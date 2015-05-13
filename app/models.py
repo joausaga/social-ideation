@@ -12,7 +12,7 @@ class SocialNetwork(models.Model):
         return self.name
 
 
-class IdeationPlatform(models.Model):
+class ConsultationPlatform(models.Model):
     name = models.CharField(max_length=50)
     url = models.URLField(null=True, blank=True)
     connector = models.OneToOneField(connectors.models.Connector)
@@ -21,17 +21,13 @@ class IdeationPlatform(models.Model):
         return self.name
 
 
-class IdeationInitiatve(models.Model):
+class Initiatve(models.Model):
     name = models.CharField(max_length=50)
-    organizer = models.CharField(max_length=50)
-    LANGUAGES = (
-        ('en', 'English'),
-        ('es', 'Spanish'),
-        ('it', 'Italian'),
-    )
-    language = models.CharField(max_length=3, choices=LANGUAGES)
-    url = models.URLField()
-    platform = models.OneToOneField(IdeationPlatform)
+    platform = models.OneToOneField(ConsultationPlatform)
+    social_network = models.ManyToManyField(SocialNetwork, blank=True)
+    hashtag = models.CharField(unique=True, max_length=14, null=True,
+                               help_text="Max length 14 characters (do not include '#')")
+    url = models.URLField(editable=False, default=None)
     users = models.IntegerField(editable=False, default=0)
     ideas = models.IntegerField(editable=False, default=0)
     votes = models.IntegerField(editable=False, default=0)
@@ -41,24 +37,12 @@ class IdeationInitiatve(models.Model):
         return self.name
 
 
-class IdeationCampaign(models.Model):
-    name = models.CharField(max_length=50)
-    ideation_initiative = models.ForeignKey(IdeationInitiatve)
-
-
-class Initiative(models.Model):
-    social_network = models.ForeignKey(SocialNetwork)
-    hashtag = models.CharField(unique=True, max_length=14, help_text="Max length 14 characters (do not include '#')")
-    ideation_initiative = models.ForeignKey(IdeationInitiatve)
-
-    def __unicode__(self):
-        return self.name
-
-
 class Campaign(models.Model):
     name = models.CharField(max_length=100)
-    initiative = models.ForeignKey(Initiative)
-    hashtag = models.CharField(max_length=14, help_text="Max length 14 characters (do not include '#')")
+    initiative = models.ForeignKey(Initiatve)
+    hashtag = models.CharField(unique=True, max_length=14, null=True,
+                               help_text="Max length 14 characters (do not include '#')")
 
     def __unicode__(self):
         return self.name
+

@@ -235,7 +235,7 @@ class ConnectorAdmin(admin.ModelAdmin):
 
 def test_connector(connector):
     _check_connector_status(connector)
-    url_callbacks = _order_url_callbacks(connector.url_callback.all(), 'testing')  # connector.url_callback.exclude(status='ok')
+    url_callbacks = _order_url_callbacks(connector.url_callback.exclude(status='ok'), 'testing')
     comment_to_delete_id, idea_to_delete_id, user_to_delete_id = None, None, None
     testing_params = _get_testing_param(connector)
     for url_cb in url_callbacks:
