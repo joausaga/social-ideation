@@ -224,8 +224,6 @@ class ConnectorAdmin(admin.ModelAdmin):
             self.message_user(request, 'The callbacks of the selected connector(s) are working and ready to be used')
         except ConnectorError as e:
             self.message_user(request, e.reason, level=messages.ERROR)
-        #except Exception as e:
-        #    self.message_user(request, e, level=messages.ERROR)
     test_connector_callbacks.short_description = "Test Connector Callbacks"
 
 # ---
