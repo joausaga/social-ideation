@@ -122,7 +122,7 @@ class Client(models.Model):
     def __unicode__(self):
         return self.user.username
 
-class TestingParameters(models.Model):
+class TestingParameter(models.Model):
     key = models.CharField(max_length=50)
     raw_value = models.CharField(max_length=100)
     TYPES = (
@@ -146,7 +146,7 @@ class TestingParameters(models.Model):
     @classmethod
     def get_params(cls):
         params = {}
-        for param in TestingParameters.objects.all():
+        for param in TestingParameter.objects.all():
             params.update(param.tuple())
         return params
 

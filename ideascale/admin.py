@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Initiative, TestingParameters
+from .models import Initiative, TestingParameter
 
 
 class InitiativeAdmin(admin.ModelAdmin):
@@ -12,4 +12,4 @@ class TestingParamAdmin(admin.ModelAdmin):
     ordering = ('key', 'raw_value', 'type')
 
 admin.site.register(Initiative, InitiativeAdmin)
-admin.site.register(TestingParameters, TestingParamAdmin)
+admin.site.register(TestingParameter, TestingParamAdmin)

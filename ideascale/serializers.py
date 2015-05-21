@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Initiative, Author, Campaign, Location, Idea, Comment, Vote, TestingParameters
+from .models import Initiative, Author, Campaign, Location, Idea, Comment, Vote
 
 
 class InitiativeSerializer(serializers.ModelSerializer):

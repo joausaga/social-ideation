@@ -1,6 +1,6 @@
 import sys
 
-from .models import Idea, Initiative, TestingParameters, Campaign, Client, Author, Location, Comment, Vote
+from .models import Idea, Initiative, TestingParameter, Campaign, Client, Author, Location, Comment, Vote
 from .serializers import IdeaSerializer, InitiativeSerializer, CampaignSerializer, AuthorSerializer, CommentSerializer, \
                          VoteSerializer
 
@@ -344,7 +344,7 @@ class TestingParams(APIView):
 
     def get(self, request, format=None):
         try:
-            testing_params = TestingParameters.get_params()
+            testing_params = TestingParameter.get_params()
             content = JSONRenderer().render(testing_params)
             resp = HttpResponse(content)
             resp.content_type = 'application/json'
@@ -587,7 +587,7 @@ class CommentsIdea(ISObject):
 
 class CommentsComment(ISObject):
     """
-    Return the list of comments of an idea
+    Return the list of comments of a comment
     """
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
