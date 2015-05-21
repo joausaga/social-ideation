@@ -5,7 +5,7 @@ from django.contrib import admin, messages
 from django.utils.html import format_html
 
 from .models import Parameter, Object, Callback, MetaConnector, Connector, BasicAttribute, ComposedAttribute, \
-                    URLCallback, URLParameter
+                    URLCallback, URLParameter, SocialNetworkConnector
 from .error import ConnectorError
 
 def get_type_name(type):
@@ -201,7 +201,8 @@ class ConnectorAdmin(admin.ModelAdmin):
         str_callbacks = ''
         url_callbacks = obj.url_callback.all()
         str_callbacks += '<table>'
-        str_callbacks += '<tr align="center"><td align="center"><b>Name</b></td><td><b>URI</b></td><td align="center"><b>Status</b></td></tr>'
+        str_callbacks += '<tr align="center"><td align="center"><b>Name</b></td><td><b>URI</b></td>' \
+                         '<td align="center"><b>Status</b></td></tr>'
         for url_callback in url_callbacks:
             str_callbacks += '<tr>'
             str_callbacks += '<td>'+ url_callback.callback.name + '</td>'
@@ -242,17 +243,17 @@ def test_connector(connector):
             print('Callback: %s' % callback.name)
             req_param = _build_request_body(connector, callback, testing_params)
             if callback.method.upper() == 'POST':
-                url = _build_request_url(url_cb.url, callback, testing_params)
-                resp = _do_request(connector, url, callback.method, req_param)
+                url = build_request_url(url_cb.url, callback, testing_params)
+                resp = do_request(connector, url, callback.method, req_param)
             elif callback.method.upper() == 'DELETE':
                 del_params = {'comment_id': comment_to_delete_id, 'idea_id': idea_to_delete_id, 'user_id': user_to_delete_id}
-                url = _build_request_url(url_cb.url, callback, del_params)
-                resp = _do_request(connector, url, callback.method, req_param)
+                url = build_request_url(url_cb.url, callback, del_params)
+                resp = do_request(connector, url, callback.method, req_param)
             else:
-                url = _build_request_url(url_cb.url, callback, testing_params)
-                resp = _do_request(connector, url, callback.method)
+                url = build_request_url(url_cb.url, callback, testing_params)
+                resp = do_request(connector, url, callback.method)
             try:
-                ret_obj = _get_json_or_error(connector.name, callback, resp)
+                ret_obj = get_json_or_error(connector.name, callback, resp)
                 _check_cb_return_obj(connector.name, callback, ret_obj)
                 if callback.method.upper() == 'POST' and callback.name.find('create') != -1:
                     if callback.name.find('comment') != -1:
@@ -301,7 +302,7 @@ def _order_url_callbacks(url_callbacks, order_criteria='alpha'):
         return get_url_cb + post_url_cb + del_url_cb
 
 
-def _build_request_url(url, callback, url_params):
+def build_request_url(url, callback, url_params):
     cb_url_params = callback.url_params.all()
     for cb_url_param in cb_url_params:
         url = url.replace('{}'.format(cb_url_param.name), str(url_params[cb_url_param.name]))
@@ -323,7 +324,7 @@ def _build_request_body(connector, callback, testing_params):
     return req_param
 
 
-def _do_request(connector, url, method, params=None):
+def do_request(connector, url, method, params=None):
     auth_header = None
     if connector.authentication:
         auth_header = {connector.auth_header: connector.auth_token}
@@ -344,7 +345,7 @@ def _do_request(connector, url, method, params=None):
         return requests.get(**request_params)
 
 
-def _get_json_or_error(connector_name, cb, response):
+def get_json_or_error(connector_name, cb, response):
     if response.status_code and not 200 <= response.status_code < 300:
         raise ConnectorError('Error when testing callback {} of the connector {}. Message: {}'
                              .format(cb.name, connector_name, response.content))
@@ -360,7 +361,7 @@ def _get_json_or_error(connector_name, cb, response):
                                  'json or xml'.format(cb.name, connector_name))
 
 
-def _get_url_cb(connector, name):
+def get_url_cb(connector, name):
     for url_cb in connector.url_callback.all():
         if url_cb.callback.name == name:
             return url_cb
@@ -368,9 +369,9 @@ def _get_url_cb(connector, name):
 
 
 def _get_testing_param(connector):
-    testing_url_cb = _get_url_cb(connector, 'get_testing_param_cb')
-    resp = _do_request(connector, testing_url_cb.url, testing_url_cb.callback.method)
-    ret_obj = _get_json_or_error(connector.name, testing_url_cb.callback, resp)
+    testing_url_cb = get_url_cb(connector, 'get_testing_param_cb')
+    resp = do_request(connector, testing_url_cb.url, testing_url_cb.callback.method)
+    ret_obj = get_json_or_error(connector.name, testing_url_cb.callback, resp)
     _check_cb_return_obj(connector.name, testing_url_cb.callback, ret_obj)
     return ret_obj
 
@@ -454,3 +455,5 @@ admin.site.register(Connector, ConnectorAdmin)
 admin.site.register(URLCallback, URLCallbackAdmin)
 
 admin.site.register(ComposedAttribute, ComposedAttributeAdmin)
+
+admin.site.register(SocialNetworkConnector)

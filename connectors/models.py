@@ -14,10 +14,10 @@ class SocialNetworkConnector(models.Model):
     name = models.CharField(max_length=50)
     connector_package = models.CharField(max_length=50)
     connector_class = models.CharField(max_length=50)
-    consumer_key = models.CharField(max_length=100)
-    consumer_secret = models.CharField(max_length=100)
-    token = models.CharField(max_length=100)
-    token_secret = models.CharField(max_length=100)
+    consumer_key = models.CharField(max_length=100, null=True, blank=True)
+    consumer_secret = models.CharField(max_length=100, null=True, blank=True)
+    token = models.CharField(max_length=100, null=True, blank=True)
+    token_secret = models.CharField(max_length=100, null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -41,6 +41,7 @@ class URLParameter(models.Model):
 
     def __unicode__(self):
         return self.name
+
 
 class BasicAttribute(models.Model):
     name = models.CharField(max_length=50)
