@@ -1,5 +1,6 @@
 from django.contrib import admin, messages
 from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetwork
+from app.tasks import synchronize_content
 from connectors.admin import do_request, get_json_or_error, get_url_cb, build_request_url
 from connectors.error import ConnectorError
 
@@ -45,7 +46,7 @@ class CampaignAdmin(admin.ModelAdmin):
 class ConsultationPlatformAdmin(admin.ModelAdmin):
     list_display = ('name', 'url', 'connector')
     ordering = ('name', 'url',)
-    actions = ['get_platform_initiative']
+    actions = ['get_platform_initiative', 'sync_content']
 
     def _cu_campaigns(self, platform, ini_obj):
         connector = platform.connector
@@ -108,6 +109,11 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
         except Exception as e:
             self.message_user(request, e, level=messages.ERROR)
     get_platform_initiative.short_description = "Get Initiatives"
+
+    # Temporal to test how the implementation works
+    def sync_content(self, request, queryset):
+        synchronize_content()
+    sync_content.short_description = "Synchronize Content"
 
 
 admin.site.register(ConsultationPlatform, ConsultationPlatformAdmin)

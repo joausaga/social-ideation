@@ -4,28 +4,47 @@ from app.models import ConsultationPlatform, Initiative, Author, Location, Idea,
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from connectors.admin import do_request, get_json_or_error, get_url_cb, build_request_url
+from django.core.cache import cache
+from hashlib import md5
 
 
 logger = get_task_logger(__name__)
 
 
+def _update_or_create_author(platform, author):
+    try:
+        author_obj = Author.objects.get(external_id=author['id'], consultation_platform=platform)
+    except Author.DoesNotExist:
+        if 'email' not in author.keys() or 'name' not in author.keys():
+            # Fetch author inform from consultation platform
+            connector = platform.connector
+            url_cb = get_url_cb(connector, 'get_user_cb')
+            url = build_request_url(url_cb.url, url_cb.callback, {'user_id': author['id']})
+            resp = do_request(connector, url, url_cb.callback.method)
+            author = get_json_or_error(connector.name, url_cb.callback, resp)
+        attr_new_author = {'screen_name': author['name'], 'email': author['email'], 'channel': 'consultation_platform',
+                           'external_id': author['id'], 'consultation_platform': platform}
+        author_obj = Author(**attr_new_author)
+        author_obj.save()
+
+    return author_obj
+
+
+def _get_or_create_location(location):
+    attr_new_location = {'latitude': location['latitude'], 'longitude': location['longitude'],
+                         'city': location['city'], 'country': location['country']}
+    location_obj, location_created = Location.objects.get_or_create(city=location['city'], country=location['country'],
+                                                                    defaults=attr_new_location)
+    return location_obj
+
+
 def _update_or_create_content(platform, raw_obj, model, filters, obj_attrs, editable_fields):
     # Handle content author
-    author = raw_obj['user_info']
-    attr_new_author = {'screen_name': author['name'], 'email': author['email'], 'channel': 'consultation_platform',
-                       'external_id': author['id'], 'consultation_platform': platform}
-    author_obj, author_created = Author.objects.update_or_create(external_id=author['id'],
-                                                                 consultation_platform=platform,
-                                                                 defaults=attr_new_author)
-    obj_attrs = obj_attrs.update({'author': author_obj})
+    obj_attrs.update({'author': _update_or_create_author(platform, raw_obj['user_info'])})
     # Handle content location
     location = raw_obj['location_info']
     if location:
-        attr_new_location = {'latitude': location['latitude'], 'longitude': location['longitude'],
-                             'city': location['city'], 'country': location['country']}
-        location_obj, location_created = Location.get_or_create(city=location['city'], country=location['country'],
-                                                                defaults=attr_new_location)
-        obj_attrs = obj_attrs.update({'location': location_obj})
+        obj_attrs.update({'location': _get_or_create_location(location)})
     # Handle content creation or update
     content_obj, content_created = model.objects.get_or_create(defaults=obj_attrs, **filters)
     if not content_created:
@@ -43,13 +62,13 @@ def _update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edit
 def _get_parent(platform, content_type, content_id):
     if content_type == 'idea':
         try:
-            return {'parent':'idea', 'parent_idea': Idea.objects.get(source_consultation=platform, cp_id=content_id)}
+            return {'parent': 'idea', 'parent_idea': Idea.objects.get(source_consultation=platform, cp_id=content_id)}
         except Idea.DoesNotExist:
             return None
     else:
         try:
-            return {'parent':'comment', 'parent_comment': Comment.objects.get(source_consultation=platform, cp_id=content_id)}
-        except:
+            return {'parent': 'comment', 'parent_comment': Comment.objects.get(source_consultation=platform, cp_id=content_id)}
+        except Comment.DoesNotExist:
             return None
 
 
@@ -57,7 +76,7 @@ def _do_create_update_comment(platform, initiative, comment):
     filters = {'cp_id': comment['id'], 'source': 'consultation_platform'}
     parent_dict = _get_parent(platform, comment['parent_type'], comment['parent_id'])
     if parent_dict:
-        if comment['parent_type'] == 'ideas':
+        if comment['parent_type'] == 'idea':
             campaign = parent_dict['parent_idea'].campaign
         else:
             campaign = parent_dict['parent_comment'].campaign
@@ -80,10 +99,10 @@ def _cud_initiative_votes(platform, initiative):
     resp = do_request(connector, url, url_cb.callback.method)
     votes = get_json_or_error(connector.name, url_cb.callback, resp)
     for vote in votes:
-        author = Author.objects.get(external_id=vote['author_id'])
+        author = _update_or_create_author(platform, {'id': vote['member_id']})
         parent_dict = _get_parent(platform, vote['parent_type'], vote['parent_id'])
         if parent_dict:
-            if vote['parent_type'] == 'ideas':
+            if vote['parent_type'] == 'idea':
                 campaign = parent_dict['parent_idea'].campaign
             else:
                 campaign = parent_dict['parent_comment'].campaign
@@ -102,6 +121,7 @@ def _cud_initiative_votes(platform, initiative):
         else:
             logger.error('Vote {} could\'nt be synchronized because its parent {} with id couldn\'t be found'.
                          format(vote['id'], vote['parent_type'], vote['parent_id']))
+
 
 def _cud_initiative_comments(platform, initiative):
     # Fetch initiative's comments
@@ -123,7 +143,6 @@ def _cud_initiative_comments(platform, initiative):
                          format(delayed_comment['id'], delayed_comment['parent_type'], delayed_comment['parent_id']))
 
 
-# Save new idea and update the existing ones
 def _cud_initiative_ideas(platform, initiative):
     # Fetch ideas
     connector = platform.connector
@@ -158,17 +177,37 @@ def _invalidate_initiative_content(platform, initiative):
     Vote.objects.filter(source_consultation=platform, initiative=initiative).update(exist=False)
 
 
+# Lock is used to ensure that synchronization is only executed one at time
 @shared_task
 def synchronize_content():
-    for cplatform in ConsultationPlatform.objects.all():
+    # The cache key consists of the task name and the MD5 digest
+    # of the feed URL.
+    hexdigest = md5('social_ideation').hexdigest()
+    lock_id = '{0}-lock-{1}'.format('synchronize_content', hexdigest)
+
+    # cache.add fails if the key already exists
+    acquire_lock = lambda: cache.add(lock_id, 'true', 60 * 5)  # Lock expires in 5 minutes
+    # memcache delete is very slow, but we have to use it to take
+    # advantage of using add() for atomic locking
+    release_lock = lambda: cache.delete(lock_id)
+
+    if acquire_lock():
+        logger.info('Starting synchronization...')
         try:
-            initiatives = Initiative.objects.get(platform=cplatform)
-            for initiative in initiatives:
-                if initiative.active:
-                    _invalidate_initiative_content(cplatform, initiative)
-                    _cud_initiative_ideas(cplatform, initiative)
-                    _cud_initiative_comments(cplatform, initiative)
-                    _cud_initiative_votes(cplatform, initiative)
-        except Initiative.DoesNotExist:
-            logger.error('Couldn\'t find initiatives associated to the platform {}. '
-                         'Content cannot be synchronized.'.format(cplatform.name))
+            for cplatform in ConsultationPlatform.objects.all():
+                try:
+                    initiatives = Initiative.objects.filter(platform=cplatform)
+                    for initiative in initiatives:
+                        if initiative.active:
+                            logger.info('Synchronazing the content of the initiative {}'.format(initiative.name))
+                            _invalidate_initiative_content(cplatform, initiative)
+                            _cud_initiative_ideas(cplatform, initiative)
+                            _cud_initiative_comments(cplatform, initiative)
+                            _cud_initiative_votes(cplatform, initiative)
+                except Initiative.DoesNotExist:
+                    logger.error('Couldn\'t find initiatives associated to the platform {}. '
+                                 'Content cannot be synchronized.'.format(cplatform.name))
+        finally:
+            release_lock()
+    else:
+        logger.info('The synchronization is already being executed by another worker')
