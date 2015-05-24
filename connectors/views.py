@@ -1,8 +1,8 @@
 import requests
 
 from django.http import HttpResponseServerError, HttpResponse
-from .models import Connector
-from .error import ConnectorError
+from connectors.models import Connector
+from connectors.error import ConnectorError
 
 
 def test_connector(request, connector_id):

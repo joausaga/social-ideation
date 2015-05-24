@@ -4,9 +4,10 @@ from django import forms
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
-from .models import Parameter, Object, Callback, MetaConnector, Connector, BasicAttribute, ComposedAttribute, \
-                    URLCallback, URLParameter, SocialNetworkConnector
-from .error import ConnectorError
+from connectors.models import Parameter, Object, Callback, MetaConnector, Connector, BasicAttribute, ComposedAttribute, \
+                              URLCallback, URLParameter, SocialNetworkConnector
+from connectors.error import ConnectorError
+
 
 def get_type_name(type):
     if type == 'bool':
@@ -347,7 +348,7 @@ def do_request(connector, url, method, params=None):
 
 def get_json_or_error(connector_name, cb, response):
     if response.status_code and not 200 <= response.status_code < 300:
-        raise ConnectorError('Error when testing callback {} of the connector {}. Message: {}'
+        raise ConnectorError('Error when calling the callback {} of the connector {}. Message: {}'
                              .format(cb.name, connector_name, response.content))
     else:
         if cb.format == 'json':
