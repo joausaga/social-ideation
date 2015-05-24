@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Initiative, Author, Campaign, Location, Idea, Comment, Vote
+from ideascale.models import Initiative, Author, Campaign, Location, Idea, Comment, Vote
 
 
 class InitiativeSerializer(serializers.ModelSerializer):
@@ -56,7 +56,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class VoteSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='ideascale_id', read_only=True)
-    author_id = serializers.IntegerField(read_only=True)
+    member_id = serializers.IntegerField(read_only=True)
     parent_id = serializers.IntegerField(read_only=True)
 
     class Meta:

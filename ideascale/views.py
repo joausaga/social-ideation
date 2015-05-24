@@ -1,8 +1,10 @@
-import sys
+import logging
 
-from .models import Idea, Initiative, TestingParameter, Campaign, Client, Author, Location, Comment, Vote
-from .serializers import IdeaSerializer, InitiativeSerializer, CampaignSerializer, AuthorSerializer, CommentSerializer, \
-                         VoteSerializer
+from ideascale.models import Idea, Initiative, TestingParameter, Campaign, Client, Author, Location, Comment, Vote
+from ideascale.serializers import IdeaSerializer, InitiativeSerializer, CampaignSerializer, AuthorSerializer, \
+                                  CommentSerializer, VoteSerializer
+
+from dateutil.parser import parse
 
 from django.http import HttpResponse, Http404
 from django.utils import timezone
@@ -17,6 +19,8 @@ from rest_framework.response import Response
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
+
+logger = logging.getLogger(__name__)
 
 # ---
 # General methods and classes
@@ -126,10 +130,11 @@ def cru_idea(idea_id, initiative, idea_obj=None):
         positive_votes = idea_obj.upVoteCount if idea_obj.upVoteCount > 0 else 0
         negative_votes = idea_obj.downVoteCount if idea_obj.downVoteCount > 0 else 0
         comments = idea_obj.commentCount if idea_obj.commentCount > 0 else 0
+        idea_is_dt = parse(idea_obj.creationDateTime)
+        idea_dt = _get_timezone_aware_datetime(idea_is_dt) if timezone.is_naive(idea_is_dt) else idea_is_dt
         idea = Idea(ideascale_id=idea_obj.id, title=idea_obj.title, text=idea_obj.text,
-                    datetime=_get_timezone_aware_datetime(idea_obj.creationDateTime), positive_votes=positive_votes,
-                    negative_votes=negative_votes, comments=comments, campaign=campaign_idea, url=idea_obj.url,
-                    user=author, location=location, sync=False)
+                    datetime=idea_dt, positive_votes=positive_votes, negative_votes=negative_votes, comments=comments,
+                    campaign=campaign_idea, url=idea_obj.url, user=author, location=location, sync=False)
         idea.save()
         return idea
 
@@ -166,9 +171,10 @@ def cru_comment(comment_id, initiative, comment_obj=None):
         positive_votes = comment_obj.upVoteCount if comment_obj.upVoteCount > 0 else 0
         negative_votes = comment_obj.downVoteCount if comment_obj.downVoteCount > 0 else 0
         comments = comment_obj.commentCount if comment_obj.commentCount > 0 else 0
+        comment_is_dt = parse(comment_obj.creationDateTime)
+        comment_dt = _get_timezone_aware_datetime(comment_is_dt) if timezone.is_naive(comment_is_dt) else comment_is_dt
         comment = Comment(ideascale_id=comment_obj.id, text=comment_obj.text,
-                          datetime=_get_timezone_aware_datetime(comment_obj.creationDateTime),
-                          positive_votes=positive_votes, negative_votes=negative_votes,
+                          datetime=comment_dt, positive_votes=positive_votes, negative_votes=negative_votes,
                           comments=comments, url=comment_obj.url, user=author, location=location,
                           parent_type=comment_obj.parentType, sync=False)
         parent_comment = get_parent_comment(comment_obj, initiative)
@@ -191,8 +197,9 @@ def cru_vote(vote_id, initiative, vote_obj):
         return vote
     except Vote.DoesNotExist:
         author = cru_author(vote_obj.memberId, initiative)
-        vote = Vote(ideascale_id=vote_obj.id, value=vote_obj.voteValue,
-                    datetime=_get_timezone_aware_datetime(vote_obj.creationDate), author=author, sync=False,
+        vote_is_dt = parse(vote_obj.creationDate)
+        vote_dt = _get_timezone_aware_datetime(vote_is_dt) if timezone.is_naive(vote_is_dt) else vote_is_dt
+        vote = Vote(ideascale_id=vote_obj.id, value=vote_obj.voteValue, datetime=vote_dt, author=author, sync=False,
                     parent_type=vote_obj.ideaType)
         if vote_obj.ideaType == 'idea':
             vote.parent_idea = cru_idea(vote_obj.ideaId, initiative)
@@ -509,7 +516,7 @@ class AuthorDetail(ISObjectDetail):
             self.api_method_params = {'memberId': user_id}
             self.create_obj = cru_author
             return super(AuthorDetail, self).get(request, user_id)
-        except Idea.DoesNotExist, e:
+        except Author.DoesNotExist, e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
@@ -646,7 +653,7 @@ class CommentDetail(ISObjectDetail):
             self.api_method_params = {'commentId': comment_id}
             self.create_obj = cru_author
             return super(CommentDetail, self).get(request, comment_id)
-        except Idea.DoesNotExist, e:
+        except Comment.DoesNotExist, e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
@@ -681,7 +688,7 @@ class Votes(ISObject):
         self.create_obj = cru_vote
         self.queryset = Vote
         self.serializer_class = VoteSerializer
-        self.filters = {'sync':False}
+        self.filters = {'sync': False}
         initiative = self.get_initiative(initiative_id)
         return super(Votes,self).get(request, initiative)
 
@@ -763,7 +770,7 @@ class VotesComment(ISObject):
 
 class VoteDetail(ISObjectDetail):
     """
-    Retrieve or delete an author instance
+    Retrieve or delete a vote instance
     """
     queryset = Vote
     serializer_class = VoteSerializer

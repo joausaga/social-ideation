@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Initiative, TestingParameter
+from ideascale.models import Initiative, TestingParameter
 
 
 class InitiativeAdmin(admin.ModelAdmin):

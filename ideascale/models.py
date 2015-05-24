@@ -98,7 +98,10 @@ class Vote(models.Model):
     sync = models.BooleanField(default=False)
 
     def __unicode__(self):
-        return 'Vote {} on idea {}'.format(self.value, self.idea.title)
+        if self.parent_idea:
+            return 'Vote {} on idea {}'.format(self.value, self.parent_idea.title)
+        elif self.parent_comment:
+            return 'Vote {} on comment {}'.format(self.value, self.parent_comment.text)
 
     def parent_id(self):
         if self.parent_idea:
@@ -106,7 +109,7 @@ class Vote(models.Model):
         elif self.parent_comment:
             return self.parent_comment.ideascale_id
 
-    def author_id(self):
+    def member_id(self):
         return self.author.ideascale_id
 
 
