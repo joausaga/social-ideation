@@ -82,15 +82,15 @@ class Author(models.Model):
     consultation_platform = models.ForeignKey(ConsultationPlatform, null=True)
 
     def __unicode__(self):
-        return self.name
+        return self.screen_name
 
 
 class BaseContent(models.Model):
-    # Id Fields (after the idea is synchronized in both platforms it will have to ids)
-    sn_id = models.CharField(max_length=50, null=True)
-    cp_id = models.CharField(max_length=50, null=True)
+    # Id Fields (after the idea is synchronized in both platforms it will have two ids)
+    sn_id = models.CharField(max_length=100, null=True)
+    cp_id = models.CharField(max_length=100, null=True)
     # Common Properties
-    datetime = models.DateTimeField()
+    datetime = models.DateTimeField(null=True)
     author = models.ForeignKey(Author)
     # Context
     initiative = models.ForeignKey(Initiative)
@@ -107,6 +107,7 @@ class BaseContent(models.Model):
     has_changed = models.BooleanField(default=False)
     exist = models.BooleanField(default=True)
     sync = models.BooleanField(default=False)
+    inconsistent = models.BooleanField(default=False)
 
     class Meta:
         abstract = True

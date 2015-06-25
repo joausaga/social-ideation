@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
-from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetwork
-from app.tasks import synchronize_content
+from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetwork, Idea, Comment, Vote
+from app.tasks import synchronize_content, test_function
 from connectors.admin import do_request, get_json_or_error, get_url_cb, build_request_url
 from connectors.error import ConnectorError
 
@@ -112,11 +112,94 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
 
     # Temporal to test how the implementation works
     def sync_content(self, request, queryset):
-        synchronize_content()
+        test_function()
+        #synchronize_content()
     sync_content.short_description = "Synchronize Content"
 
+
+class IdeaAdmin(admin.ModelAdmin):
+    list_display = ('idea_id', 'idea_source', 'initiative', 'campaign', 'author', 'datetime', 'title', 'text',
+                    're_posts', 'bookmarks', 'positive_votes', 'negative_votes', 'comments', 'sync')
+    ordering = ('initiative', 'campaign', 'author', 'datetime', 'positive_votes', 'negative_votes', 'comments')
+
+    def has_add_permission(self, request):
+        return False
+
+    def get_queryset(self, request):
+        qs = super(IdeaAdmin, self).get_queryset(request)
+        return qs.filter(exist=True)
+
+    def idea_id(self, obj):
+        if obj.sn_id:
+            return obj.sn_id
+        else:
+            return obj.cp_id
+    idea_id.short_description = 'Id'
+
+    def idea_source(self, obj):
+        if obj.source_consultation:
+            return obj.source_consultation.name.title()
+        else:
+            return obj.source_social.name.title()
+    idea_source.short_description = 'Source'
+
+
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('comment_id', 'comment_source', 'initiative', 'campaign', 'author', 'datetime', 'text', 'parent',
+                    'positive_votes', 'negative_votes', 'comments', 'sync')
+    ordering = ('initiative', 'campaign', 'author', 'datetime', 'positive_votes', 'negative_votes', 'comments')
+
+    def has_add_permission(self, request):
+        return False
+
+    def get_queryset(self, request):
+        qs = super(CommentAdmin, self).get_queryset(request)
+        return qs.filter(exist=True)
+
+    def comment_id(self, obj):
+        if obj.sn_id:
+            return obj.sn_id
+        else:
+            return obj.cp_id
+    comment_id.short_description = 'Id'
+
+    def comment_source(self, obj):
+        if obj.source_consultation:
+            return obj.source_consultation.name.title()
+        else:
+            return obj.source_social.name.title()
+    comment_source.short_description = 'Source'
+
+
+class VoteAdmin(admin.ModelAdmin):
+    list_display = ('vote_id', 'vote_source', 'initiative', 'campaign', 'author', 'datetime', 'value', 'parent', 'sync')
+    ordering = ('initiative', 'campaign', 'author')
+
+    def has_add_permission(self, request):
+        return False
+
+    def get_queryset(self, request):
+        qs = super(VoteAdmin, self).get_queryset(request)
+        return qs.filter(exist=True)
+
+    def vote_id(self, obj):
+        if obj.sn_id:
+            return obj.sn_id
+        else:
+            return obj.cp_id
+    vote_id.short_description = 'Id'
+
+    def vote_source(self, obj):
+        if obj.source_consultation:
+            return obj.source_consultation.name.title()
+        else:
+            return obj.source_social.name.title()
+    vote_source.short_description = 'Source'
 
 admin.site.register(ConsultationPlatform, ConsultationPlatformAdmin)
 admin.site.register(Initiative, InitiativeAdmin)
 admin.site.register(Campaign, CampaignAdmin)
 admin.site.register(SocialNetwork, SocialNetworkAdmin)
+admin.site.register(Idea, IdeaAdmin)
+admin.site.register(Comment, CommentAdmin)
+admin.site.register(Vote, VoteAdmin)
