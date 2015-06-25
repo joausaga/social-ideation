@@ -356,7 +356,7 @@ def get_json_or_error(connector_name, cb, response):
         elif cb.format == 'xml':
             return response.xml()
         elif cb.format == 'txt':
-            return response.txt()
+            return response.text
         else:
             raise ConnectorError('Error, do not understand response of callback {} of the connector {}. Expected '
                                  'json or xml'.format(cb.name, connector_name))
@@ -439,6 +439,11 @@ def _check_type_attr(connector_name, cb_name, attr, value):
 #
 # ---
 
+class SocialNetworkConnectorAdmin(admin.ModelAdmin):
+    list_display = ('name', 'connector_module', 'connector_class', 'active')
+    ordering = ('name',)
+
+
 admin.site.register(Parameter, ParameterAdmin)
 
 admin.site.register(URLParameter, URLParameterAdmin)
@@ -457,4 +462,4 @@ admin.site.register(URLCallback, URLCallbackAdmin)
 
 admin.site.register(ComposedAttribute, ComposedAttributeAdmin)
 
-admin.site.register(SocialNetworkConnector)
+admin.site.register(SocialNetworkConnector, SocialNetworkConnectorAdmin)
