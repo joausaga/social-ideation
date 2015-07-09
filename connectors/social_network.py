@@ -68,6 +68,12 @@ class SocialNetworkBase():
 
     @classmethod
     @abc.abstractmethod
+    def comment_comment(cls, id_comment, message):
+        """Comment the comment identified by id_comment"""
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
     def edit_comment(cls, id_comment, message):
         """Edit the comment identified by id_comment"""
         raise NotImplementedError
@@ -116,21 +122,22 @@ class Facebook(SocialNetworkBase):
         resp = graph.get_object('me/accounts')
         for page in resp['data']:
             if page['id'] == cls.config_manager.get('facebook', 'page_id'):
+                print page['access_token']
                 return page['access_token']
         raise ConnectorError('Couldn\'t get long-lived page token')
 
     @classmethod
     def authenticate(cls):
+        config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'connectors/config')
         try:
             cls.config_manager = ConfigParser.ConfigParser()
-            config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'connectors/config')
             cls.config_manager.read(config_file)
             long_lived_page_token = cls.config_manager.get('facebook', 'page_token')
         except ConfigParser.NoOptionError:
             long_lived_page_token = cls.get_long_lived_page_token()
             cls.config_manager.set('facebook', 'page_token', long_lived_page_token)
             # Save long-lived page token --which doesn't expire-- to use later
-            with open('connectors/config', 'wb') as configfile:
+            with open(config_file, 'wb') as configfile:
                 cls.config_manager.write(configfile)
         cls.graph = facebook.GraphAPI(long_lived_page_token)
 
@@ -203,11 +210,11 @@ class Facebook(SocialNetworkBase):
 
     @classmethod
     def publish_post(cls, message):
-        cls.graph.put_wall_post(message)
+        return cls.graph.put_wall_post(message)
 
     @classmethod
     def edit_post(cls, id_post, new_message):
-        cls.graph.request(cls.graph.version + "/" + id_post, post_args={'message': new_message}, method="POST")
+        return cls.graph.request(cls.graph.version + "/" + id_post, post_args={'message': new_message}, method="POST")
         #  cls.graph.edit_message_post(post_id=id_post, message=new_message)
 
     @classmethod
@@ -229,11 +236,11 @@ class Facebook(SocialNetworkBase):
 
     @classmethod
     def comment_post(cls, id_post, message):
-        cls.graph.put_comment(object_id=id_post, message=message)
+        return cls.graph.put_comment(object_id=id_post, message=message)
 
     @classmethod
     def edit_comment(cls, id_comment, message):
-        cls.graph.request(cls.graph.version + "/" + id_comment, post_args={'message': message}, method="POST")
+        return cls.graph.request(cls.graph.version + "/" + id_comment, post_args={'message': message}, method="POST")
 
     @classmethod
     def delete_comment(cls, id_comment):
@@ -252,4 +259,5 @@ class Facebook(SocialNetworkBase):
 if __name__ == "__main__":
     Facebook.authenticate()
     #print Facebook.get_posts()
-    print Facebook.get_info_user('435131070002704')
+    #Facebook.publish_post('Hello from social_network.py!')
+    #print Facebook.get_info_user('435131070002704')
