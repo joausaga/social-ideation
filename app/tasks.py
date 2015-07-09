@@ -1,12 +1,15 @@
 from __future__ import absolute_import
 
+from app.error import AppError
 from app.models import ConsultationPlatform, Initiative, Author, Location, Idea, Comment, Vote, Campaign, SocialNetwork
+from app.utils import convert_to_utf8_str
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from connectors.admin import do_request, get_json_or_error, get_url_cb, build_request_url
+from app.utils import do_request, get_json_or_error, get_url_cb, build_request_url, build_request_body, \
+                      generate_idea_title_from_text
 from django.core.cache import cache
+from django.db.models import Q
 from hashlib import md5
-
 
 import traceback
 
@@ -66,11 +69,14 @@ def _update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edit
         obj_attrs.update({'location': _get_or_create_location(raw_obj['location_info'])})
     # Handle content creation or updating
     content_obj, content_created = model.objects.get_or_create(defaults=obj_attrs, **filters)
-    if not content_created:
+    if not content_created and content_obj.source == source:
         content_obj.exist = True
         for editable_field in editable_fields:
             obj_field = getattr(content_obj, editable_field)
             if obj_field != raw_obj[editable_field]:
+                logger.info('The object with the id {} has changed its {}. '
+                            'Before {}, now {}'.format(content_obj.id, editable_field,
+                                                       obj_field, raw_obj[editable_field]))
                 content_obj.has_changed = True
                 setattr(content_obj, editable_field, raw_obj[editable_field])
     content_obj.save()
@@ -78,11 +84,11 @@ def _update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edit
     return content_obj
 
 
-def _get_parent(platform, content_type, content_id, source):
+def _get_parent(content_type, content_id, source):
     if source == 'consultation_platform':
-        filter = {'source_consultation':platform, 'cp_id':content_id}
+        filter = {'cp_id': content_id}
     else:
-        filter = {'source_social':platform, 'sn_id':content_id}
+        filter = {'sn_id':content_id}
     if content_type == 'idea':
         try:
             return {'parent': 'idea', 'parent_idea': Idea.objects.get(**filter)}
@@ -97,10 +103,10 @@ def _get_parent(platform, content_type, content_id, source):
 
 def _do_create_update_comment(platform, initiative, comment, source):
     if source == 'consultation_platform':
-        filters = {'cp_id': comment['id'], 'source': source}
+        filters = {'cp_id': comment['id']}
     else:
-        filters = {'sn_id': comment['id'], 'source': source}
-    parent_dict = _get_parent(platform, comment['parent_type'], comment['parent_id'], source)
+        filters = {'sn_id': comment['id']}
+    parent_dict = _get_parent(comment['parent_type'], comment['parent_id'], source)
     if parent_dict:
         if comment['parent_type'] == 'idea':
             campaign = parent_dict['parent_idea'].campaign
@@ -123,7 +129,7 @@ def _do_create_update_comment(platform, initiative, comment, source):
 
 def _do_create_update_vote(platform, initiative, vote, source):
     author = _update_or_create_author(platform, {'id': vote['member_id']}, source)
-    parent_dict = _get_parent(platform, vote['parent_type'], vote['parent_id'], source)
+    parent_dict = _get_parent(vote['parent_type'], vote['parent_id'], source)
     if parent_dict:
         if vote['parent_type'] == 'idea':
             campaign = parent_dict['parent_idea'].campaign
@@ -134,10 +140,10 @@ def _do_create_update_vote(platform, initiative, vote, source):
         vote_attrs.update(parent_dict)
         if source == 'consultation_platform':
             vote_attrs.update({'cp_id': vote['id'], 'source_consultation': platform})
-            filters = {'cp_id': vote['id'], 'source_consultation': platform, 'defaults': vote_attrs}
+            filters = {'cp_id': vote['id'], 'defaults': vote_attrs}
         else:
             vote_attrs.update({'sn_id': vote['id'], 'source_social': platform})
-            filters = {'sn_id': vote['id'], 'source_social': platform, 'defaults': vote_attrs}
+            filters = {'sn_id': vote['id'], 'defaults': vote_attrs}
         if 'datetime' in vote.keys():
             vote_attrs.update({'datetime': vote['datetime']})
         vote_obj, vote_created = Vote.objects.get_or_create(**filters)
@@ -154,10 +160,14 @@ def _do_create_update_vote(platform, initiative, vote, source):
 def _cud_initiative_votes(platform, initiative):
     # Fetch initiative's votes
     connector = platform.connector
-    url_cb = get_url_cb(connector, 'get_votes_cb')
+    url_cb = get_url_cb(connector, 'get_votes_ideas_cb')
     url = build_request_url(url_cb.url, url_cb.callback, {'initiative_id': initiative.external_id})
     resp = do_request(connector, url, url_cb.callback.method)
     votes = get_json_or_error(connector.name, url_cb.callback, resp)
+    url_cb = get_url_cb(connector, 'get_votes_comments_cb')
+    url = build_request_url(url_cb.url, url_cb.callback, {'initiative_id': initiative.external_id})
+    resp = do_request(connector, url, url_cb.callback.method)
+    votes += get_json_or_error(connector.name, url_cb.callback, resp)
     for vote in votes:
         _do_create_update_vote(platform, initiative, vote, 'consultation_platform')
 
@@ -178,8 +188,9 @@ def _cud_initiative_comments(platform, initiative):
     for delayed_comment in delayed_comments:
         comment_obj = _do_create_update_comment(platform, initiative, delayed_comment, 'consultation_platform')
         if not comment_obj:
-            logger.error('Comment {} couldn\'t be synchronized because its parent {} with id {} couldn\'t be found'.
-                         format(delayed_comment['id'], delayed_comment['parent_type'], delayed_comment['parent_id']))
+            logger.warning('Comment {} couldn\'t be synchronized because its parent {} with id {} couldn\'t be found. {}'.
+                           format(delayed_comment['id'], delayed_comment['parent_type'], delayed_comment['parent_id'],
+                                  delayed_comment['text']))
 
 
 def _cud_initiative_ideas(platform, initiative):
@@ -194,18 +205,17 @@ def _cud_initiative_ideas(platform, initiative):
         try:
             campaign = Campaign.objects.get(external_id=idea['campaign_info']['id'])
         except Campaign.DoesNotExist:
-            logger.error('Couldn\'t find the campaign with the id {} within the initiative {}. '
-                         'Idea {} cannot be synchronized.'.format(idea['campaign_info']['id'], initiative.name,
-                                                                  idea['id']))
+            logger.warning('Couldn\'t find the campaign with the id {} within the initiative {}. '
+                           'Idea {} cannot be synchronized.'.format(idea['campaign_info']['id'], initiative.name,
+                                                                    idea['id']))
             continue
-        filters = {'cp_id': idea['id'], 'source': 'consultation_platform'}
+        filters = {'cp_id': idea['id']}
         idea_attrs = {'cp_id': idea['id'], 'source': 'consultation_platform', 'datetime': idea['datetime'],
                       'title': idea['title'], 'text': idea['text'], 'url': idea['url'], 'comments': idea['comments'],
                       'initiative': initiative, 'campaign': campaign, 'positive_votes': idea['positive_votes'],
                       'negative_votes': idea['negative_votes'], 'source_consultation': platform}
         editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
         _update_or_create_content(platform, idea, Idea, filters, idea_attrs, editable_fields, 'consultation_platform')
-    # Should we delete ideas that don't exist anymore (those that conserve exist=False)?
 
 
 def _extract_hashtags(post):
@@ -254,14 +264,13 @@ def _pull_content_social_network(social_network):
                 campaign = Campaign.objects.get(pk=7)
                 if campaign:
                     # Save/Update ideas
-                    filters = {'sn_id': post['id'], 'source': 'social_network'}
+                    filters = {'sn_id': post['id']}
                     idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
                                   'title': post['title'], 'text': post['text'], 'url': post['url'],
                                   'comments': post['comments'], 'initiative': initiative, 'campaign': campaign,
                                   'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
                                   'source_social': social_network}
                     editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
-                    logger.info('To save post: ' + post['text'])
                     _update_or_create_content(social_network, post, Idea, filters, idea_attrs, editable_fields,
                                               'social_network')
                     # Save/Update comments
@@ -318,17 +327,20 @@ def _do_data_consolidation(type_obj, filters):
             attrs = {'parent': type_obj, 'parent_comment': obj.id}
         # Consolidate comments
         comments_saved = Comment.objects.filter(**attrs).count()
+        # Add also replies to the comments
+        for comment_saved in Comment.objects.filter(**attrs):
+            comments_saved += Comment.objects.filter(parent_comment=comment_saved.id).count()
         if getattr(obj, 'comments') != comments_saved:
-            logger.warning('{} with id {} has inconsistent its property comments. Property: {} - Registered in DB: {}'.
-                           format(type_obj, obj.id, getattr(obj, 'comments'), comments_saved))
+            logger.info('{} with id {} has inconsistent its property comments. Property: {} - Registered in DB: {}'.
+                        format(type_obj, obj.id, getattr(obj, 'comments'), comments_saved))
             objs_consolidated += 1
             setattr(obj, 'comments', comments_saved)
         # Consolidate positive votes
         attrs.update({'value': 1})
         p_votes_saved = Vote.objects.filter(**attrs).count()
         if getattr(obj, 'positive_votes') != p_votes_saved:
-            logger.warning('{} with id {} has inconsistent its property positive_votes. '
-                           'Property: {} - Registered in DB: {}'.format(type_obj, obj.id, getattr(obj, 'positive_votes'),
+            logger.info('{} with id {} has inconsistent its property positive_votes. '
+                        'Property: {} - Registered in DB: {}'.format(type_obj, obj.id, getattr(obj, 'positive_votes'),
                                                                         p_votes_saved))
             objs_consolidated += 1
             setattr(obj, 'positive_votes', p_votes_saved)
@@ -336,8 +348,8 @@ def _do_data_consolidation(type_obj, filters):
         attrs.update({'value': -1})
         n_votes_saved = Vote.objects.filter(**attrs).count()
         if getattr(obj, 'negative_votes') != n_votes_saved:
-            logger.warning('{} with id {} has inconsistent its property negative_votes. '
-                           'Property: {} - Registered in DB: {}'.format(type_obj, obj.id, getattr(obj, 'negative_votes'),
+            logger.info('{} with id {} has inconsistent its property negative_votes. '
+                        'Property: {} - Registered in DB: {}'.format(type_obj, obj.id, getattr(obj, 'negative_votes'),
                                                                         n_votes_saved))
             objs_consolidated += 1
             setattr(obj, 'inconsistent', n_votes_saved)
@@ -362,38 +374,276 @@ def _consolidate_data(platform, source):
     return objs_consolidated
 
 
-def _push_content(type, obj):
+def _do_push_content(obj, type):
     initiative = obj.initiative
-    ini_hashtag = initiative.hashtag
     campaign = obj.campaign
-    cam_hashtag = campaign.hashtag
+    template_idea = '{}\nAuthor: {} ({})\nVotes ({}) Up: {}/Down: {}\nLink: {}'
+    template_comment = '{}\nAuthor: {} ({})\nVotes ({}) Up: {}/Down: {}'
+    text_uf8 = convert_to_utf8_str(obj.text)
     if obj.source == 'consultation_platform':
+        # Push object to the initiative's social networks
+        ini_hashtag = initiative.hashtag
+        cam_hashtag = campaign.hashtag
         for social_network in initiative.social_network.all():
             connector = social_network.connector
             sn_class = connector.connector_class.title()
             sn_module = connector.connector_module.lower()
             sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
             sn.authenticate()
-            new_text = '#{} #{} {}'.format(ini_hashtag.title(), cam_hashtag.title(), obj.text)
+            # TODO: New text should be bounded by the social network's text length restriction
             if obj.is_new:
-                # Push new content to the social network
+                obj.is_new = False
                 if type == 'idea':
-                    new_post = sn.publish_post(new_text)
+                    text_to_sn = template_idea.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
+                                                      obj.source_consultation.name, obj.positive_votes,
+                                                      obj.negative_votes, obj.url)
+                    text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.title(), cam_hashtag.title(), text_to_sn)
+                    new_post = sn.publish_post(text_to_sn)
                     obj.sn_id = new_post['id']
                 elif type == 'comment':
+                    text_to_sn = template_comment.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
+                                                         obj.source_consultation.name, obj.positive_votes,
+                                                         obj.negative_votes)
                     if obj.parent == 'idea':
-                        parent = Idea.objects.get(id=obj.parent_idea)
-                        sn.comment_post(parent.sn_id, new_text)
+                        parent = Idea.objects.get(id=obj.parent_idea.id)
+                        new_comment = sn.comment_post(parent.sn_id, text_to_sn)
+                        obj.sn_id = new_comment['id']
+                    elif obj.parent == 'comment':
+                        try:
+                            parent = Comment.objects.get(id=obj.parent_comment.id)
+                            sn.comment_post(parent.sn_id, text_to_sn)
+                        except:
+                            logger.info('Replies to comments cannot be posted through the API of {}'.
+                                        format(social_network.name))
+                    else:
+                        raise AppError('Unknown the type of the object\'s parent')
+                else:
+                    logger.info('Objects of type {} are ignored and not synchronized'.format(type))
             elif obj.has_changed:
+                obj.has_changed = False
                 # Update content to social network
                 if type == 'idea':
-                    sn.edit_post(obj.sn_id, new_text)
+                    text_to_sn = template_idea.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
+                                                      obj.source_consultation.name, obj.positive_votes,
+                                                      obj.negative_votes, obj.url)
+                    text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.title(), cam_hashtag.title(), text_to_sn)
+                    sn.edit_post(obj.sn_id, text_to_sn)
                 elif type == 'comment':
-                    sn.edit_comment(obj.sn_id, new_text)
-            obj.sync = True
-            obj.save()
+                    text_to_sn = template_comment.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
+                                                         obj.source_consultation.name, obj.positive_votes,
+                                                         obj.negative_votes)
+                    sn.edit_comment(obj.sn_id, text_to_sn)
+                else:
+                    logger.info('Objects of type {} are ignored and not synchronized'.format(type))
     else:
-        pass # Push to consultation_platform
+        # Push object to the initiative's consultation_platform
+        cplatform = initiative.platform
+        connector = cplatform.connector
+        if obj.is_new:
+            obj.is_new = False
+            if type == 'idea':
+                text_to_cp = template_idea.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                                                  obj.source_social.name, obj.positive_votes, obj.negative_votes,
+                                                  obj.url)
+                url_cb = get_url_cb(connector, 'create_idea_cb')
+                url = build_request_url(url_cb.url, url_cb.callback, {'initiative_id': initiative.external_id})
+                params = {'title': generate_idea_title_from_text(obj.text), 'text': text_to_cp,
+                          'campaign_id': campaign.external_id}
+                body_param = build_request_body(connector, url_cb.callback, params)
+                resp = do_request(connector, url, url_cb.callback.method, body_param)
+                new_content = get_json_or_error(connector.name, url_cb.callback, resp)
+                obj.cp_id = new_content['id']
+            elif type == 'comment':
+                text_to_cp = template_comment.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                                                     obj.source_social.name, obj.positive_votes, obj.negative_votes)
+                params = {'text': text_to_cp}
+                if obj.parent == 'idea':
+                    url_cb = get_url_cb(connector, 'create_comment_idea_cb')
+                    url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': obj.parent_idea.cp_id})
+                elif obj.parent == 'comment':
+                    url_cb = get_url_cb(connector, 'create_comment_comment_cb')
+                    url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': obj.parent_comment.cp_id})
+                else:
+                    raise AppError('Unknown the type of the object\'s parent')
+                body_param = build_request_body(connector, url_cb.callback, params)
+                resp = do_request(connector, url, url_cb.callback.method, body_param)
+                new_content = get_json_or_error(connector.name, url_cb.callback, resp)
+                obj.cp_id = new_content['id']
+            else:
+                logger.info('Objects of type {} are ignored and not synchronized'.format(type))
+        elif obj.has_changed:
+            obj.has_changed = False
+            if type == 'idea':
+                text_to_cp = template_idea.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                                                  obj.source_social.name, obj.positive_votes, obj.negative_votes,
+                                                  obj.url)
+                try:
+                    url_cb = get_url_cb(connector, 'update_idea_cb')
+                    url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': obj.cp_id})
+                    params = {'title': generate_idea_title_from_text(obj.text), 'text': text_to_cp,
+                              'campaign_id': campaign.external_id}
+                    body_param = build_request_body(connector, url_cb.callback, params)
+                    do_request(connector, url, url_cb.callback.method, body_param)
+                except:
+                    logger.info('Cannon\'t find the url of the callback to update ideas through the API of {}'.
+                                format(cplatform.name))
+            elif type == 'comment':
+                text_to_cp = template_comment.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                                                     obj.source_social.name, obj.positive_votes, obj.negative_votes)
+                try:
+                    url_cb = get_url_cb(connector, 'update_comment_cb')
+                    url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': obj.cp_id})
+                    params = {'text': text_to_cp}
+                    body_param = build_request_body(connector, url_cb.callback, params)
+                    do_request(connector, url, url_cb.callback.method, body_param)
+                except:
+                    logger.info('Cannon\'t find the url of the callback to update comments through the API of {}'.
+                                format(cplatform.name))
+    obj.sync = True
+    obj.save()
+
+
+def _do_delete_content(obj, type):
+    initiative = obj.initiative
+    if obj.source == 'consultation_platform':
+        # Delete object from the initiative's social networks
+        for social_network in initiative.social_network.all():
+            connector = social_network.connector
+            sn_class = connector.connector_class.title()
+            sn_module = connector.connector_module.lower()
+            sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+            sn.authenticate()
+            if type == 'idea':
+                sn.delete_post(obj.sn_id)
+                logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
+                            format(obj.id, obj.source_consultation, social_network))
+            else:
+                sn.delete_comment(obj.sn_id)
+                logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
+                            format(obj.id, obj.source_consultation, social_network))
+    else:
+        # Delete object from the initiative's consultation platform
+        cplatform = initiative.platform
+        connector = cplatform.connector
+        if type == 'idea':
+            url_cb = get_url_cb(connector, 'delete_idea_cb')
+            url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': obj.cp_id})
+            do_request(connector, url, url_cb.callback.method)
+            logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
+                         format(obj.id, obj.source_social, cplatform))
+        else:
+            url_cb = get_url_cb(connector, 'delete_comment_cb')
+            url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': obj.cp_id})
+            do_request(connector, url, url_cb.callback.method)
+            logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
+                         format(obj.id, obj.source_social, cplatform))
+    obj.sn_id = None
+    obj.cp_id = None
+    obj.save()
+
+
+def _pull_data():
+    # Pull data from consultation platforms
+    for cplatform in ConsultationPlatform.objects.all():
+        initiatives = Initiative.objects.filter(platform=cplatform)
+        for initiative in initiatives:
+            if initiative.active:
+                logger.info('Pulling content of the initiative {} from the platform {}'.format(initiative,
+                                                                                               cplatform))
+                _invalidate_initiative_content(source_consultation=cplatform, initiative=initiative)
+                try:
+                    _pull_content_consultation_platform(cplatform, initiative)
+                except Exception as e:
+                    logger.warning('Problem when trying to pull content of the initiative {} from platform {}. '
+                                   'Message: {}'.
+                                   format(initiative, cplatform, e))
+                    logger.warning(traceback.format_exc())
+    # Pull data from social networks
+    for socialnetwork in SocialNetwork.objects.all():
+        initiatives = Initiative.objects.filter(social_network=socialnetwork)
+        for initiative in initiatives:
+            if initiative.active:
+                _invalidate_initiative_content(source_social=socialnetwork, initiative=initiative)
+        logger.info('Pulling content posted on {}'.format(socialnetwork))
+        try:
+            _pull_content_social_network(socialnetwork)
+        except Exception as e:
+            logger.warning('Problem when trying to pull content posted on {}. Message: {}'.
+                           format(socialnetwork, e))
+            logger.warning(traceback.format_exc())
+
+
+def _push_data():
+    # Push ideas to consultation platforms and social networks
+    logger.info('Pushing ideas to social networks and consultation platforms')
+    existing_ideas = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
+                     order_by('datetime')
+    for idea in existing_ideas:
+           try:
+               _do_push_content(idea, 'idea')
+           except Exception as e:
+                if idea.source == 'consultation_platform':
+                    logger.warning('Error when trying to publish the idea with the id={} on {}. '
+                                   'Message: {}'.format(idea.id, idea.source_consultation, e))
+                else:
+                    logger.warning('Error when trying to publish the idea with the id={} on {}. '
+                                   'Message: {}'.format(idea.id, idea.source_social, e))
+                logger.warning(traceback.format_exc())
+    # Push comments to consultation platforms and social networks
+    logger.info('Pushing comments to social networks and consultation platforms')
+    existing_comments = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
+                        order_by('datetime')
+    for comment in existing_comments:
+        try:
+            _do_push_content(comment, 'comment')
+        except Exception as e:
+                if comment.source == 'consultation_platform':
+                    logger.warning('Error when trying to publish the comment with the id={} on {}. '
+                                   'Message: {}'.format(comment.id, comment.source_consultation, e))
+                else:
+                    logger.warning('Error when trying to publish the comment with the id={} on {}. '
+                                   'Message: {}'.format(comment.id, comment.source_social, e))
+                logger.warning(traceback.format_exc())
+
+
+def _delete_data():
+    # Delete ideas that don't exist anymore in their original social networks or consultation platforms
+    logger.info('Checking whether exists ideas that do not exist anymore')
+    unexisting_ideas = Idea.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
+    for idea in unexisting_ideas:
+        try:
+            _do_delete_content(idea, 'idea')
+        except Exception as e:
+            if idea.source == 'consultation_platform':
+                logger.warning('Error when trying to delete the idea with the id={} from {}. '
+                               'Message: {}'.format(idea.id, idea.source_consultation, e))
+            else:
+                logger.warning('Error when trying to delete the idea with the id={} from {}. '
+                               'Message: {}'.format(idea.id, idea.source_social, e))
+            logger.warning(traceback.format_exc())
+    # Delete comments that don't exist anymore in their original social networks or consultation platforms
+    logger.info('Checking whether exists comments that do not exist anymore')
+    unexisting_comments = Comment.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
+    for comment in unexisting_comments:
+        try:
+            _do_delete_content(comment, 'comment')
+        except Exception as e:
+            if comment.source == 'consultation_platform':
+                logger.warning('Error when trying to delete the comment with the id={} from {}. '
+                               'Message: {}'.format(comment.id, comment.source_consultation, e))
+            else:
+                logger.warning('Error when trying to delete the comment with the id={} from {}. '
+                               'Message: {}'.format(comment.id, comment.source_social, e))
+            logger.warning(traceback.format_exc())
+
+
+def _consolidate_app_db():
+    for cplatform in ConsultationPlatform.objects.all():
+        objs_consolidated = _consolidate_data(cplatform, 'consultation_platform')
+        logger.info('{} objects were consolidated in the platform {}'.format(objs_consolidated, cplatform))
+    for socialnetwork in SocialNetwork.objects.all():
+        objs_consolidated = _consolidate_data(socialnetwork, 'social_network')
+        logger.info('{} objects were consolidated in the social_network {}'.format(objs_consolidated, socialnetwork))
 
 
 @shared_task
@@ -410,44 +660,18 @@ def synchronize_content():
     release_lock = lambda: cache.delete(lock_id)
 
     if acquire_lock():
-        # Lock is used to ensure that synchronization is only executed one at time
-        logger.info('Starting synchronization...')
         try:
-            # Synchronize data from consultation platforms
-            for cplatform in ConsultationPlatform.objects.all():
-                initiatives = Initiative.objects.filter(platform=cplatform)
-                for initiative in initiatives:
-                    if initiative.active:
-                        logger.info('Synchronizing the content of the initiative {} run on the platform {}'.
-                                    format(initiative.name, cplatform.name))
-                        _invalidate_initiative_content(source_consultation=cplatform, initiative=initiative)
-                        _pull_content_consultation_platform(cplatform, initiative)
-                        logger.info('The process of synchronizing content from {} has finished successfully'.
-                                    format(cplatform))
-                objs_consolidated = _consolidate_data(cplatform, 'consultation_platform')
-                logger.info('{} objects were consolidated in the platform {}'.format(objs_consolidated, cplatform))
-            # Synchronize data from social networks
-            for socialnetwork in SocialNetwork.objects.all():
-                initiatives = Initiative.objects.filter(social_network=socialnetwork)
-                for initiative in initiatives:
-                    if initiative.active:
-                        _invalidate_initiative_content(source_social=socialnetwork, initiative=initiative)
-                logger.info('Synchronizing the content posted on {} social network'.format(socialnetwork.name))
-                try:
-                    _pull_content_social_network(socialnetwork)
-                    logger.info('The process of synchronizing content from {} has finished successfully'.
-                                format(socialnetwork))
-                    objs_consolidated = _consolidate_data(socialnetwork, 'social_network')
-                    logger.info('{} objects were consolidated in the social_network {}'.format(objs_consolidated,
-                                                                                               socialnetwork))
-                except Exception as e:
-                    logger.error('Error while syncronizing the content posted on the social network {}. '
-                                 'Message: {}'.format(socialnetwork.name, e.message))
-                    logger.critical(traceback.format_exc())
-            # Synchronize data to consultation platforms and social networks
-            for idea in Idea.objects.filter(exist=True, sync=False):
-                _push_content('idea', idea)
-            logger.info('The synchronization has finished successfully...')
+            # Lock is used to ensure that synchronization is only executed one at time
+            logger.info('Starting the synchronization')
+            logger.info('----------------------------')
+            _pull_data()
+            _push_data()
+            _delete_data()
+            logger.info('----------------------------')
+            logger.info('The synchronization has successfully finished!')
+        except Exception as e:
+            logger.critical('Error!, the synchronization could not finish. Message: {}'.format(e))
+            logger.critical(traceback.format_exc())
         finally:
             release_lock()
     else:
@@ -455,12 +679,10 @@ def synchronize_content():
 
 
 def test_function():
-    pass
-
-
-
-# 1. Check data consistency (OK!)
-# 2. Post to IS new ideas/comments/votes
-# 3. Update to IS existing ideas, comments, votes
-# 4. Post to Fb new ideas/comments/votes
-# 5. Update to Fb existing ideas, comments, votes
+    logger.info('Starting the synchronization')
+    logger.info('----------------------------')
+    _pull_data()
+    _push_data()
+    _delete_data()
+    logger.info('----------------------------')
+    logger.info('The synchronization has successfully finished!')
