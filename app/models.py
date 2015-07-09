@@ -80,6 +80,8 @@ class Author(models.Model):
                                                        ('social_network', 'Social Network'),))
     social_network = models.ForeignKey(SocialNetwork, null=True)
     consultation_platform = models.ForeignKey(ConsultationPlatform, null=True)
+    # Property to save any other information
+    payload = models.TextField(null=True, editable=False)
 
     def __unicode__(self):
         return self.screen_name
@@ -107,7 +109,6 @@ class BaseContent(models.Model):
     has_changed = models.BooleanField(default=False)
     exist = models.BooleanField(default=True)
     sync = models.BooleanField(default=False)
-    inconsistent = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
