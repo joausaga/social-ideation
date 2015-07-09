@@ -234,6 +234,7 @@ class ISObject(APIView):
     def get(self, request, initiative, format=None):
         call_api = True
         try:
+            self.queryset.objects.all().update(sync=True)
             while call_api:
                 objs_raw = get_ideascale_data(initiative, self.api_method, self.api_method_params, self.pag_params)
                 if len(objs_raw) > 0:
@@ -247,7 +248,7 @@ class ISObject(APIView):
                     call_api = False
             if self.filters:
                 objs = self.queryset.objects.filter(**self.filters)
-                # TODO: Delete all that have sync=True
+                # Delete all that have sync=True (?)
             else:
                 objs = self.queryset.objects.all()
             serializer = self.serializer_class(objs, many=True)
@@ -256,8 +257,6 @@ class ISObject(APIView):
                 setattr(client, self.client_attr, objs.order_by('-datetime').first())
                 client.save()
             serialized_data = serializer.data
-            if self.filters:
-                objs.update(sync=True)
             return Response(serialized_data)
         except IdeaScalyError as e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
@@ -669,9 +668,9 @@ class CommentDetail(ISObjectDetail):
             return Response('Error: {}'.format(e.reason), status=status.HTTP_400_BAD_REQUEST)
 
 
-class Votes(ISObject):
+class VotesIdeas(ISObject):
     """
-    Return the list of votes or create a new vote.
+    Return the list of all votes of all ideas.
     """
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -683,14 +682,41 @@ class Votes(ISObject):
             return Http404
 
     def get(self, request, initiative_id, format=None):
-        self.api_method = 'get_all_votes'
+        self.api_method = 'get_all_votes_ideas'
         self.client_attr = 'last_vote'
         self.create_obj = cru_vote
         self.queryset = Vote
         self.serializer_class = VoteSerializer
         self.filters = {'sync': False}
         initiative = self.get_initiative(initiative_id)
-        return super(Votes,self).get(request, initiative)
+        return super(VotesIdeas,self).get(request, initiative)
+
+    def post(self, request, initiative_id, format=None):
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class VotesComments(ISObject):
+    """
+    Return the list of all votes of all comments.
+    """
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get_initiative(self, initiative_id):
+        try:
+            return Initiative.objects.get(id=initiative_id)
+        except Initiative.DoesNotExist:
+            return Http404
+
+    def get(self, request, initiative_id, format=None):
+        self.api_method = 'get_all_votes_comments'
+        self.client_attr = 'last_vote'
+        self.create_obj = cru_vote
+        self.queryset = Vote
+        self.serializer_class = VoteSerializer
+        self.filters = {'sync': False}
+        initiative = self.get_initiative(initiative_id)
+        return super(VotesComments,self).get(request, initiative)
 
     def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
