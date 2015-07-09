@@ -119,7 +119,7 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
 
 class IdeaAdmin(admin.ModelAdmin):
     list_display = ('idea_id', 'idea_source', 'initiative', 'campaign', 'author', 'datetime', 'title', 'text',
-                    're_posts', 'bookmarks', 'positive_votes', 'negative_votes', 'comments', 'sync')
+                    're_posts', 'bookmarks', 'positive_votes', 'negative_votes', 'comments', 'sync', 'has_changed')
     ordering = ('initiative', 'campaign', 'author', 'datetime', 'positive_votes', 'negative_votes', 'comments')
 
     def has_add_permission(self, request):
@@ -130,10 +130,10 @@ class IdeaAdmin(admin.ModelAdmin):
         return qs.filter(exist=True)
 
     def idea_id(self, obj):
-        if obj.sn_id:
-            return obj.sn_id
-        else:
+        if obj.source == 'consultation_platform':
             return obj.cp_id
+        else:
+            return obj.sn_id
     idea_id.short_description = 'Id'
 
     def idea_source(self, obj):
@@ -157,10 +157,10 @@ class CommentAdmin(admin.ModelAdmin):
         return qs.filter(exist=True)
 
     def comment_id(self, obj):
-        if obj.sn_id:
-            return obj.sn_id
-        else:
+        if obj.source == 'consultation_platform':
             return obj.cp_id
+        else:
+            return obj.sn_id
     comment_id.short_description = 'Id'
 
     def comment_source(self, obj):
@@ -183,10 +183,10 @@ class VoteAdmin(admin.ModelAdmin):
         return qs.filter(exist=True)
 
     def vote_id(self, obj):
-        if obj.sn_id:
-            return obj.sn_id
-        else:
+        if obj.source == 'consultation_platform':
             return obj.cp_id
+        else:
+            return obj.sn_id
     vote_id.short_description = 'Id'
 
     def vote_source(self, obj):
