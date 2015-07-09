@@ -29,8 +29,10 @@ urlpatterns = [
     url(r'^comments/comment/(?P<comment_id>[0-9]+)$', views.CommentsComment.as_view()),
     # ex: /comment/comment_id
     url(r'^comment/(?P<comment_id>[0-9]+)$', views.CommentDetail.as_view()),
-    # ex: /votes/initiative_id
-    url(r'^votes/(?P<initiative_id>[0-9]+)$', views.Votes.as_view()),
+    # ex: /votes-ideas/initiative_id
+    url(r'^votes-ideas/(?P<initiative_id>[0-9]+)$', views.VotesIdeas.as_view()),
+    # ex: /votes-comments/initiative_id
+    url(r'^votes-comments/(?P<initiative_id>[0-9]+)$', views.VotesComments.as_view()),
     # ex: /vote/vote_id
     url(r'^vote/(?P<vote_id>[0-9]+)$', views.VoteDetail.as_view()),
     # ex: /votes/idea/idea_id
