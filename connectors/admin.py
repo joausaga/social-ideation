@@ -1,12 +1,13 @@
-import requests
-
+from app.utils import *
 from django import forms
 from django.contrib import admin, messages
 from django.utils.html import format_html
-
+from celery.utils.log import get_task_logger
 from connectors.models import Parameter, Object, Callback, MetaConnector, Connector, BasicAttribute, ComposedAttribute, \
                               URLCallback, URLParameter, SocialNetworkConnector
 from connectors.error import ConnectorError
+
+logger = get_task_logger(__name__)
 
 
 def get_type_name(type):
@@ -171,7 +172,7 @@ class URLCallbackAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.status = 'untested'
-        obj.save(form=form)
+        obj.save()
 
 
 class ConnectorForm(forms.ModelForm):
@@ -241,8 +242,8 @@ def test_connector(connector):
     for url_cb in url_callbacks:
         callback = url_cb.callback
         if callback.name != 'testing_param_cb':
-            print('Callback: %s' % callback.name)
-            req_param = _build_request_body(connector, callback, testing_params)
+            logger.info('Callback: {}'.format(callback.name))
+            req_param = build_request_body(connector, callback, testing_params)
             if callback.method.upper() == 'POST':
                 url = build_request_url(url_cb.url, callback, testing_params)
                 resp = do_request(connector, url, callback.method, req_param)
@@ -301,72 +302,6 @@ def _order_url_callbacks(url_callbacks, order_criteria='alpha'):
         return get_url_cb + del_url_cb + post_url_cb
     else:
         return get_url_cb + post_url_cb + del_url_cb
-
-
-def build_request_url(url, callback, url_params):
-    cb_url_params = callback.url_params.all()
-    for cb_url_param in cb_url_params:
-        url = url.replace('{}'.format(cb_url_param.name), str(url_params[cb_url_param.name]))
-    return url
-
-
-def _build_request_body(connector, callback, testing_params):
-    req_param = {}
-    cb_body_params = callback.body_params.all()
-    for cb_body_param in cb_body_params:
-        try:
-            req_param[cb_body_param.name] = testing_params[cb_body_param.name]
-        except KeyError:
-            if cb_body_param.required:
-                raise ConnectorError('Parameter {} missing. It required for calling {}, which is a callback of '
-                                     'the connector {}. The callback testing_param_cb must include this '
-                                     'parameter as part of the parameter set'
-                                     .format(cb_body_param.name, callback.name, connector.name))
-    return req_param
-
-
-def do_request(connector, url, method, params=None):
-    auth_header = None
-    if connector.authentication:
-        auth_header = {connector.auth_header: connector.auth_token}
-    request_params = {'url': url}
-    if auth_header and params:
-        request_params.update({'headers': auth_header, 'data': params})
-    else:
-        if auth_header:
-            request_params.update({'headers': auth_header})
-        else:
-            request_params.update({'data': params})
-
-    if method.upper() == 'POST':
-        return requests.post(**request_params)
-    elif method.upper() == 'DELETE':
-        return requests.delete(**request_params)
-    else:
-        return requests.get(**request_params)
-
-
-def get_json_or_error(connector_name, cb, response):
-    if response.status_code and not 200 <= response.status_code < 300:
-        raise ConnectorError('Error when calling the callback {} of the connector {}. Message: {}'
-                             .format(cb.name, connector_name, response.content))
-    else:
-        if cb.format == 'json':
-            return response.json()
-        elif cb.format == 'xml':
-            return response.xml()
-        elif cb.format == 'txt':
-            return response.text
-        else:
-            raise ConnectorError('Error, do not understand response of callback {} of the connector {}. Expected '
-                                 'json or xml'.format(cb.name, connector_name))
-
-
-def get_url_cb(connector, name):
-    for url_cb in connector.url_callback.all():
-        if url_cb.callback.name == name:
-            return url_cb
-    raise ConnectorError('The callback \'{}\' needed to obtain testing parameters was not defined'.format(name))
 
 
 def _get_testing_param(connector):
