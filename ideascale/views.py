@@ -253,9 +253,12 @@ class ISObject(APIView):
                 objs = self.queryset.objects.all()
             serializer = self.serializer_class(objs, many=True)
             if self.client_attr:
-                client = Client.objects.get(user=request.user)
-                setattr(client, self.client_attr, objs.order_by('-datetime').first())
-                client.save()
+                try:
+                    client = Client.objects.get(user=request.user)
+                    setattr(client, self.client_attr, objs.order_by('-datetime').first())
+                    client.save()
+                except Client.DoesNotExist:
+                    pass
             serialized_data = serializer.data
             return Response(serialized_data)
         except IdeaScalyError as e:
@@ -403,37 +406,41 @@ class Ideas(ISObject):
     Return the list of ideas or create a new one.
     """
 
-    def get_initiative(self, initiative_id):
-        try:
-            return Initiative.objects.get(id=initiative_id)
-        except Initiative.DoesNotExist:
-            return Http404
-
     def get(self, request, initiative_id, format=None):
-        self.api_method = 'get_all_ideas'
-        self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
-        self.iterate = True
-        self.create_obj = cru_idea
-        self.queryset = Idea
-        self.serializer_class = IdeaSerializer
-        self.filters = {'sync': False}
-        self.client_attr = 'last_idea'
-        initiative = self.get_initiative(initiative_id)
-        return super(Ideas, self).get(request, initiative)
+        try:
+            self.api_method = 'get_all_ideas'
+            self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
+            self.iterate = True
+            self.create_obj = cru_idea
+            self.queryset = Idea
+            self.serializer_class = IdeaSerializer
+            self.filters = {'sync': False}
+            self.client_attr = 'last_idea'
+            initiative = Initiative.objects.get(id=initiative_id)
+            return super(Ideas, self).get(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
     def post(self, request, initiative_id, format=None):
-        idea_details = {'title': request.data['title'], 'text': request.data['text'],
-                        'campaignId': request.data['campaign_id']}
-        if 'tags' in request.data.keys():
-            tags = [tag.strip() for tag in idea_details['tags'].split(',')]
-            idea_details['tags'] = tags
-        self.api_method_params = idea_details
-        self.api_method = 'create_idea'
-        self.create_obj = cru_idea
-        self.serializer_class = IdeaSerializer
-        self.filters = {}
-        initiative = self.get_initiative(initiative_id)
-        return super(Ideas,self).post(request, initiative)
+        try:
+            idea_details = {'title': request.data['title'], 'text': request.data['text'],
+                            'campaignId': request.data['campaign_id']}
+            if 'tags' in request.data.keys():
+                tags = [tag.strip() for tag in idea_details['tags'].split(',')]
+                idea_details['tags'] = tags
+            self.api_method_params = idea_details
+            self.api_method = 'create_idea'
+            self.create_obj = cru_idea
+            self.serializer_class = IdeaSerializer
+            self.filters = {}
+            initiative = Initiative.objects.get(id=initiative_id)
+            return super(Ideas,self).post(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
 
 class IdeaDetail(ISObjectDetail):
@@ -473,31 +480,35 @@ class Authors(ISObject):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get_initiative(self, initiative_id):
-        try:
-            return Initiative.objects.get(id=initiative_id)
-        except Initiative.DoesNotExist:
-            return Http404
-
     def get(self, request, initiative_id, format=None):
-        self.api_method = 'get_all_members'
-        self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
-        self.iterate = True
-        self.create_obj = cru_author
-        self.queryset = Author
-        self.serializer_class = AuthorSerializer
-        initiative = self.get_initiative(initiative_id)
-        return super(Authors,self).get(request, initiative)
+        try:
+            self.api_method = 'get_all_members'
+            self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
+            self.iterate = True
+            self.create_obj = cru_author
+            self.queryset = Author
+            self.serializer_class = AuthorSerializer
+            initiative = Initiative.objects.get(id=initiative_id)
+            return super(Authors,self).get(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
     def post(self, request, initiative_id, format=None):
-        author_details = {'name': request.data['name'], 'email': request.data['email']}
-        author_details.update({'silent': True})
-        self.api_method_params = author_details
-        self.api_method = 'create_new_member'
-        self.create_obj = cru_author
-        self.serializer_class = AuthorSerializer
-        initiative = self.get_initiative(initiative_id)
-        return super(Authors,self).post(request, initiative)
+        try:
+            author_details = {'name': request.data['name'], 'email': request.data['email']}
+            author_details.update({'silent': True})
+            self.api_method_params = author_details
+            self.api_method = 'create_new_member'
+            self.create_obj = cru_author
+            self.serializer_class = AuthorSerializer
+            initiative = Initiative.objects.get(id=initiative_id)
+            return super(Authors,self).post(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
 
 class AuthorDetail(ISObjectDetail):
@@ -558,23 +569,23 @@ class CommentsIdea(ISObject):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get_idea(self, idea_id):
-        try:
-            return Idea.objects.get(ideascale_id=idea_id)
-        except Idea.DoesNotExist:
-            return Http404
 
     def get(self, request, idea_id, format=None):
-        idea = self.get_idea(idea_id)
-        initiative = idea.campaign.initiative
-        self.api_method = 'get_comments_idea'
-        self.api_method_params = {'ideaId': idea_id}
-        self.client_attr = 'last_comment_idea'
-        self.create_obj = cru_comment
-        self.queryset = Comment
-        self.serializer_class = CommentSerializer
-        self.filters = {'sync':False, 'parent_idea': idea}
-        return super(CommentsIdea,self).get(request, initiative)
+        try:
+            idea = Idea.objects.get(ideascale_id=idea_id)
+            initiative = idea.campaign.initiative
+            self.api_method = 'get_comments_idea'
+            self.api_method_params = {'ideaId': idea_id}
+            self.client_attr = 'last_comment_idea'
+            self.create_obj = cru_comment
+            self.queryset = Comment
+            self.serializer_class = CommentSerializer
+            self.filters = {'sync':False, 'parent_idea': idea}
+            return super(CommentsIdea,self).get(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
     def post(self, request, idea_id, format=None):
         try:
@@ -598,12 +609,6 @@ class CommentsComment(ISObject):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get_comment(self, comment_id):
-        try:
-            return Comment.objects.get(ideascale_id=comment_id)
-        except Comment.DoesNotExist:
-            return Http404
-
     def get_initiative(self, comment):
         if comment.parent_type == 'idea':
             return comment.parent_idea.campaign.initiative
@@ -614,15 +619,20 @@ class CommentsComment(ISObject):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def post(self, request, comment_id, format=None):
-        comment = self.get_comment(comment_id)
-        initiative = self.get_initiative(comment)
-        comment_details = {'text': request.data['text'], 'commentId': comment_id}
-        self.api_method = 'comment_comment'
-        self.api_method_params = comment_details
-        self.create_obj = cru_comment
-        self.serializer_class = CommentSerializer
-        self.filters = {'sync':True}
-        return super(CommentsComment,self).post(request, initiative)
+        try:
+            comment = Comment.objects.get(ideascale_id=comment_id)
+            initiative = self.get_initiative(comment)
+            comment_details = {'text': request.data['text'], 'commentId': comment_id}
+            self.api_method = 'comment_comment'
+            self.api_method_params = comment_details
+            self.create_obj = cru_comment
+            self.serializer_class = CommentSerializer
+            self.filters = {'sync':True}
+            return super(CommentsComment,self).post(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
 
 class CommentDetail(ISObjectDetail):
@@ -632,12 +642,6 @@ class CommentDetail(ISObjectDetail):
     queryset = Comment
     serializer_class = CommentSerializer
 
-    def get_comment(self, comment_id):
-        try:
-            return Comment.objects.get(ideascale_id=comment_id)
-        except Comment.DoesNotExist:
-            return Http404
-
     def get_initiative(self, comment):
         if comment.parent_type == 'idea':
             return comment.parent_idea.campaign.initiative
@@ -646,7 +650,7 @@ class CommentDetail(ISObjectDetail):
 
     def get(self, request, comment_id, format=None):
         try:
-            comment = self.get_comment(comment_id)
+            comment = Comment.objects.get(ideascale_id=comment_id)
             self.initiative = self.get_initiative(comment)
             self.api_method = 'get_comment'
             self.api_method_params = {'commentId': comment_id}
@@ -659,12 +663,12 @@ class CommentDetail(ISObjectDetail):
 
     def delete(self, request, comment_id, format=None):
         try:
-            comment = self.get_comment(comment_id)
+            comment = Comment.objects.get(ideascale_id=comment_id)
             initiative = self.get_initiative(comment)
             api = get_api_obj(initiative)
             api.delete_comment(comment_id)
             return super(CommentDetail, self).delete(request, comment_id)
-        except IdeaScalyError as e:
+        except (Comment.DoesNotExist, IdeaScalyError) as e:
             return Response('Error: {}'.format(e.reason), status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -675,21 +679,20 @@ class VotesIdeas(ISObject):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get_initiative(self, initiative_id):
-        try:
-            return Initiative.objects.get(id=initiative_id)
-        except Initiative.DoesNotExist:
-            return Http404
-
     def get(self, request, initiative_id, format=None):
-        self.api_method = 'get_all_votes_ideas'
-        self.client_attr = 'last_vote'
-        self.create_obj = cru_vote
-        self.queryset = Vote
-        self.serializer_class = VoteSerializer
-        self.filters = {'sync': False}
-        initiative = self.get_initiative(initiative_id)
-        return super(VotesIdeas,self).get(request, initiative)
+        try:
+            self.api_method = 'get_all_votes_ideas'
+            self.client_attr = 'last_vote'
+            self.create_obj = cru_vote
+            self.queryset = Vote
+            self.serializer_class = VoteSerializer
+            self.filters = {'sync': False}
+            initiative = Initiative.objects.get(id=initiative_id)
+            return super(VotesIdeas,self).get(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
     def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -702,21 +705,20 @@ class VotesComments(ISObject):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get_initiative(self, initiative_id):
-        try:
-            return Initiative.objects.get(id=initiative_id)
-        except Initiative.DoesNotExist:
-            return Http404
-
     def get(self, request, initiative_id, format=None):
-        self.api_method = 'get_all_votes_comments'
-        self.client_attr = 'last_vote'
-        self.create_obj = cru_vote
-        self.queryset = Vote
-        self.serializer_class = VoteSerializer
-        self.filters = {'sync': False}
-        initiative = self.get_initiative(initiative_id)
-        return super(VotesComments,self).get(request, initiative)
+        try:
+            self.api_method = 'get_all_votes_comments'
+            self.client_attr = 'last_vote'
+            self.create_obj = cru_vote
+            self.queryset = Vote
+            self.serializer_class = VoteSerializer
+            self.filters = {'sync': False}
+            initiative = Initiative.objects.get(id=initiative_id)
+            return super(VotesComments,self).get(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
     def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
@@ -727,37 +729,41 @@ class VotesIdea(ISObject):
     Return the list of votes related to a particular idea.
     """
 
-    def get_idea(self, idea_id):
-        try:
-            return Idea.objects.get(ideascale_id=idea_id)
-        except Idea.DoesNotExist:
-            return Http404
-
     def get(self, request, idea_id, format=None):
-        idea = self.get_idea(idea_id)
-        initiative = idea.campaign.initiative
-        self.api_method = 'get_votes_idea'
-        self.client_attr = 'last_vote_idea'
-        self.api_method_params = {'ideaId': idea_id}
-        self.create_obj = cru_vote
-        self.queryset = Vote
-        self.serializer_class = VoteSerializer
-        self.filters = {'sync':False}
-        return super(VotesIdea, self).get(request, initiative)
+        try:
+            idea = Idea.objects.get(ideascale_id=idea_id)
+            initiative = idea.campaign.initiative
+            self.api_method = 'get_votes_idea'
+            self.client_attr = 'last_vote_idea'
+            self.api_method_params = {'ideaId': idea_id}
+            self.create_obj = cru_vote
+            self.queryset = Vote
+            self.serializer_class = VoteSerializer
+            self.filters = {'sync':False}
+            return super(VotesIdea, self).get(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
     def post(self, request, idea_id, format=None):
-        idea = self.get_idea(idea_id)
-        initiative = idea.campaign.initiative
-        if request.data['value'] > 0:
-            self.api_method = 'vote_up_idea'
-        else:
-            self.api_method = 'vote_down_idea'
-        votes_details = {'myVote': request.data['value'], 'ideaId': idea.ideascale_id}
-        self.api_method_params = votes_details
-        self.create_obj = cru_idea
-        self.serializer_class = IdeaSerializer
-        self.filters = {'sync':True}
-        return super(VotesIdea,self).post(request, initiative)
+        try:
+            idea = Idea.objects.get(ideascale_id=idea_id)
+            initiative = idea.campaign.initiative
+            if request.data['value'] > 0:
+                self.api_method = 'vote_up_idea'
+            else:
+                self.api_method = 'vote_down_idea'
+            votes_details = {'myVote': request.data['value'], 'ideaId': idea.ideascale_id}
+            self.api_method_params = votes_details
+            self.create_obj = cru_idea
+            self.serializer_class = IdeaSerializer
+            self.filters = {'sync':True}
+            return super(VotesIdea,self).post(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
 
 
@@ -766,12 +772,6 @@ class VotesComment(ISObject):
     Return the list of votes related to a comment idea.
     """
 
-    def get_comment(self, comment_id):
-        try:
-            return Comment.objects.get(ideascale_id=comment_id)
-        except Comment.DoesNotExist:
-            return Http404
-
     def get_initiative(self, comment):
         if comment.parent_type == 'idea':
             return comment.parent_idea.campaign.initiative
@@ -779,16 +779,21 @@ class VotesComment(ISObject):
             return self.get_initiative(comment.parent_comment)
 
     def get(self, request, comment_id, format=None):
-        comment = self.get_comment(comment_id)
-        self.api_method = 'get_votes_comment'
-        self.client_attr = 'last_vote_comment'
-        self.api_method_params = {'commentId': comment_id}
-        self.create_obj = cru_vote
-        self.queryset = Vote
-        self.serializer_class = VoteSerializer
-        self.filters = {'sync': False}
-        initiative = self.get_initiative(comment)
-        return super(VotesComment, self).get(request, initiative)
+        try:
+            comment = Comment.objects.get(ideascale_id=comment_id)
+            self.api_method = 'get_votes_comment'
+            self.client_attr = 'last_vote_comment'
+            self.api_method_params = {'commentId': comment_id}
+            self.create_obj = cru_vote
+            self.queryset = Vote
+            self.serializer_class = VoteSerializer
+            self.filters = {'sync': False}
+            initiative = self.get_initiative(comment)
+            return super(VotesComment, self).get(request, initiative)
+        except Exception as e:
+            resp = Response(status=status.HTTP_400_BAD_REQUEST)
+            resp.content = e
+            return resp
 
     def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
