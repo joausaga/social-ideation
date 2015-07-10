@@ -92,6 +92,12 @@ class SocialNetworkBase():
 
     @classmethod
     @abc.abstractmethod
+    def get_comment(cls, id_comment):
+        """Get the comment identified by id_comment"""
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
     def get_info_user(cls, id_user):
         """Get information about a particular user"""
         raise NotImplementedError
@@ -150,7 +156,7 @@ class Facebook(SocialNetworkBase):
         return post_dict
 
     @classmethod
-    def build_comment_dict(cls, comment_raw, parent_type, parent_id):
+    def build_comment_dict(cls, comment_raw, parent_type=None, parent_id=None):
         comment_dict = {'id': comment_raw['id'], 'text': comment_raw['message'],
                         'user_info': {'name': comment_raw['from']['name'], 'id': comment_raw['from']['id']},
                         'datetime': comment_raw['created_time'], 'positive_votes': 0, 'negative_votes': 0, 'url': None,
@@ -164,43 +170,55 @@ class Facebook(SocialNetworkBase):
         return like_dict
 
     @classmethod
-    def get_elements(cls, elements, type_element, parent_type=None, parent_id=None):
+    def get_elements(cls, elements, type_elements, parent_type=None, parent_id=None):
         elements_array = []
         while True:
             try:
                 for element in elements['data']:
-                    if type_element == 'posts':
-                        post_dict = cls.build_post_dict(element)
-                        if 'comments' in element.keys():
-                            comments_array = cls.get_elements(element['comments'], 'comments', 'post', element['id'])
-                            post_dict.update({'comments_array': comments_array})
-                            post_dict.update({'comments': len(comments_array)})
-                        if 'likes' in element.keys():
-                            likes_array = cls.get_elements(element['likes'], 'likes', 'post', element['id'])
-                            post_dict.update({'positive_votes': len(likes_array)})
-                            post_dict.update({'votes_array': likes_array})
+                    if type_elements == 'posts':
+                        post_dict = cls.get_element(element, 'post')
                         elements_array.append(post_dict)
-                    elif type_element == 'comments':
-                        comment_dict = cls.build_comment_dict(element, parent_type, parent_id)
-                        replies = cls.graph.get_connections(element['id'], 'comments')
-                        if len(replies['data']) > 0:
-                            reply_array = cls.get_elements(replies, 'comments', 'comment', element['id'])
-                            comment_dict.update({'comments': len(reply_array)})
-                            comment_dict.update({'comments_array': reply_array})
-                        likes = cls.graph.get_connections(element['id'], 'likes')
-                        if len(likes['data']) > 0:
-                            likes_array = cls.get_elements(likes, 'likes', 'comment', element['id'])
-                            comment_dict.update({'positive_votes': len(likes_array)})
-                            comment_dict.update({'votes_array': likes_array})
+                    elif type_elements == 'comments':
+                        comment_dict = cls.get_element(element, 'comment', parent_type, parent_id)
                         elements_array.append(comment_dict)
                     else:
-                        like_dict = cls.build_like_dict(element, parent_type, parent_id)
+                        like_dict = cls.get_element(element, 'like', parent_type, parent_id)
                         elements_array.append(like_dict)
                 # Attempt to make a request to the next page of data, if it exists
                 elements = requests.get(elements['paging']['next']).json()
             except KeyError:
                 # When there are no more pages (['paging']['next']), break from the loop
                 return elements_array
+
+    @classmethod
+    def get_element(cls, element, type_element, parent_type=None, parent_id=None):
+        if type_element == 'post':
+            post_dict = cls.build_post_dict(element)
+            if 'comments' in element.keys():
+                comments_array = cls.get_elements(element['comments'], 'comments', 'post', element['id'])
+                post_dict.update({'comments_array': comments_array})
+                post_dict.update({'comments': len(comments_array)})
+            if 'likes' in element.keys():
+                likes_array = cls.get_elements(element['likes'], 'likes', 'post', element['id'])
+                post_dict.update({'positive_votes': len(likes_array)})
+                post_dict.update({'votes_array': likes_array})
+            return post_dict
+        elif type_element == 'comment':
+            comment_dict = cls.build_comment_dict(element, parent_type, parent_id)
+            replies = cls.graph.get_connections(element['id'], 'comments')
+            if len(replies['data']) > 0:
+                reply_array = cls.get_elements(replies, 'comments', 'comment', element['id'])
+                comment_dict.update({'comments': len(reply_array)})
+                comment_dict.update({'comments_array': reply_array})
+            likes = cls.graph.get_connections(element['id'], 'likes')
+            if len(likes['data']) > 0:
+                likes_array = cls.get_elements(likes, 'likes', 'comment', element['id'])
+                comment_dict.update({'positive_votes': len(likes_array)})
+                comment_dict.update({'votes_array': likes_array})
+            return comment_dict
+        else:
+            like_dict = cls.build_like_dict(element, parent_type, parent_id)
+            return like_dict
 
     @classmethod
     def get_posts(cls):
@@ -223,7 +241,11 @@ class Facebook(SocialNetworkBase):
 
     @classmethod
     def get_post(cls, id_post):
-        return cls.build_post_dict(cls.graph.get_object(id=id_post))
+        try:
+            raw_post = cls.graph.get_object(id=id_post)
+            return cls.get_element(raw_post, 'post')
+        except facebook.GraphAPIError as e:
+            return None
 
     @classmethod
     def vote_post(cls, id_post, type_vote=None):
@@ -250,6 +272,14 @@ class Facebook(SocialNetworkBase):
     def delete_vote_comment(cls, id_comment, id_vote):
         cls.graph.request(cls.graph.version + "/" + id_comment + "/likes", method="DELETE")
         # cls.graph.delete_like(id_comment)
+
+    @classmethod
+    def get_comment(cls, id_comment):
+        try:
+            raw_comment = cls.graph.get_object(id=id_comment)
+            return cls.get_element(raw_comment, 'comment')
+        except facebook.GraphAPIError as e:
+            return None
 
     @classmethod
     def get_info_user(cls, id_user):
