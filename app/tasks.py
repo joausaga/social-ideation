@@ -411,7 +411,8 @@ def _do_push_content(obj, type):
                     elif obj.parent == 'comment':
                         try:
                             parent = Comment.objects.get(id=obj.parent_comment.id)
-                            sn.comment_post(parent.sn_id, text_to_sn)
+                            new_comment = sn.comment_comment(parent.sn_id, text_to_sn)
+                            obj.sn_id = new_comment['id']
                         except:
                             logger.info('Replies to comments cannot be posted through the API of {}'.
                                         format(social_network.name))
@@ -542,7 +543,7 @@ def _do_delete_content(obj, type):
     obj.save()
 
 
-def _pull_data():
+def pull_data():
     # Pull data from consultation platforms
     for cplatform in ConsultationPlatform.objects.all():
         initiatives = Initiative.objects.filter(platform=cplatform)
@@ -573,7 +574,7 @@ def _pull_data():
             logger.warning(traceback.format_exc())
 
 
-def _push_data():
+def push_data():
     # Push ideas to consultation platforms and social networks
     logger.info('Pushing ideas to social networks and consultation platforms')
     existing_ideas = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
@@ -606,7 +607,7 @@ def _push_data():
                 logger.warning(traceback.format_exc())
 
 
-def _delete_data():
+def delete_data():
     # Delete ideas that don't exist anymore in their original social networks or consultation platforms
     logger.info('Checking whether exists ideas that do not exist anymore')
     unexisting_ideas = Idea.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
@@ -637,7 +638,7 @@ def _delete_data():
             logger.warning(traceback.format_exc())
 
 
-def _consolidate_app_db():
+def consolidate_app_db():
     for cplatform in ConsultationPlatform.objects.all():
         objs_consolidated = _consolidate_data(cplatform, 'consultation_platform')
         logger.info('{} objects were consolidated in the platform {}'.format(objs_consolidated, cplatform))
@@ -664,9 +665,9 @@ def synchronize_content():
             # Lock is used to ensure that synchronization is only executed one at time
             logger.info('Starting the synchronization')
             logger.info('----------------------------')
-            _pull_data()
-            _push_data()
-            _delete_data()
+            pull_data()
+            push_data()
+            delete_data()
             logger.info('----------------------------')
             logger.info('The synchronization has successfully finished!')
         except Exception as e:
@@ -679,10 +680,4 @@ def synchronize_content():
 
 
 def test_function():
-    logger.info('Starting the synchronization')
-    logger.info('----------------------------')
-    _pull_data()
-    _push_data()
-    _delete_data()
-    logger.info('----------------------------')
-    logger.info('The synchronization has successfully finished!')
+    pass
