@@ -1,8 +1,7 @@
-from . import views
+from ideascale import views
 
 from django.conf.urls import url
 from rest_framework.urlpatterns import format_suffix_patterns
-
 
 re_url = '(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)'
 
