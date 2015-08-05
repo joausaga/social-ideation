@@ -29,6 +29,7 @@ class Author(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
     initiative = models.ForeignKey(Initiative)
+    sync = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.name
