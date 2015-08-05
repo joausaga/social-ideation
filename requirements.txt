@@ -5,7 +5,6 @@ celery==3.1.18
 configparser==3.5.0b2
 Django==1.8
 djangorestframework==3.1.1
-facebook-sdk==1.0.0a0
 ideascaly==0.8
 kombu==3.0.26
 MySQL-python==1.2.5
