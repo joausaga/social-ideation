@@ -4,13 +4,11 @@ test_fb_api.py
 
 local_setup.txt
 
-manage.py
-
 celerybeat-schedule.db
 
-migrations
-
 .idea
+
+how_to_do_migrations
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
