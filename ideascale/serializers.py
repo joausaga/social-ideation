@@ -56,7 +56,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class VoteSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='ideascale_id', read_only=True)
-    member_id = serializers.IntegerField(read_only=True)
+    user_id = serializers.IntegerField(read_only=True)
     parent_id = serializers.IntegerField(read_only=True)
 
     class Meta:

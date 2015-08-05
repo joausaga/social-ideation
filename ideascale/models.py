@@ -110,7 +110,7 @@ class Vote(models.Model):
         elif self.parent_comment:
             return self.parent_comment.ideascale_id
 
-    def member_id(self):
+    def user_id(self):
         return self.author.ideascale_id
 
 
