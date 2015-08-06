@@ -254,14 +254,13 @@ def _pull_content_social_network(social_network):
     sn.authenticate()
     posts = sn.get_posts()
     for post in posts:
-        #hashtags = _extract_hashtags(post)
-        hashtags = '#test'
+        hashtags = _extract_hashtags(post)
         if len(hashtags) > 0:
-            #initiative = _get_initiative(hashtags, social_network)
-            initiative = Initiative.objects.get(pk=4)
+            initiative = _get_initiative(hashtags, social_network)
+            #initiative = Initiative.objects.get(pk=4)
             if initiative:
-                #campaign = _get_campaign(hashtags, initiative)
-                campaign = Campaign.objects.get(pk=7)
+                campaign = _get_campaign(hashtags, initiative)
+                #campaign = Campaign.objects.get(pk=7)
                 if campaign:
                     # Save/Update ideas
                     filters = {'sn_id': post['id']}
@@ -580,23 +579,25 @@ def push_data():
     existing_ideas = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
                      order_by('datetime')
     for idea in existing_ideas:
-           try:
-               _do_push_content(idea, 'idea')
-           except Exception as e:
-                if idea.source == 'consultation_platform':
-                    logger.warning('Error when trying to publish the idea with the id={} on {}. '
-                                   'Message: {}'.format(idea.id, idea.source_consultation, e))
-                else:
-                    logger.warning('Error when trying to publish the idea with the id={} on {}. '
-                                   'Message: {}'.format(idea.id, idea.source_social, e))
-                logger.warning(traceback.format_exc())
+        try:
+            if idea.initiative.active:
+                _do_push_content(idea, 'idea')
+        except Exception as e:
+            if idea.source == 'consultation_platform':
+                logger.warning('Error when trying to publish the idea with the id={} on {}. '
+                               'Message: {}'.format(idea.id, idea.source_consultation, e))
+            else:
+                logger.warning('Error when trying to publish the idea with the id={} on {}. '
+                               'Message: {}'.format(idea.id, idea.source_social, e))
+            logger.warning(traceback.format_exc())
     # Push comments to consultation platforms and social networks
     logger.info('Pushing comments to social networks and consultation platforms')
     existing_comments = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
                         order_by('datetime')
     for comment in existing_comments:
         try:
-            _do_push_content(comment, 'comment')
+            if comment.initiative.active:
+                _do_push_content(comment, 'comment')
         except Exception as e:
                 if comment.source == 'consultation_platform':
                     logger.warning('Error when trying to publish the comment with the id={} on {}. '
@@ -613,7 +614,8 @@ def delete_data():
     unexisting_ideas = Idea.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
     for idea in unexisting_ideas:
         try:
-            _do_delete_content(idea, 'idea')
+            if idea.initiative.active:
+                _do_delete_content(idea, 'idea')
         except Exception as e:
             if idea.source == 'consultation_platform':
                 logger.warning('Error when trying to delete the idea with the id={} from {}. '
@@ -627,7 +629,8 @@ def delete_data():
     unexisting_comments = Comment.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
     for comment in unexisting_comments:
         try:
-            _do_delete_content(comment, 'comment')
+            if comment.initiative.active:
+                _do_delete_content(comment, 'comment')
         except Exception as e:
             if comment.source == 'consultation_platform':
                 logger.warning('Error when trying to delete the comment with the id={} from {}. '
