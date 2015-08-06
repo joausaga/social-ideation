@@ -190,8 +190,12 @@ def cru_vote(vote_id, initiative, vote_obj):
     try:
         vote = Vote.objects.get(ideascale_id=vote_id)
         if vote_obj:
-            vote.value = vote_obj.voteValue
-            vote.parent_type = vote_obj.ideaType
+            if 'voteValue' in vote_obj.keys():
+                vote.value = vote_obj.voteValue
+            elif 'myVote' in vote_obj.keys():
+                vote.value = vote_obj.myVote
+            if 'parent_type' in vote_obj.keys():
+                vote.parent_type = vote_obj.ideaType
         vote.sync = False
         vote.save()
         return vote
@@ -199,12 +203,15 @@ def cru_vote(vote_id, initiative, vote_obj):
         author = cru_author(vote_obj.authorId, initiative)
         vote_is_dt = parse(vote_obj.creationDateTime)
         vote_dt = _get_timezone_aware_datetime(vote_is_dt) if timezone.is_naive(vote_is_dt) else vote_is_dt
-        vote = Vote(ideascale_id=vote_obj.id, value=vote_obj.voteValue, datetime=vote_dt, author=author, sync=False,
-                    parent_type=vote_obj.ideaType)
-        if vote_obj.ideaType == 'idea':
-            vote.parent_idea = cru_idea(vote_obj.ideaId, initiative)
+        vote_parent_type = vote_obj.ideaType if 'ideaType' in vote_obj.keys() else 'idea'
+        vote_value = vote_obj.voteValue if 'voteValue' in vote_obj.keys() else vote_obj.myVote
+        vote_parent_id = vote_obj.ideaId if 'ideaId' in vote_obj.keys() else vote_obj.id
+        vote = Vote(ideascale_id=vote_obj.id, value=vote_value, datetime=vote_dt, author=author, sync=False,
+                    parent_type=vote_parent_type)
+        if vote_parent_type == 'idea':
+            vote.parent_idea = cru_idea(vote_parent_id, initiative)
         else:
-            vote.parent_comment = cru_comment(vote_obj.ideaId, initiative)
+            vote.parent_comment = cru_comment(vote_parent_id, initiative)
         vote.save()
         return vote
 
