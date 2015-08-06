@@ -764,7 +764,7 @@ class VotesIdea(ISObject):
             votes_details = {'myVote': request.data['value'], 'ideaId': idea.ideascale_id}
             self.api_method_params = votes_details
             self.create_obj = cru_vote
-            self.serializer_class = IdeaSerializer
+            self.serializer_class = VoteSerializer
             self.filters = {'sync':True}
             return super(VotesIdea,self).post(request, initiative)
         except Exception as e:
