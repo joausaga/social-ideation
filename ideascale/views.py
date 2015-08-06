@@ -202,7 +202,7 @@ def cru_vote(vote_id, initiative, vote_obj):
     except Vote.DoesNotExist:
         author_id = vote_obj.authorId if hasattr(vote_obj, 'authorId') else vote_obj.memberId
         author = cru_author(author_id, initiative)
-        vote_is_dt = parse(vote_obj.creationDateTime) if hasattr(vote_obj, 'creationDateTime') else vote_obj.creationDate
+        vote_is_dt = parse(vote_obj.creationDateTime) if hasattr(vote_obj, 'creationDateTime') else parse(vote_obj.creationDate)
         vote_dt = _get_timezone_aware_datetime(vote_is_dt) if timezone.is_naive(vote_is_dt) else vote_is_dt
         vote_parent_type = vote_obj.ideaType if hasattr(vote_obj, 'ideaType') else 'idea'
         vote_value = vote_obj.voteValue if hasattr(vote_obj, 'voteValue') else vote_obj.myVote
