@@ -654,7 +654,7 @@ class CommentDetail(ISObjectDetail):
             self.initiative = self.get_initiative(comment)
             self.api_method = 'get_comment'
             self.api_method_params = {'commentId': comment_id}
-            self.create_obj = cru_author
+            self.create_obj = cru_comment
             return super(CommentDetail, self).get(request, comment_id)
         except Comment.DoesNotExist, e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
@@ -756,7 +756,7 @@ class VotesIdea(ISObject):
                 self.api_method = 'vote_down_idea'
             votes_details = {'myVote': request.data['value'], 'ideaId': idea.ideascale_id}
             self.api_method_params = votes_details
-            self.create_obj = cru_idea
+            self.create_obj = cru_vote
             self.serializer_class = IdeaSerializer
             self.filters = {'sync':True}
             return super(VotesIdea,self).post(request, initiative)
