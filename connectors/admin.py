@@ -279,7 +279,7 @@ def _check_connector_status(connector):
         if callback.method.upper() == 'GET':
             continue
         elif callback.method.upper() == 'DELETE':
-            if url_cb.status == 'failure':
+            if url_cb.status == 'failure' or url_cb.status == 'untested':
                 del_failure = True
         elif callback.method.upper() == 'POST':
             if del_failure:
