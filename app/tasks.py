@@ -285,12 +285,12 @@ def _pull_content_social_network(social_network):
                             # Process comment's votes
                             if 'votes_array' in comment.keys():
                                 for vote in comment['votes_array']:
-                                    vote.update({'author_id': vote['user_info']['id']})
+                                    vote.update({'user_id': vote['user_info']['id']})
                                     _do_create_update_vote(social_network, initiative, vote, 'social_network')
                     # Save/Update votes
                     if 'votes_array' in post.keys():
                         for vote in post['votes_array']:
-                            vote.update({'author_id': vote['user_info']['id'], 'parent_type': 'idea'})
+                            vote.update({'user_id': vote['user_info']['id'], 'parent_type': 'idea'})
                             _do_create_update_vote(social_network, initiative, vote, 'social_network')
                 else:
                     logger.error('Couldn\'t find the campaign within the initiative {} that is targeted by the post. '
