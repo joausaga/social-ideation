@@ -197,7 +197,7 @@ def cru_vote(vote_id, initiative, vote_obj):
         return vote
     except Vote.DoesNotExist:
         author = cru_author(vote_obj.authorId, initiative)
-        vote_is_dt = parse(vote_obj.creationDate)
+        vote_is_dt = parse(vote_obj.creationDateTime)
         vote_dt = _get_timezone_aware_datetime(vote_is_dt) if timezone.is_naive(vote_is_dt) else vote_is_dt
         vote = Vote(ideascale_id=vote_obj.id, value=vote_obj.voteValue, datetime=vote_dt, author=author, sync=False,
                     parent_type=vote_obj.ideaType)
