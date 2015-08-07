@@ -18,8 +18,8 @@ class InitiativeAdmin(admin.ModelAdmin):
         return obj.platform
     consultation_platform.short_description = 'Consultation Platform'
 
-    #def has_add_permission(self, request):
-    #    return False
+    def has_add_permission(self, request):
+        return False
 
     def social_networks(self, obj):
         str_sn = ''
@@ -39,14 +39,14 @@ class CampaignAdmin(admin.ModelAdmin):
     list_display = ('name', 'initiative', 'hashtag', )
     ordering = ('name', 'initiative', 'hashtag', )
 
-    #def has_add_permission(self, request):
-    #    return False
+    def has_add_permission(self, request):
+        return False
 
 
 class ConsultationPlatformAdmin(admin.ModelAdmin):
     list_display = ('name', 'url', 'connector')
     ordering = ('name', 'url',)
-    actions = ['get_platform_initiative', 'sync_content']
+    actions = ['get_platform_initiative']
 
     def _cu_campaigns(self, platform, ini_obj):
         connector = platform.connector

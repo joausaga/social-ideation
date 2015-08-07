@@ -24,7 +24,7 @@ class ConsultationPlatform(models.Model):
 class Initiative(models.Model):
     external_id = models.IntegerField(editable=False)
     name = models.CharField(max_length=50, editable=False)
-    platform = models.OneToOneField(ConsultationPlatform, editable=False)
+    platform = models.ForeignKey(ConsultationPlatform, editable=False)
     social_network = models.ManyToManyField(SocialNetwork, blank=True)
     hashtag = models.CharField(unique=True, max_length=14, null=True,
                                help_text="Max length 14 characters (do not include '#')")
@@ -43,8 +43,7 @@ class Campaign(models.Model):
     external_id = models.IntegerField(editable=False)
     name = models.CharField(max_length=100)
     initiative = models.ForeignKey(Initiative)
-    hashtag = models.CharField(unique=True, max_length=14, null=True,
-                               help_text="Max length 14 characters (do not include '#')")
+    hashtag = models.CharField(max_length=14, null=True, help_text="Max length 14 characters (do not include '#')")
 
     def __unicode__(self):
         return self.name
