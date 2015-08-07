@@ -6,7 +6,7 @@ from app.utils import convert_to_utf8_str
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from app.utils import do_request, get_json_or_error, get_url_cb, build_request_url, build_request_body, \
-                      generate_idea_title_from_text
+                      generate_idea_title_from_text, remove_hashtags
 from django.core.cache import cache
 from django.db.models import Q
 from hashlib import md5
@@ -220,10 +220,12 @@ def _cud_initiative_ideas(platform, initiative):
 
 def _extract_hashtags(post):
     hashtags = []
-    words = post['message'].split(' ')
-    for word in words:
-        if '#' in word:
-            hashtags.append(word.replace('#','').lower().strip())
+    lines = post['text'].split('\n')
+    for line in lines:
+        words = line.split(' ')
+        for word in words:
+            if '#' in word:
+                hashtags.append(word.replace('#','').replace('\n','').lower().strip())
     return hashtags
 
 
@@ -291,10 +293,6 @@ def _pull_content_social_network(social_network):
                         for vote in post['votes_array']:
                             vote.update({'user_id': vote['user_info']['id'], 'parent_type': 'idea'})
                             _do_create_update_vote(social_network, initiative, vote, 'social_network')
-                else:
-                    logger.error('Couldn\'t find the campaign within the initiative {} that is targeted by the post. '
-                                 'The post {} containing an idea cannot be synchronized.'
-                                 .format(initiative.name, post['id']))
 
 
 def _pull_content_consultation_platform(platform, initiative):
@@ -439,10 +437,11 @@ def _do_push_content(obj, type):
         # Push object to the initiative's consultation_platform
         cplatform = initiative.platform
         connector = cplatform.connector
+        text_cplatform = remove_hashtags(text_uf8)
         if obj.is_new:
             obj.is_new = False
             if type == 'idea':
-                text_to_cp = template_idea.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_idea.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
                                                   obj.source_social.name, obj.positive_votes, obj.negative_votes,
                                                   obj.url)
                 url_cb = get_url_cb(connector, 'create_idea_cb')
@@ -454,7 +453,7 @@ def _do_push_content(obj, type):
                 new_content = get_json_or_error(connector.name, url_cb.callback, resp)
                 obj.cp_id = new_content['id']
             elif type == 'comment':
-                text_to_cp = template_comment.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_comment.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
                                                      obj.source_social.name, obj.positive_votes, obj.negative_votes)
                 params = {'text': text_to_cp}
                 if obj.parent == 'idea':
@@ -474,7 +473,7 @@ def _do_push_content(obj, type):
         elif obj.has_changed:
             obj.has_changed = False
             if type == 'idea':
-                text_to_cp = template_idea.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_idea.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
                                                   obj.source_social.name, obj.positive_votes, obj.negative_votes,
                                                   obj.url)
                 try:
@@ -488,7 +487,7 @@ def _do_push_content(obj, type):
                     logger.info('Cannon\'t find the url of the callback to update ideas through the API of {}'.
                                 format(cplatform.name))
             elif type == 'comment':
-                text_to_cp = template_comment.format(text_uf8, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_comment.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
                                                      obj.source_social.name, obj.positive_votes, obj.negative_votes)
                 try:
                     url_cb = get_url_cb(connector, 'update_comment_cb')

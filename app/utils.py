@@ -134,13 +134,23 @@ def generate_idea_title_from_text(text):
     TITLE_LENGTH = 64  # Taking as reference IdeaScale's limitation
 
     for word in text.split():
-        if len(title) + len(word) <= TITLE_LENGTH:
-            title += ' ' + word
-        else:
-            break
+        if not '#' in word:
+            if len(title) + len(word) <= TITLE_LENGTH:
+                title += ' ' + word
+            else:
+                break
 
     return convert_to_utf8_str(title.strip().title())
 
+
+def remove_hashtags(text):
+    text_without_hashtags = ''
+
+    for word in text.split():
+        if not '#' in word:
+            text_without_hashtags += word + ' '
+
+    return text_without_hashtags
 
 def convert_to_utf8_str(arg):
     # written by Michael Norton (http://docondev.blogspot.com/)
