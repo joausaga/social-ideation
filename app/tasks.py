@@ -374,9 +374,11 @@ def _consolidate_data(platform, source):
 def _do_push_content(obj, type):
     initiative = obj.initiative
     campaign = obj.campaign
-    template_idea = '{}\nAuthor: {} ({})\nVotes ({}) Up: {}/Down: {}\nLink: {}'
-    template_comment = '{}\nAuthor: {} ({})\nVotes ({}) Up: {}/Down: {}'
+    template_idea = '{}\n\nAuthor: {} ({})\n\nVotes ({}) Up: {}/Down: {}\n\nLink: {}'
+    template_idea_sn = '[{}]\n\n{}\n\n#{} #{}\n\nAuthor:\n{} ({})\n\nVotes ({}) Up: {}/Down: {}\n\nLink:\n{}'
+    template_comment = '{}\n\nAuthor: {} ({})\n\nVotes ({}) Up: {}/Down: {}'
     text_uf8 = convert_to_utf8_str(obj.text)
+    author_name_utf8 = convert_to_utf8_str(obj.author.screen_name)
     if obj.source == 'consultation_platform':
         # Push object to the initiative's social networks
         ini_hashtag = initiative.hashtag
@@ -391,14 +393,16 @@ def _do_push_content(obj, type):
             if obj.is_new:
                 obj.is_new = False
                 if type == 'idea':
-                    text_to_sn = template_idea.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
-                                                      obj.source_consultation.name, obj.positive_votes,
-                                                      obj.negative_votes, obj.url)
-                    text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.title(), cam_hashtag.title(), text_to_sn)
+                    title_utf8 = convert_to_utf8_str(obj.title)
+                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
+                                                         author_name_utf8, obj.source_consultation.name,
+                                                         obj.source_consultation.name, obj.positive_votes,
+                                                         obj.negative_votes, obj.url)
+                    #text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.lower(), cam_hashtag.lower(), text_to_sn)
                     new_post = sn.publish_post(text_to_sn)
                     obj.sn_id = new_post['id']
                 elif type == 'comment':
-                    text_to_sn = template_comment.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
+                    text_to_sn = template_comment.format(text_uf8, author_name_utf8, obj.source_consultation.name,
                                                          obj.source_consultation.name, obj.positive_votes,
                                                          obj.negative_votes)
                     if obj.parent == 'idea':
@@ -421,13 +425,15 @@ def _do_push_content(obj, type):
                 obj.has_changed = False
                 # Update content to social network
                 if type == 'idea':
-                    text_to_sn = template_idea.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
-                                                      obj.source_consultation.name, obj.positive_votes,
-                                                      obj.negative_votes, obj.url)
-                    text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.title(), cam_hashtag.title(), text_to_sn)
+                    title_utf8 = convert_to_utf8_str(obj.title)
+                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
+                                                         author_name_utf8, obj.source_consultation.name,
+                                                         obj.source_consultation.name, obj.positive_votes,
+                                                         obj.negative_votes, obj.url)
+                    #text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.title(), cam_hashtag.title(), text_to_sn)
                     sn.edit_post(obj.sn_id, text_to_sn)
                 elif type == 'comment':
-                    text_to_sn = template_comment.format(text_uf8, obj.author.screen_name, obj.source_consultation.name,
+                    text_to_sn = template_comment.format(text_uf8, author_name_utf8, obj.source_consultation.name,
                                                          obj.source_consultation.name, obj.positive_votes,
                                                          obj.negative_votes)
                     sn.edit_comment(obj.sn_id, text_to_sn)
@@ -441,7 +447,7 @@ def _do_push_content(obj, type):
         if obj.is_new:
             obj.is_new = False
             if type == 'idea':
-                text_to_cp = template_idea.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_idea.format(text_cplatform, author_name_utf8, obj.source_social.name,
                                                   obj.source_social.name, obj.positive_votes, obj.negative_votes,
                                                   obj.url)
                 url_cb = get_url_cb(connector, 'create_idea_cb')
@@ -453,7 +459,7 @@ def _do_push_content(obj, type):
                 new_content = get_json_or_error(connector.name, url_cb.callback, resp)
                 obj.cp_id = new_content['id']
             elif type == 'comment':
-                text_to_cp = template_comment.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_comment.format(text_cplatform, author_name_utf8, obj.source_social.name,
                                                      obj.source_social.name, obj.positive_votes, obj.negative_votes)
                 params = {'text': text_to_cp}
                 if obj.parent == 'idea':
@@ -473,7 +479,7 @@ def _do_push_content(obj, type):
         elif obj.has_changed:
             obj.has_changed = False
             if type == 'idea':
-                text_to_cp = template_idea.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_idea.format(text_cplatform, author_name_utf8, obj.source_social.name,
                                                   obj.source_social.name, obj.positive_votes, obj.negative_votes,
                                                   obj.url)
                 try:
@@ -487,7 +493,7 @@ def _do_push_content(obj, type):
                     logger.info('Cannon\'t find the url of the callback to update ideas through the API of {}'.
                                 format(cplatform.name))
             elif type == 'comment':
-                text_to_cp = template_comment.format(text_cplatform, obj.author.screen_name, obj.source_social.name,
+                text_to_cp = template_comment.format(text_cplatform, author_name_utf8, obj.source_social.name,
                                                      obj.source_social.name, obj.positive_votes, obj.negative_votes)
                 try:
                     url_cb = get_url_cb(connector, 'update_comment_cb')
