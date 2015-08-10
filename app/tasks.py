@@ -389,6 +389,7 @@ def _do_push_content(obj, type):
                        '{}\n\n' \
                        '#{} #{}'
     template_comment_sn = '{}\n\n' \
+                          '----\n' \
                           'Votes Up: {}/Down: {}\n' \
                           'Author: {} ({})'
     desc_attachment = 'Idea contributed by {} in the initiative {}'
