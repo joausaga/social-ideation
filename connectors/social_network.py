@@ -234,8 +234,13 @@ class Facebook(SocialNetworkBase):
             return cls.graph.put_wall_post(message)
 
     @classmethod
-    def edit_post(cls, id_post, new_message):
-        return cls.graph.request(cls.graph.version + "/" + id_post, post_args={'message': new_message}, method="POST")
+    def edit_post(cls, id_post, new_message, attachment=None):
+        if attachment:
+            attachment.update({'message': new_message})
+            return cls.graph.request(cls.graph.version + "/" + id_post, post_args=attachment, method="POST")
+        else:
+            return cls.graph.request(cls.graph.version + "/" + id_post, post_args={'message': new_message},
+                                     method="POST")
         #  cls.graph.edit_message_post(post_id=id_post, message=new_message)
 
     @classmethod
