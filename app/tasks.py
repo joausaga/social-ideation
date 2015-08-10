@@ -16,6 +16,9 @@ import traceback
 logger = get_task_logger(__name__)
 
 
+LOGO_IDEASCALE_VIA = 'https://dl.dropboxusercontent.com/u/55956367/via_is.png'
+
+
 def _update_or_create_author(platform, author, source):
     try:
         if source == 'consultation_platform':
@@ -378,20 +381,19 @@ def _do_push_content(obj, type):
     template_idea_cp = '{}\n\n' \
                        '----------------\n\n' \
                        'Author: {}'
+    template_comment_cp = '{}\n' \
+                          'Author: {}'
     template_idea_sn = '----------------\n' \
                        '{}\n' \
                        '----------------\n\n' \
                        '{}\n\n' \
                        '#{} #{}\n\n' \
                        '----------------\n\n' \
-                       'Author: {} ({})\n\n' \
-                       'Votes ({}) Up: {}/Down: {}\n\n' \
-                       'Link: {}'
+                       'Votes Up: {}/Down: {}'
     template_comment_sn = '{}\n\n' \
                           'Author: {} ({})\n' \
-                          'Votes ({}) Up: {}/Down: {}'
-    template_comment_cp = '{}\n' \
-                          'Author: {}'
+                          'Votes Up: {}/Down: {}'
+    desc_attachment = 'Idea contributed by {} in the initiative {}'
     text_uf8 = convert_to_utf8_str(obj.text)
     author_name_utf8 = convert_to_utf8_str(obj.author.screen_name)
     if obj.source == 'consultation_platform':
@@ -410,16 +412,19 @@ def _do_push_content(obj, type):
                 if type == 'idea':
                     title_utf8 = convert_to_utf8_str(obj.title)
                     text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                                         author_name_utf8, obj.source_consultation.name,
-                                                         obj.source_consultation.name, obj.positive_votes,
-                                                         obj.negative_votes, obj.url)
-                    #text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.lower(), cam_hashtag.lower(), text_to_sn)
-                    new_post = sn.publish_post(text_to_sn)
+                                                         obj.positive_votes, obj.negative_votes)
+                    attachment = {
+                        'name': title_utf8,
+                        'link':  obj.url,
+                        'caption': initiative.url,
+                        'description': desc_attachment.format(author_name_utf8, initiative.name),
+                        'picture': LOGO_IDEASCALE_VIA
+                    }
+                    new_post = sn.publish_post(text_to_sn, attachment)
                     obj.sn_id = new_post['id']
                 elif type == 'comment':
                     text_to_sn = template_comment_sn.format(text_uf8, author_name_utf8, obj.source_consultation.name,
-                                                            obj.source_consultation.name, obj.positive_votes,
-                                                            obj.negative_votes)
+                                                            obj.positive_votes, obj.negative_votes)
                     if obj.parent == 'idea':
                         parent = Idea.objects.get(id=obj.parent_idea.id)
                         new_comment = sn.comment_post(parent.sn_id, text_to_sn)
@@ -442,15 +447,11 @@ def _do_push_content(obj, type):
                 if type == 'idea':
                     title_utf8 = convert_to_utf8_str(obj.title)
                     text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                                         author_name_utf8, obj.source_consultation.name,
-                                                         obj.source_consultation.name, obj.positive_votes,
-                                                         obj.negative_votes, obj.url)
-                    #text_to_sn = '#{} #{}\n{}'.format(ini_hashtag.title(), cam_hashtag.title(), text_to_sn)
+                                                         obj.positive_votes, obj.negative_votes)
                     sn.edit_post(obj.sn_id, text_to_sn)
                 elif type == 'comment':
                     text_to_sn = template_comment_sn.format(text_uf8, author_name_utf8, obj.source_consultation.name,
-                                                            obj.source_consultation.name, obj.positive_votes,
-                                                            obj.negative_votes)
+                                                            obj.positive_votes, obj.negative_votes)
                     sn.edit_comment(obj.sn_id, text_to_sn)
                 else:
                     logger.info('Objects of type {} are ignored and not synchronized'.format(type))
