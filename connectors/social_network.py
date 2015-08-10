@@ -227,8 +227,11 @@ class Facebook(SocialNetworkBase):
         return posts_array
 
     @classmethod
-    def publish_post(cls, message):
-        return cls.graph.put_wall_post(message)
+    def publish_post(cls, message, attachment=None):
+        if attachment:
+            return cls.graph.put_wall_post(message, attachment=attachment)
+        else:
+            return cls.graph.put_wall_post(message)
 
     @classmethod
     def edit_post(cls, id_post, new_message):
