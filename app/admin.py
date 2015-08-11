@@ -149,6 +149,7 @@ class CommentAdmin(admin.ModelAdmin):
     list_display = ('comment_id', 'comment_source', 'initiative', 'campaign', 'author', 'datetime', 'text', 'parent',
                     'positive_votes', 'negative_votes', 'comments', 'sync')
     ordering = ('initiative', 'campaign', 'author', 'datetime', 'positive_votes', 'negative_votes', 'comments')
+    list_filter = ['initiative']
 
     def has_add_permission(self, request):
         return False
@@ -175,6 +176,7 @@ class CommentAdmin(admin.ModelAdmin):
 class VoteAdmin(admin.ModelAdmin):
     list_display = ('vote_id', 'vote_source', 'initiative', 'campaign', 'author', 'datetime', 'value', 'parent', 'sync')
     ordering = ('initiative', 'campaign', 'author')
+    list_filter = ['initiative']
 
     def has_add_permission(self, request):
         return False
