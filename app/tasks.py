@@ -387,7 +387,9 @@ def _do_push_content(obj, type):
                        '{}\n' \
                        '----------------\n\n' \
                        '{}\n\n' \
-                       '#{} #{}'
+                       '#{} #{}\n\n' \
+                       '----------------\n' \
+                       'Votes Up: {}/Down: {}'
     template_comment_sn = '{}\n\n' \
                           '----\n' \
                           'Votes Up: {}/Down: {}\n' \
@@ -411,11 +413,12 @@ def _do_push_content(obj, type):
                 obj.is_new = False
                 if type == 'idea':
                     title_utf8 = convert_to_utf8_str(obj.title)
-                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower())
+                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
+                                                         obj.positive_votes, obj.negative_votes)
                     attachment = {
                         'name': title_utf8,
                         'link':  obj.url,
-                        'caption': desc_caption_attachment.format(obj.positive_votes, obj.negative_votes),
+                        'caption': initiative.name.upper(),
                         'description': desc_attachment.format(author_name_utf8, initiative.name),
                         'picture': LOGO_IDEASCALE_VIA
                     }
@@ -445,15 +448,9 @@ def _do_push_content(obj, type):
                 # Update content to social network
                 if type == 'idea':
                     title_utf8 = convert_to_utf8_str(obj.title)
-                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower())
-                    attachment = {
-                        'name': title_utf8,
-                        'link':  obj.url,
-                        'caption': desc_caption_attachment.format(obj.positive_votes, obj.negative_votes),
-                        'description': desc_attachment.format(author_name_utf8, initiative.name),
-                        'picture': LOGO_IDEASCALE_VIA
-                    }
-                    sn.edit_post(obj.sn_id, text_to_sn, attachment)
+                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
+                                                         obj.positive_votes, obj.negative_votes)
+                    sn.edit_post(obj.sn_id, text_to_sn)
                 elif type == 'comment':
                     text_to_sn = template_comment_sn.format(text_uf8, obj.positive_votes, obj.negative_votes,
                                                             author_name_utf8, obj.source_consultation.name)
