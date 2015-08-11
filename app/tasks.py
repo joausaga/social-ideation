@@ -605,10 +605,10 @@ def push_data():
         except Exception as e:
             if idea.source == 'consultation_platform':
                 logger.warning('Error when trying to publish the idea with the id={} on {}. '
-                               'Message: {}'.format(idea.id, idea.source_consultation, e))
+                               'Message: {}'.format(idea.id, idea.source_consultation, convert_to_utf8_str(e)))
             else:
                 logger.warning('Error when trying to publish the idea with the id={} on {}. '
-                               'Message: {}'.format(idea.id, idea.source_social, e))
+                               'Message: {}'.format(idea.id, idea.source_social, convert_to_utf8_str(e)))
             logger.warning(traceback.format_exc())
     # Push comments to consultation platforms and social networks
     logger.info('Pushing comments to social networks and consultation platforms')
@@ -621,10 +621,10 @@ def push_data():
         except Exception as e:
                 if comment.source == 'consultation_platform':
                     logger.warning('Error when trying to publish the comment with the id={} on {}. '
-                                   'Message: {}'.format(comment.id, comment.source_consultation, e))
+                                   'Message: {}'.format(comment.id, comment.source_consultation, convert_to_utf8_str(e)))
                 else:
                     logger.warning('Error when trying to publish the comment with the id={} on {}. '
-                                   'Message: {}'.format(comment.id, comment.source_social, e))
+                                   'Message: {}'.format(comment.id, comment.source_social, convert_to_utf8_str(e)))
                 logger.warning(traceback.format_exc())
 
 
