@@ -121,7 +121,7 @@ class IdeaAdmin(admin.ModelAdmin):
     list_display = ('idea_id', 'idea_source', 'initiative', 'campaign', 'author', 'datetime', 'title', 'text',
                     're_posts', 'bookmarks', 'positive_votes', 'negative_votes', 'comments', 'sync', 'has_changed')
     ordering = ('initiative', 'campaign', 'author', 'datetime', 'positive_votes', 'negative_votes', 'comments')
-    list_filter = ['initiative', 'campaign']
+    list_filter = ['initiative']
 
     def has_add_permission(self, request):
         return False
