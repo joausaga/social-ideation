@@ -7,6 +7,7 @@ class SocialNetwork(models.Model):
     name = models.CharField(max_length=50)
     url = models.URLField(null=True, blank=True)
     connector = models.OneToOneField(connectors.models.SocialNetworkConnector)
+    blocked = models.DateTimeField(null=True, editable=False, default=None)
 
     def __unicode__(self):
         return self.name
