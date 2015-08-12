@@ -509,6 +509,8 @@ def _do_push_content(obj, type):
                             raise AppError(e)
                     else:
                         logger.info('Objects of type {} are ignored and not synchronized'.format(type))
+            else:
+                logger.info('Still blocked to post on {}'.format(social_network.name))
     else:
         # Push object to the initiative's consultation_platform
         cplatform = initiative.platform
