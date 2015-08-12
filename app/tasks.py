@@ -7,8 +7,10 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from app.utils import do_request, get_json_or_error, get_url_cb, build_request_url, build_request_body, \
                       generate_idea_title_from_text, remove_hashtags
+from datetime import datetime
 from django.core.cache import cache
 from django.db.models import Q
+from django.utils import timezone
 from hashlib import md5
 
 import traceback
@@ -374,6 +376,20 @@ def _consolidate_data(platform, source):
     return objs_consolidated
 
 
+def _is_social_network_enabled(social_network):
+    if not social_network.blocked:
+        return True
+    else:
+        t_now = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
+        t_delta = t_now - social_network.blocked
+        if t_delta.seconds >= 600:
+            # Let's try again if 10 minutes have passed
+            social_network.blocked = None
+            return True
+        else:
+            return False
+
+
 def _do_push_content(obj, type):
     initiative = obj.initiative
     campaign = obj.campaign
@@ -395,7 +411,6 @@ def _do_push_content(obj, type):
                           'Votes Up: {}/Down: {}\n' \
                           'Author: {} ({})'
     desc_attachment = 'Idea contributed by {} in the initiative {}'
-    desc_caption_attachment = 'Votes Up: {}/Down: {}'
     text_uf8 = convert_to_utf8_str(obj.text)
     author_name_utf8 = convert_to_utf8_str(obj.author.screen_name)
     if obj.source == 'consultation_platform':
@@ -403,60 +418,97 @@ def _do_push_content(obj, type):
         ini_hashtag = initiative.hashtag
         cam_hashtag = campaign.hashtag
         for social_network in initiative.social_network.all():
-            connector = social_network.connector
-            sn_class = connector.connector_class.title()
-            sn_module = connector.connector_module.lower()
-            sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-            sn.authenticate()
-            # TODO: New text should be bounded by the social network's text length restriction
-            if obj.is_new:
-                obj.is_new = False
-                if type == 'idea':
-                    title_utf8 = convert_to_utf8_str(obj.title)
-                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                                         obj.positive_votes, obj.negative_votes)
-                    attachment = {
-                        'name': title_utf8,
-                        'link':  obj.url,
-                        'caption': initiative.name.upper(),
-                        'description': desc_attachment.format(author_name_utf8, initiative.name),
-                        'picture': LOGO_IDEASCALE_VIA
-                    }
-                    new_post = sn.publish_post(text_to_sn, attachment)
-                    obj.sn_id = new_post['id']
-                elif type == 'comment':
-                    text_to_sn = template_comment_sn.format(text_uf8, obj.positive_votes, obj.negative_votes,
-                                                            author_name_utf8, obj.source_consultation.name)
-                    if obj.parent == 'idea':
-                        parent = Idea.objects.get(id=obj.parent_idea.id)
-                        new_comment = sn.comment_post(parent.sn_id, text_to_sn)
-                        obj.sn_id = new_comment['id']
-                    elif obj.parent == 'comment':
+            if _is_social_network_enabled(social_network):
+                connector = social_network.connector
+                sn_class = connector.connector_class.title()
+                sn_module = connector.connector_module.lower()
+                sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+                sn.authenticate()
+                # TODO: New text should be bounded by the social network's text length restriction
+                if obj.is_new:
+                    obj.is_new = False
+                    if type == 'idea':
+                        title_utf8 = convert_to_utf8_str(obj.title)
+                        text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(),
+                                                             cam_hashtag.lower(), obj.positive_votes, obj.negative_votes)
+                        attachment = {
+                            'name': title_utf8,
+                            'link':  obj.url,
+                            'caption': initiative.name.upper(),
+                            'description': desc_attachment.format(author_name_utf8, initiative.name),
+                            'picture': LOGO_IDEASCALE_VIA
+                        }
                         try:
-                            parent = Comment.objects.get(id=obj.parent_comment.id)
-                            new_comment = sn.comment_comment(parent.sn_id, text_to_sn)
-                            obj.sn_id = new_comment['id']
-                        except:
-                            logger.info('Replies to comments cannot be posted through the API of {}'.
-                                        format(social_network.name))
+                            new_post = sn.publish_post(text_to_sn, attachment)
+                            obj.sn_id = new_post['id']
+                        except Exception as e:
+                            if 'blocked' in e.message:
+                                social_network.blocked = timezone.make_aware(datetime.now(),
+                                                                             timezone.get_default_timezone())
+                            raise AppError(e)
+                    elif type == 'comment':
+                        text_to_sn = template_comment_sn.format(text_uf8, obj.positive_votes, obj.negative_votes,
+                                                                author_name_utf8, obj.source_consultation.name)
+                        if obj.parent == 'idea':
+                            parent = Idea.objects.get(id=obj.parent_idea.id)
+                            if parent:
+                                try:
+                                    new_comment = sn.comment_post(parent.sn_id, text_to_sn)
+                                    obj.sn_id = new_comment['id']
+                                except Exception as e:
+                                    if 'blocked' in e.message:
+                                        social_network.blocked = timezone.make_aware(datetime.now(),
+                                                                                     timezone.get_default_timezone())
+                                    raise AppError(e)
+                            else:
+                                raise AppError('Comment\'s parent does not exist')
+                        elif obj.parent == 'comment':
+                            try:
+                                parent = Comment.objects.get(id=obj.parent_comment.id)
+                                if parent:
+                                    try:
+                                        new_comment = sn.comment_comment(parent.sn_id, text_to_sn)
+                                        obj.sn_id = new_comment['id']
+                                    except Exception as e:
+                                        if 'blocked' in e.message:
+                                            social_network.blocked = timezone.make_aware(datetime.now(),
+                                                                                         timezone.get_default_timezone())
+                                        raise AppError(e)
+                                else:
+                                    raise AppError('Comment\'s parent does not exist')
+                            except:
+                                logger.info('Replies to comments cannot be posted through the API of {}'.
+                                            format(social_network.name))
+                        else:
+                            raise AppError('Unknown the type of the object\'s parent')
                     else:
-                        raise AppError('Unknown the type of the object\'s parent')
-                else:
-                    logger.info('Objects of type {} are ignored and not synchronized'.format(type))
-            elif obj.has_changed:
-                obj.has_changed = False
-                # Update content to social network
-                if type == 'idea':
-                    title_utf8 = convert_to_utf8_str(obj.title)
-                    text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                                         obj.positive_votes, obj.negative_votes)
-                    sn.edit_post(obj.sn_id, text_to_sn)
-                elif type == 'comment':
-                    text_to_sn = template_comment_sn.format(text_uf8, obj.positive_votes, obj.negative_votes,
-                                                            author_name_utf8, obj.source_consultation.name)
-                    sn.edit_comment(obj.sn_id, text_to_sn)
-                else:
-                    logger.info('Objects of type {} are ignored and not synchronized'.format(type))
+                        logger.info('Objects of type {} are ignored and not synchronized'.format(type))
+                elif obj.has_changed:
+                    obj.has_changed = False
+                    # Update content to social network
+                    if type == 'idea':
+                        title_utf8 = convert_to_utf8_str(obj.title)
+                        text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
+                                                             obj.positive_votes, obj.negative_votes)
+                        try:
+                            sn.edit_post(obj.sn_id, text_to_sn)
+                        except Exception as e:
+                            if 'blocked' in e.message:
+                                social_network.blocked = timezone.make_aware(datetime.now(),
+                                                                             timezone.get_default_timezone())
+                            raise AppError(e)
+                    elif type == 'comment':
+                        text_to_sn = template_comment_sn.format(text_uf8, obj.positive_votes, obj.negative_votes,
+                                                                author_name_utf8, obj.source_consultation.name)
+                        try:
+                            sn.edit_comment(obj.sn_id, text_to_sn)
+                        except Exception as e:
+                            if 'blocked' in e.message:
+                                social_network.blocked = timezone.make_aware(datetime.now(),
+                                                                             timezone.get_default_timezone())
+                            raise AppError(e)
+                    else:
+                        logger.info('Objects of type {} are ignored and not synchronized'.format(type))
     else:
         # Push object to the initiative's consultation_platform
         cplatform = initiative.platform
@@ -601,10 +653,10 @@ def push_data():
                 _do_push_content(idea, 'idea')
         except Exception as e:
             if idea.source == 'consultation_platform':
-                logger.warning('Error when trying to publish the idea with the id={} on {}. '
-                               'Message: {}'.format(idea.id, idea.source_consultation, convert_to_utf8_str(e)))
+                logger.warning('Error when trying to publish the idea with the id={} on the social networks. '
+                               'Message: {}'.format(idea.id, convert_to_utf8_str(e)))
             else:
-                logger.warning('Error when trying to publish the idea with the id={} on {}. '
+                logger.warning('Error when trying to publish the idea with the id={} on the consultation platforms. '
                                'Message: {}'.format(idea.id, idea.source_social, convert_to_utf8_str(e)))
             logger.warning(traceback.format_exc())
     # Push comments to consultation platforms and social networks
@@ -616,13 +668,13 @@ def push_data():
             if comment.initiative.active:
                 _do_push_content(comment, 'comment')
         except Exception as e:
-                if comment.source == 'consultation_platform':
-                    logger.warning('Error when trying to publish the comment with the id={} on {}. '
-                                   'Message: {}'.format(comment.id, comment.source_consultation, convert_to_utf8_str(e)))
-                else:
-                    logger.warning('Error when trying to publish the comment with the id={} on {}. '
-                                   'Message: {}'.format(comment.id, comment.source_social, convert_to_utf8_str(e)))
-                logger.warning(traceback.format_exc())
+            if comment.source == 'consultation_platform':
+                logger.warning('Error when trying to publish the comment with the id={} on the social networks. '
+                               'Message: {}'.format(comment.id, comment.source_consultation, convert_to_utf8_str(e)))
+            else:
+                logger.warning('Error when trying to publish the comment with the id={} on the consultation platforms. '
+                               'Message: {}'.format(comment.id, comment.source_social, convert_to_utf8_str(e)))
+            logger.warning(traceback.format_exc())
 
 
 def delete_data():
@@ -633,6 +685,7 @@ def delete_data():
         try:
             if idea.initiative.active:
                 _do_delete_content(idea, 'idea')
+                idea.delete()
         except Exception as e:
             if idea.source == 'consultation_platform':
                 logger.warning('Error when trying to delete the idea with the id={} from {}. '
@@ -648,6 +701,7 @@ def delete_data():
         try:
             if comment.initiative.active:
                 _do_delete_content(comment, 'comment')
+                comment.delete()
         except Exception as e:
             if comment.source == 'consultation_platform':
                 logger.warning('Error when trying to delete the comment with the id={} from {}. '
