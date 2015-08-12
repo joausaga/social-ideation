@@ -385,6 +385,7 @@ def _is_social_network_enabled(social_network):
         if t_delta.seconds >= 600:
             # Let's try again if 10 minutes have passed
             social_network.blocked = None
+            social_network.save()
             return True
         else:
             return False
@@ -445,6 +446,7 @@ def _do_push_content(obj, type):
                             if 'blocked' in e.message:
                                 social_network.blocked = timezone.make_aware(datetime.now(),
                                                                              timezone.get_default_timezone())
+                                social_network.save()
                             raise AppError(e)
                     elif type == 'comment':
                         text_to_sn = template_comment_sn.format(text_uf8, obj.positive_votes, obj.negative_votes,
@@ -459,6 +461,7 @@ def _do_push_content(obj, type):
                                     if 'blocked' in e.message:
                                         social_network.blocked = timezone.make_aware(datetime.now(),
                                                                                      timezone.get_default_timezone())
+                                        social_network.save()
                                     raise AppError(e)
                             else:
                                 raise AppError('Comment\'s parent does not exist')
@@ -473,6 +476,7 @@ def _do_push_content(obj, type):
                                         if 'blocked' in e.message:
                                             social_network.blocked = timezone.make_aware(datetime.now(),
                                                                                          timezone.get_default_timezone())
+                                            social_network.save()
                                         raise AppError(e)
                                 else:
                                     raise AppError('Comment\'s parent does not exist')
@@ -496,6 +500,7 @@ def _do_push_content(obj, type):
                             if 'blocked' in e.message:
                                 social_network.blocked = timezone.make_aware(datetime.now(),
                                                                              timezone.get_default_timezone())
+                                social_network.save()
                             raise AppError(e)
                     elif type == 'comment':
                         text_to_sn = template_comment_sn.format(text_uf8, obj.positive_votes, obj.negative_votes,
@@ -506,6 +511,7 @@ def _do_push_content(obj, type):
                             if 'blocked' in e.message:
                                 social_network.blocked = timezone.make_aware(datetime.now(),
                                                                              timezone.get_default_timezone())
+                                social_network.save()
                             raise AppError(e)
                     else:
                         logger.info('Objects of type {} are ignored and not synchronized'.format(type))
