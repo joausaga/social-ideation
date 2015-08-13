@@ -761,5 +761,8 @@ def synchronize_content():
         logger.info('The synchronization is already being executed by another worker')
 
 
+@shared_task
 def test_function():
-    pass
+    x = 10
+    y = 10
+    print('The sum of {} + {} = {}'.format(x,y,x+y))
