@@ -15,6 +15,7 @@ class SocialNetworkConnector(models.Model):
     connector_module = models.CharField(max_length=50)
     connector_class = models.CharField(max_length=50)
     active = models.BooleanField(null=False, default=False)
+    url_subscriptions = models.URLField(null=True)
 
     def __unicode__(self):
         return self.name

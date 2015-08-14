@@ -8,6 +8,10 @@ class SocialNetwork(models.Model):
     url = models.URLField(null=True, blank=True)
     connector = models.OneToOneField(connectors.models.SocialNetworkConnector)
     blocked = models.DateTimeField(null=True, editable=False, default=None)
+    callback_real_time_updates = models.URLField(null=True)
+    object_real_time_updates = models.CharField(max_length=50, null=True)
+    field_real_time_updates = models.CharField(max_length=50, null=True)
+    token_real_time_updates = models.CharField(max_length=100, null=True, editable=False)
 
     def __unicode__(self):
         return self.name

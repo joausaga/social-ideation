@@ -374,27 +374,20 @@ def _check_type_attr(connector_name, cb_name, attr, value):
 #
 # ---
 
+
 class SocialNetworkConnectorAdmin(admin.ModelAdmin):
     list_display = ('name', 'connector_module', 'connector_class', 'active')
     ordering = ('name',)
 
 
 admin.site.register(Parameter, ParameterAdmin)
-
 admin.site.register(URLParameter, URLParameterAdmin)
-
 admin.site.register(BasicAttribute, AttributeAdmin)
-
 admin.site.register(Object, ObjectAdmin)
-
 admin.site.register(Callback, CallbackAdmin)
-
 admin.site.register(MetaConnector, MetaConnectorAdmin)
-
 admin.site.register(Connector, ConnectorAdmin)
-
 admin.site.register(URLCallback, URLCallbackAdmin)
-
 admin.site.register(ComposedAttribute, ComposedAttributeAdmin)
 
 admin.site.register(SocialNetworkConnector, SocialNetworkConnectorAdmin)

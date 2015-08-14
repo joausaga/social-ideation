@@ -1,6 +1,11 @@
+import hashlib
+import os
+import requests
+
 from django.contrib import admin, messages
 from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetwork, Idea, Comment, Vote
 from app.tasks import synchronize_content, test_function
+from app.error import AppError
 from connectors.admin import do_request, get_json_or_error, get_url_cb, build_request_url
 from connectors.error import ConnectorError
 
@@ -8,6 +13,39 @@ from connectors.error import ConnectorError
 class SocialNetworkAdmin(admin.ModelAdmin):
     list_display = ('name', 'url', 'connector', )
     ordering = ('name', 'url', )
+    actions = ['subscribe_real_time_updates']
+
+    def subscribe_real_time_updates(self, request, queryset):
+        try:
+            for obj in queryset:
+                if not obj.connector.url_subscriptions:
+                    self.message_user(request, 'Please set in the connector the subscription URL',
+                                      level=messages.WARNING)
+                else:
+                    if not obj.callback_real_time_updates or not obj.field_real_time_updates or \
+                       not obj.object_real_time_updates:
+                        self.message_user(request, 'Please indicate the callback, field and object on which to receive '
+                                                   'the updates', level=messages.WARNING)
+                    else:
+                        if obj.token_real_time_updates:
+                            # Remove previous subscription
+                            requests.delete(url=obj.connect.url_real_time_updates)
+                        token = hashlib.sha1(os.urandom(128)).hexdigest()
+                        post_data = {'object': obj.object_real_time_updates,
+                                     'fields': obj.field_real_time_updates,
+                                     'callback_url': obj.callback_real_time_updates,
+                                     'verify_token': token}
+                        resp = requests.post(url=obj.connect.url_real_time_updates, data=post_data)
+                        if resp.status_code and not 200 <= resp.status_code < 300:
+                            self.message_user(request, 'An error occurred when trying to subscribe to receive real '
+                                                       'time updates', level=messages.ERROR)
+                        else:
+                            obj.token_real_time_updates = token
+                            obj.save()
+                            self.message_user(request, 'Successful subscription to receive real time updates')
+        except AppError as e:
+            self.message_user(request, e.reason, level=messages.ERROR)
+    subscribe_real_time_updates.short_description = 'Subscribe to receive real time updates'
 
 
 class InitiativeAdmin(admin.ModelAdmin):
@@ -101,8 +139,8 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
                                            'the system. Don\'t forget to activate it if you want it to be '
                                            'synchronized.')
             else:
-                self.message_user(request, '{} new initiatives were obtained from the selected platform(s) and stored in '
-                                           'the system. Don\'t forget to activate them if you want them to be '
+                self.message_user(request, '{} new initiatives were obtained from the selected platform(s) and stored '
+                                           'in the system. Don\'t forget to activate them if you want them to be '
                                            'synchronized.'.format(new_initiatives))
         except ConnectorError as e:
             self.message_user(request, e.reason, level=messages.ERROR)
