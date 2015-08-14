@@ -3,6 +3,7 @@ from connectors.error import ConnectorError
 import abc
 import ConfigParser
 import facebook
+import json
 import os
 import requests
 
@@ -128,7 +129,6 @@ class Facebook(SocialNetworkBase):
         resp = graph.get_object('me/accounts')
         for page in resp['data']:
             if page['id'] == cls.config_manager.get('facebook', 'page_id'):
-                print page['access_token']
                 return page['access_token']
         raise ConnectorError('Couldn\'t get long-lived page token')
 
@@ -293,6 +293,28 @@ class Facebook(SocialNetworkBase):
     def get_info_user(cls, id_user):
         raw_user = cls.graph.get_object(id_user)
         return {'id': raw_user['id'], 'name': raw_user['name'], 'url': raw_user['link']}
+
+    @classmethod
+    def subscribe_real_time_updates(cls, url, data):
+        config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'connectors/config')
+        cls.config_manager = ConfigParser.ConfigParser()
+        cls.config_manager.read(config_file)
+        app_id = cls.config_manager.get('facebook', 'app_id')
+        app_secret = cls.config_manager.get('facebook', 'app_secret')
+        access_token = facebook.get_app_access_token(app_id, app_secret)
+        data.update({'access_token': access_token})
+        resp = requests.post(url=url, data=data)
+        if resp.status_code and not 200 <= resp.status_code < 300:
+            err_msg = 'Error when trying to make the subscription to receive real time updates'
+            resp_text = json.loads(resp.text)
+            if 'error' in resp_text.keys():
+                if 'message' in resp_text['error'].keys():
+                    raise ConnectorError('{}. Message: {}'.format(err_msg, resp_text['error']['message']))
+                else:
+                    raise ConnectorError(err_msg)
+            else:
+                raise ConnectorError(err_msg)
+
 
 if __name__ == "__main__":
     Facebook.authenticate()

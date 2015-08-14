@@ -35,14 +35,17 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                                      'fields': obj.field_real_time_updates,
                                      'callback_url': obj.callback_real_time_updates,
                                      'verify_token': token}
-                        resp = requests.post(url=obj.connect.url_real_time_updates, data=post_data)
-                        if resp.status_code and not 200 <= resp.status_code < 300:
-                            self.message_user(request, 'An error occurred when trying to subscribe to receive real '
-                                                       'time updates', level=messages.ERROR)
-                        else:
+                        connector = obj.connector
+                        sn_class = connector.connector_class.title()
+                        sn_module = connector.connector_module.lower()
+                        sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+                        try:
+                            sn.subscribe_real_time_updates(obj.connector.url_subscriptions, post_data)
                             obj.token_real_time_updates = token
                             obj.save()
                             self.message_user(request, 'Successful subscription to receive real time updates')
+                        except ConnectorError as e:
+                            self.message_user(request, e.reason, level=messages.ERROR)
         except AppError as e:
             self.message_user(request, e.reason, level=messages.ERROR)
     subscribe_real_time_updates.short_description = 'Subscribe to receive real time updates'
