@@ -27,10 +27,12 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                         self.message_user(request, 'Please indicate the callback, field and object on which to receive '
                                                    'the updates', level=messages.WARNING)
                     else:
-                        if obj.token_real_time_updates:
+                        if obj.subscribed_read_time_updates:
                             # Remove previous subscription
                             requests.delete(url=obj.connect.url_real_time_updates)
                         token = hashlib.sha1(os.urandom(128)).hexdigest()
+                        obj.token_real_time_updates = token
+                        obj.save()
                         post_data = {'object': obj.object_real_time_updates,
                                      'fields': obj.field_real_time_updates,
                                      'callback_url': obj.callback_real_time_updates,
@@ -41,7 +43,7 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                         sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
                         try:
                             sn.subscribe_real_time_updates(obj.connector.url_subscriptions, post_data)
-                            obj.token_real_time_updates = token
+                            obj.subscribed_read_time_updates = True
                             obj.save()
                             self.message_user(request, 'Successful subscription to receive real time updates')
                         except ConnectorError as e:
