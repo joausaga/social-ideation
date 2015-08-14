@@ -315,7 +315,6 @@ class Facebook(SocialNetworkBase):
             else:
                 raise ConnectorError(err_msg)
 
-
 if __name__ == "__main__":
     Facebook.authenticate()
     #print Facebook.get_posts()
