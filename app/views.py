@@ -1,10 +1,11 @@
 from django.http import HttpResponse, HttpResponseForbidden
+from django.views.decorators.csrf import csrf_exempt
 from app.models import SocialNetwork
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
-
+@csrf_exempt
 def fb_real_time_updates(request):
     logger.info('Got a request!')
     if request.method == 'GET':
