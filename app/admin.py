@@ -13,7 +13,24 @@ from connectors.error import ConnectorError
 class SocialNetworkAdmin(admin.ModelAdmin):
     list_display = ('name', 'url', 'connector', )
     ordering = ('name', 'url', )
-    actions = ['subscribe_real_time_updates']
+    actions = ['subscribe_real_time_updates', 'delete_subscription_real_time_updates']
+
+    def delete_subscription_real_time_updates(self, request, queryset):
+        for obj in queryset:
+            if obj.subscribed_read_time_updates:
+                connector = obj.connector
+                sn_class = connector.connector_class.title()
+                sn_module = connector.connector_module.lower()
+                sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+                post_data = {'object': obj.object_real_time_updates}
+                try:
+                    sn.delete_subscription_real_time_updates(obj.connector.url_subscriptions, post_data)
+                except ConnectorError as e:
+                    self.message_user(request, e.reason, level=messages.ERROR)
+            else:
+                self.message_user(request, 'The social network has not been subscribed to receive real time update',
+                                  level=messages.WARNING)
+    delete_subscription_real_time_updates.short_description = 'Delete subscription to receive real time updates'
 
     def subscribe_real_time_updates(self, request, queryset):
         try:
@@ -27,27 +44,28 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                         self.message_user(request, 'Please indicate the callback, field and object on which to receive '
                                                    'the updates', level=messages.WARNING)
                     else:
-                        if obj.subscribed_read_time_updates:
-                            # Remove previous subscription
-                            requests.delete(url=obj.connect.url_real_time_updates)
-                        token = hashlib.sha1(os.urandom(128)).hexdigest()
-                        obj.token_real_time_updates = token
-                        obj.save()
-                        post_data = {'object': obj.object_real_time_updates,
-                                     'fields': obj.field_real_time_updates,
-                                     'callback_url': obj.callback_real_time_updates,
-                                     'verify_token': token}
-                        connector = obj.connector
-                        sn_class = connector.connector_class.title()
-                        sn_module = connector.connector_module.lower()
-                        sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-                        try:
-                            sn.subscribe_real_time_updates(obj.connector.url_subscriptions, post_data)
-                            obj.subscribed_read_time_updates = True
+                        if not obj.subscribed_read_time_updates:
+                            connector = obj.connector
+                            sn_class = connector.connector_class.title()
+                            sn_module = connector.connector_module.lower()
+                            sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+                            token = hashlib.sha1(os.urandom(128)).hexdigest()
+                            obj.token_real_time_updates = token
                             obj.save()
-                            self.message_user(request, 'Successful subscription to receive real time updates')
-                        except ConnectorError as e:
-                            self.message_user(request, e.reason, level=messages.ERROR)
+                            post_data = {'object': obj.object_real_time_updates,
+                                         'fields': obj.field_real_time_updates,
+                                         'callback_url': obj.callback_real_time_updates,
+                                         'verify_token': token}
+                            try:
+                                sn.subscribe_real_time_updates(obj.connector.url_subscriptions, post_data)
+                                obj.subscribed_read_time_updates = True
+                                obj.save()
+                                self.message_user(request, 'Successful subscription to receive real time updates')
+                            except ConnectorError as e:
+                                self.message_user(request, e.reason, level=messages.ERROR)
+                        else:
+                            self.message_user(request, 'Please delete the current subscription to receive real time '
+                                                       'updates')
         except AppError as e:
             self.message_user(request, e.reason, level=messages.ERROR)
     subscribe_real_time_updates.short_description = 'Subscribe to receive real time updates'
