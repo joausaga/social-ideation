@@ -25,6 +25,10 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                 post_data = {'object': obj.object_real_time_updates}
                 try:
                     sn.delete_subscription_real_time_updates(obj.connector.url_subscriptions, post_data)
+                    obj.subscribed_read_time_updates = False
+                    obj.token_real_time_updates = None
+                    obj.save()
+                    self.message_user(request, 'Successful delete of the subscription to receive real time updates')
                 except ConnectorError as e:
                     self.message_user(request, e.reason, level=messages.ERROR)
             else:
@@ -53,7 +57,7 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                             obj.token_real_time_updates = token
                             obj.save()
                             post_data = {'object': obj.object_real_time_updates,
-                                         'fields': obj.field_real_time_updates,
+                                         'fields': 'feed, category, description, website, picture',
                                          'callback_url': obj.callback_real_time_updates,
                                          'verify_token': token}
                             try:
