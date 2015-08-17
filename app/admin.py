@@ -23,7 +23,7 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                 sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
                 post_data = {'object': obj.object_real_time_updates}
                 try:
-                    sn.delete_subscription_real_time_updates(obj.app_id, obj.app_secret, post_data)
+                    sn.delete_subscription_real_time_updates(obj, post_data)
                     obj.subscribed_read_time_updates = False
                     obj.token_real_time_updates = None
                     obj.save()
@@ -56,7 +56,7 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                                      'callback_url': obj.callback_real_time_updates,
                                      'verify_token': token}
                         try:
-                            sn.subscribe_real_time_updates(obj.app_id, obj.app_secret, obj.page_id, post_data)
+                            sn.subscribe_real_time_updates(obj, post_data)
                             obj.subscribed_read_time_updates = True
                             obj.save()
                             self.message_user(request, 'Successful subscription to receive real time updates')

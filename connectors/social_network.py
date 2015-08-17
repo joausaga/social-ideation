@@ -13,7 +13,7 @@ class SocialNetworkBase():
 
     @classmethod
     @abc.abstractmethod
-    def authenticate(cls, app_id, app_secret, access_token, **kwargs):
+    def authenticate(cls, app):
         """Authenticate to the channel"""
         raise NotImplementedError
 
@@ -106,17 +106,9 @@ class Facebook(SocialNetworkBase):
     graph = None
     config_manager = None
     host = 'https://graph.facebook.com'
-    ver = '2.4'
+    ver = 'v2.4'
     api_real_time_subscription = host + '/' + ver + '/{}/' + 'subscriptions'
     api_app_page_subscription = host + '/' + ver + '/{}/' + 'subscribed_apps'
-
-    @classmethod
-    def get_page_token(cls, access_token, page_id):
-        graph = facebook.GraphAPI(access_token)
-        resp = graph.get_object('me/accounts')
-        for page in resp['data']:
-            if page['id'] == page_id:
-                return page['access_token']
 
     @classmethod
     def get_long_lived_access_token(cls, app_id, app_secret, access_token):
@@ -141,18 +133,13 @@ class Facebook(SocialNetworkBase):
         raise ConnectorError('Couldn\'t get long-lived page token')
 
     @classmethod
-    def authenticate(cls, app_id, app_secret, access_token, **kwargs):
-        exist_attr = True
-        page_token = None
-        if hasattr(kwargs['model'], 'page_token'):
-            page_token = getattr(kwargs['model'], 'page_token')
+    def authenticate(cls, app):
+        if not app.page_token:
+            page_token = cls.get_long_lived_page_token(app.app_id, app.app_secret, app.access_token, app.page_id)
+            app.page_token = page_token
+            app.save() # Save page token to use later
         else:
-            exist_attr = False
-        if not page_token:
-            page_token = cls.get_long_lived_page_token(app_id, app_secret, access_token, kwargs['page_id'])
-            if exist_attr:
-                setattr(kwargs['model'], 'page_token', page_token)
-                kwargs['model'].save()  # Save page token to use later
+            page_token = app.page_token
         cls.graph = facebook.GraphAPI(page_token)
 
     @classmethod
@@ -319,18 +306,24 @@ class Facebook(SocialNetworkBase):
             return err_msg
 
     @classmethod
-    def subscribe_real_time_updates(cls, app_id, app_secret, page_id, data):
-        access_token = facebook.get_app_access_token(app_id, app_secret)
-        page_token = cls.get_page_token(access_token, page_id)
-        url = cls.api_app_page_subscription.format(page_id)
-        data.update({'page_token': page_token})
-        resp = requests.post(url=url, data=data)
+    def subscribe_real_time_updates(cls, app, data):
+        if not app.page_token:
+            page_token = cls.get_long_lived_page_token(app.app_id, app.app_secret,
+                                                       app.access_token, app.page_id)
+            app.page_token = page_token
+            app.save()
+        else:
+            page_token = app.page_token
+        url = cls.api_app_page_subscription.format(app.page_id)
+        data_token = ({'access_token': page_token})
+        resp = requests.post(url=url, data=data_token)
         resp_text = json.loads(resp.text)
         if resp.status_code and not 200 <= resp.status_code < 300:
             raise ConnectorError(cls._get_req_error_msg(resp_text))
         else:
+            access_token = facebook.get_app_access_token(app.app_id, app.app_secret)
             data.update({'access_token': access_token})
-            url = cls.api_real_time_subscription.format(app_id)
+            url = cls.api_real_time_subscription.format(app.app_id)
             resp = requests.post(url=url, data=data)
             resp_text = json.loads(resp.text)
             if resp.status_code and not 200 <= resp.status_code < 300:
@@ -339,10 +332,10 @@ class Facebook(SocialNetworkBase):
                 return resp_text
 
     @classmethod
-    def delete_subscription_real_time_updates(cls, app_id, app_secret, data):
-        access_token = facebook.get_app_access_token(app_id, app_secret)
+    def delete_subscription_real_time_updates(cls, app, data):
+        access_token = facebook.get_app_access_token(app.app_id, app.app_secret)
         data.update({'access_token': access_token})
-        url = cls.api_real_time_subscription.format(app_id)
+        url = cls.api_real_time_subscription.format(app.app_id)
         resp = requests.delete(url=url, data=data)
         resp_text = json.loads(resp.text)
         if resp.status_code and not 200 <= resp.status_code < 300:

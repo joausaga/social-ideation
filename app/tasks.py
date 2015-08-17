@@ -42,8 +42,7 @@ def _update_or_create_author(platform, author, source):
                 sn_class = connector.connector_class.title()
                 sn_module = connector.connector_module.lower()
                 sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-                sn.authenticate(platform.app_id, platform.app_secret, platform.access_token,
-                                page_id=platform.page_id, model=platform)
+                sn.authenticate(platform)
                 author = sn.get_info_user(author['id'])
         attr_new_author = {'screen_name': author['name'], 'channel': source, 'external_id': author['id']}
         if 'email' in author.keys():
@@ -260,8 +259,7 @@ def _pull_content_social_network(social_network):
     sn_class = connector.connector_class.title()
     sn_module = connector.connector_module.lower()
     sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    sn.authenticate(social_network.app_id, social_network.app_secret, social_network.access_token,
-                    page_id=social_network.page_id, model=social_network)
+    sn.authenticate(social_network)
     posts = sn.get_posts()
     for post in posts:
         hashtags = _extract_hashtags(post)
@@ -427,8 +425,7 @@ def _do_push_content(obj, type):
                 sn_class = connector.connector_class.title()
                 sn_module = connector.connector_module.lower()
                 sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-                sn.authenticate(social_network.app_id, social_network.app_secret, social_network.access_token,
-                                page_id=social_network.page_id, model=social_network)
+                sn.authenticate(social_network)
                 # TODO: New text should be bounded by the social network's text length restriction
                 if obj.is_new:
                     obj.is_new = False
@@ -593,8 +590,7 @@ def _do_delete_content(obj, type):
             sn_class = connector.connector_class.title()
             sn_module = connector.connector_module.lower()
             sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-            sn.authenticate(social_network.app_id, social_network.app_secret, social_network.access_token,
-                            page_id=social_network.page_id, model=social_network)
+            sn.authenticate(social_network)
             if type == 'idea':
                 sn.delete_post(obj.sn_id)
                 logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
