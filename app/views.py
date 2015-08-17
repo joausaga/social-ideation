@@ -1,5 +1,6 @@
 import logging
 import hashlib
+import hmac
 import json
 
 from django.http import HttpResponse, HttpResponseForbidden
@@ -16,6 +17,12 @@ def _get_facebook_app():
             return app
     return None
 
+
+def _valid_request(app_secret, req_signature, payload):
+    exp_signature = 'sha1=' + hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+    return exp_signature == req_signature
+
+
 @csrf_exempt
 def fb_real_time_updates(request):
     fb_app = _get_facebook_app()
@@ -29,11 +36,8 @@ def fb_real_time_updates(request):
         elif request.method == 'POST':
             logger.info(request.body)
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
-            logger.info(req_signature)
-            exp_signature = 'sha1=' + hashlib.sha1('sha1='+unicode(request.body)+fb_app.app_secret).hexdigest()
-            logger.info(exp_signature)
-            req_json = json.loads(request.body)
-            if req_signature == exp_signature:
+            if _valid_request(fb_app.app_secret,req_signature,request.body):
+                req_json = json.loads(request.body)
                 logger.info(req_json)
                 return HttpResponse()
             else:
