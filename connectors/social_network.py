@@ -1,10 +1,8 @@
 from connectors.error import ConnectorError
 
 import abc
-import ConfigParser
 import facebook
 import json
-import os
 import requests
 
 class SocialNetworkBase():
@@ -15,7 +13,7 @@ class SocialNetworkBase():
 
     @classmethod
     @abc.abstractmethod
-    def authenticate(cls):
+    def authenticate(cls, app_id, app_secret, access_token, **kwargs):
         """Authenticate to the channel"""
         raise NotImplementedError
 
@@ -107,13 +105,14 @@ class SocialNetworkBase():
 class Facebook(SocialNetworkBase):
     graph = None
     config_manager = None
+    host = 'https://graph.facebook.com'
+    ver = '2.4'
+    api_real_time_subscription = host + '/' + ver + '/{}/' + 'subscriptions'
 
     @classmethod
-    def get_long_lived_access_token(cls):
-        access_token = cls.config_manager.get('facebook', 'access_token')
-        app_id = cls.config_manager.get('facebook', 'app_id')
-        app_secret = cls.config_manager.get('facebook', 'app_secret')
-        url = 'https://graph.facebook.com/oauth/access_token?client_id={}&client_secret={}&grant_type=fb_exchange_token&fb_exchange_token={}'
+    def get_long_lived_access_token(cls, app_id, app_secret, access_token):
+        url = cls.host + \
+              '/oauth/access_token?client_id={}&client_secret={}&grant_type=fb_exchange_token&fb_exchange_token={}'
         resp = requests.get(url=url.format(app_id,app_secret,access_token))
         if resp.status_code and not 200 <= resp.status_code < 300:
             raise ConnectorError('Error when trying to get long-lived access token')
@@ -122,33 +121,36 @@ class Facebook(SocialNetworkBase):
             return str_resp.split('&')[0].split('=')[1]
 
     @classmethod
-    def get_long_lived_page_token(cls):
-        access_token = cls.get_long_lived_access_token()
+    def get_long_lived_page_token(cls, app_id, app_secret, access_token, page_id):
+        access_token = cls.get_long_lived_access_token(app_id, app_secret, access_token)
         graph = facebook.GraphAPI(access_token)
         # Get page token to post as the page
         resp = graph.get_object('me/accounts')
         for page in resp['data']:
-            if page['id'] == cls.config_manager.get('facebook', 'page_id'):
+            if page['id'] == page_id:
                 return page['access_token']
         raise ConnectorError('Couldn\'t get long-lived page token')
 
     @classmethod
-    def authenticate(cls):
-        config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'connectors/config')
-        try:
-            cls.config_manager = ConfigParser.ConfigParser()
-            cls.config_manager.read(config_file)
-            long_lived_page_token = cls.config_manager.get('facebook', 'page_token')
-        except ConfigParser.NoOptionError:
-            long_lived_page_token = cls.get_long_lived_page_token()
-            cls.config_manager.set('facebook', 'page_token', long_lived_page_token)
-            # Save long-lived page token --which doesn't expire-- to use later
-            with open(config_file, 'wb') as configfile:
-                cls.config_manager.write(configfile)
-        cls.graph = facebook.GraphAPI(long_lived_page_token)
+    def authenticate(cls, app_id, app_secret, access_token, **kwargs):
+        exist_attr = True
+        page_token = None
+        if hasattr(kwargs['model'], 'page_token'):
+            page_token = getattr(kwargs['model'], 'page_token')
+        else:
+            exist_attr = False
+        if not page_token:
+            page_token = cls.get_long_lived_page_token(app_id, app_secret, access_token, kwargs['page_id'])
+            if exist_attr:
+                setattr(kwargs['model'], 'page_token', page_token)
+                kwargs['model'].save()  # Save page token to use later
+        cls.graph = facebook.GraphAPI(page_token)
 
     @classmethod
     def build_post_dict(cls, post_raw):
+        if not 'message' in post_raw.keys() or not post_raw['message'].strip():
+            # Posts without text are ignored
+            return None
         post_dict = {'id': post_raw['id'], 'text': post_raw['message'], 'title': '',
                      'user_info': {'name': post_raw['from']['name'], 'id': post_raw['from']['id']},
                      'url': post_raw['actions'][0]['link'], 'datetime': post_raw['created_time'],
@@ -157,6 +159,9 @@ class Facebook(SocialNetworkBase):
 
     @classmethod
     def build_comment_dict(cls, comment_raw, parent_type=None, parent_id=None):
+        if not comment_raw['message'].strip():
+            # Comments without text are ignored
+            return None
         comment_dict = {'id': comment_raw['id'], 'text': comment_raw['message'],
                         'user_info': {'name': comment_raw['from']['name'], 'id': comment_raw['from']['id']},
                         'datetime': comment_raw['created_time'], 'positive_votes': 0, 'negative_votes': 0, 'url': None,
@@ -177,10 +182,10 @@ class Facebook(SocialNetworkBase):
                 for element in elements['data']:
                     if type_elements == 'posts':
                         post_dict = cls.get_element(element, 'post')
-                        elements_array.append(post_dict)
+                        if post_dict: elements_array.append(post_dict)
                     elif type_elements == 'comments':
                         comment_dict = cls.get_element(element, 'comment', parent_type, parent_id)
-                        elements_array.append(comment_dict)
+                        if comment_dict: elements_array.append(comment_dict)
                     else:
                         like_dict = cls.get_element(element, 'like', parent_type, parent_id)
                         elements_array.append(like_dict)
@@ -194,27 +199,29 @@ class Facebook(SocialNetworkBase):
     def get_element(cls, element, type_element, parent_type=None, parent_id=None):
         if type_element == 'post':
             post_dict = cls.build_post_dict(element)
-            if 'comments' in element.keys():
-                comments_array = cls.get_elements(element['comments'], 'comments', 'post', element['id'])
-                post_dict.update({'comments_array': comments_array})
-                post_dict.update({'comments': len(comments_array)})
-            if 'likes' in element.keys():
-                likes_array = cls.get_elements(element['likes'], 'likes', 'post', element['id'])
-                post_dict.update({'positive_votes': len(likes_array)})
-                post_dict.update({'votes_array': likes_array})
+            if post_dict:
+                if 'comments' in element.keys():
+                    comments_array = cls.get_elements(element['comments'], 'comments', 'post', element['id'])
+                    post_dict.update({'comments_array': comments_array})
+                    post_dict.update({'comments': len(comments_array)})
+                if 'likes' in element.keys():
+                    likes_array = cls.get_elements(element['likes'], 'likes', 'post', element['id'])
+                    post_dict.update({'positive_votes': len(likes_array)})
+                    post_dict.update({'votes_array': likes_array})
             return post_dict
         elif type_element == 'comment':
             comment_dict = cls.build_comment_dict(element, parent_type, parent_id)
-            replies = cls.graph.get_connections(element['id'], 'comments')
-            if len(replies['data']) > 0:
-                reply_array = cls.get_elements(replies, 'comments', 'comment', element['id'])
-                comment_dict.update({'comments': len(reply_array)})
-                comment_dict.update({'comments_array': reply_array})
-            likes = cls.graph.get_connections(element['id'], 'likes')
-            if len(likes['data']) > 0:
-                likes_array = cls.get_elements(likes, 'likes', 'comment', element['id'])
-                comment_dict.update({'positive_votes': len(likes_array)})
-                comment_dict.update({'votes_array': likes_array})
+            if comment_dict:
+                replies = cls.graph.get_connections(element['id'], 'comments')
+                if len(replies['data']) > 0:
+                    reply_array = cls.get_elements(replies, 'comments', 'comment', element['id'])
+                    comment_dict.update({'comments': len(reply_array)})
+                    comment_dict.update({'comments_array': reply_array})
+                likes = cls.graph.get_connections(element['id'], 'likes')
+                if len(likes['data']) > 0:
+                    likes_array = cls.get_elements(likes, 'likes', 'comment', element['id'])
+                    comment_dict.update({'positive_votes': len(likes_array)})
+                    comment_dict.update({'votes_array': likes_array})
             return comment_dict
         else:
             like_dict = cls.build_like_dict(element, parent_type, parent_id)
@@ -295,18 +302,14 @@ class Facebook(SocialNetworkBase):
         return {'id': raw_user['id'], 'name': raw_user['name'], 'url': raw_user['link']}
 
     @classmethod
-    def subscribe_real_time_updates(cls, url, data):
-        config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'connectors/config')
-        cls.config_manager = ConfigParser.ConfigParser()
-        cls.config_manager.read(config_file)
-        app_id = cls.config_manager.get('facebook', 'app_id')
-        app_secret = cls.config_manager.get('facebook', 'app_secret')
+    def subscribe_real_time_updates(cls, app_id, app_secret, data):
         access_token = facebook.get_app_access_token(app_id, app_secret)
         data.update({'access_token': access_token})
+        url = cls.api_real_time_subscription.format(app_id)
         resp = requests.post(url=url, data=data)
+        resp_text = json.loads(resp.text)
         if resp.status_code and not 200 <= resp.status_code < 300:
             err_msg = 'Error when trying to make the subscription to receive real time updates'
-            resp_text = json.loads(resp.text)
             if 'error' in resp_text.keys():
                 if 'message' in resp_text['error'].keys():
                     raise ConnectorError('{}. Message: {}'.format(err_msg, resp_text['error']['message']))
@@ -314,17 +317,13 @@ class Facebook(SocialNetworkBase):
                     raise ConnectorError(err_msg)
             else:
                 raise ConnectorError(err_msg)
+        return resp_text
 
     @classmethod
-    def delete_subscription_real_time_updates(cls, url, data):
-        config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                   'connectors/config')
-        cls.config_manager = ConfigParser.ConfigParser()
-        cls.config_manager.read(config_file)
-        app_id = cls.config_manager.get('facebook', 'app_id')
-        app_secret = cls.config_manager.get('facebook', 'app_secret')
+    def delete_subscription_real_time_updates(cls, app_id, app_secret, data):
         access_token = facebook.get_app_access_token(app_id, app_secret)
         data.update({'access_token': access_token})
+        url = cls.api_real_time_subscription.format(app_id)
         resp = requests.delete(url=url, data=data)
         if resp.status_code and not 200 <= resp.status_code < 300:
             err_msg = 'Error when trying to make the subscription to receive real time updates'
@@ -337,8 +336,8 @@ class Facebook(SocialNetworkBase):
             else:
                 raise ConnectorError(err_msg)
 
-if __name__ == "__main__":
-    Facebook.authenticate()
-    #print Facebook.get_posts()
-    #Facebook.publish_post('Hello from social_network.py!')
-    #print Facebook.get_info_user('435131070002704')
+#if __name__ == "__main__":
+#Facebook.authenticate()
+#print Facebook.get_posts()
+#Facebook.publish_post('Hello from social_network.py!')
+#print Facebook.get_info_user('435131070002704')
