@@ -1,4 +1,6 @@
 import logging
+import hashlib
+import json
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
@@ -6,21 +8,32 @@ from app.models import SocialNetworkApp
 
 logger = logging.getLogger(__name__)
 
+
+def _get_facebook_app():
+    apps = SocialNetworkApp.objects.all()
+    for app in apps:
+        if app.connector.name.lower() == 'facebook':
+            return app
+    return None
+
 @csrf_exempt
 def fb_real_time_updates(request):
-    logger.info('Got a request!')
-    if request.method == 'GET':
-        challenge = request.GET.get('hub.challenge')
-        token = request.GET.get('hub.verify_token')
-        fb = SocialNetworkApp.objects.get(name__contains='Facebook')
-        if fb.token_real_time_updates == token:
-            logger.info('Token received!')
-            return HttpResponse(challenge)
-        else:
-            logger.warning('Token is not the same!')
-            return HttpResponseForbidden()
-    elif request.method == 'POST':
-        logger.info('There is an update!')
-        return HttpResponse()
-    else:
-        return HttpResponseForbidden()
+    fb_app = _get_facebook_app()
+    if fb_app:
+        if request.method == 'GET':
+            challenge = request.GET.get('hub.challenge')
+            token = request.GET.get('hub.verify_token')
+            if fb_app.token_real_time_updates == token:
+                logger.info('Token received!')
+                return HttpResponse(challenge)
+        elif request.method == 'POST':
+            logger.info('There is an update!')
+            req_signature = request.META.get('X_HUB_SIGNATURE')
+            exp_signature = hashlib.sha1('sha1='+request.body+fb_app.app_secret)
+            if req_signature == exp_signature:
+                req_json = json.loads(request.body)
+                logger.info(req_json)
+                return HttpResponse()
+            else:
+                logger.info('The received signature does not correspond to the expected one!')
+    return HttpResponseForbidden()

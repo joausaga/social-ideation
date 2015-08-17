@@ -39,9 +39,9 @@ class SocialNetworkAdmin(admin.ModelAdmin):
         try:
             for obj in queryset:
                 if not obj.callback_real_time_updates or not obj.field_real_time_updates or \
-                   not obj.object_real_time_updates:
-                    self.message_user(request, 'Please indicate the callback, field and object on which to receive '
-                                               'the updates', level=messages.WARNING)
+                   not obj.object_real_time_updates or not obj.page_id:
+                    self.message_user(request, 'Please indicate the page id, callback, field and object',
+                                      level=messages.WARNING)
                 else:
                     if not obj.subscribed_read_time_updates:
                         connector = obj.connector
@@ -56,7 +56,7 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                                      'callback_url': obj.callback_real_time_updates,
                                      'verify_token': token}
                         try:
-                            sn.subscribe_real_time_updates(obj.app_id, obj.app_secret, post_data)
+                            sn.subscribe_real_time_updates(obj.app_id, obj.app_secret, obj.page_id, post_data)
                             obj.subscribed_read_time_updates = True
                             obj.save()
                             self.message_user(request, 'Successful subscription to receive real time updates')

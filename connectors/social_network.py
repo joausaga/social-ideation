@@ -108,6 +108,15 @@ class Facebook(SocialNetworkBase):
     host = 'https://graph.facebook.com'
     ver = '2.4'
     api_real_time_subscription = host + '/' + ver + '/{}/' + 'subscriptions'
+    api_app_page_subscription = host + '/' + ver + '/{}/' + 'subscribed_apps'
+
+    @classmethod
+    def get_page_token(cls, access_token, page_id):
+        graph = facebook.GraphAPI(access_token)
+        resp = graph.get_object('me/accounts')
+        for page in resp['data']:
+            if page['id'] == page_id:
+                return page['access_token']
 
     @classmethod
     def get_long_lived_access_token(cls, app_id, app_secret, access_token):
@@ -302,22 +311,32 @@ class Facebook(SocialNetworkBase):
         return {'id': raw_user['id'], 'name': raw_user['name'], 'url': raw_user['link']}
 
     @classmethod
-    def subscribe_real_time_updates(cls, app_id, app_secret, data):
+    def _get_req_error_msg(cls, resp_text):
+        err_msg = 'Error when trying to make the subscription to receive real time updates'
+        if 'error' in resp_text.keys() and 'message' in resp_text['error'].keys():
+            return '{}. Message: {}'.format(err_msg, resp_text['error']['message'])
+        else:
+            return err_msg
+
+    @classmethod
+    def subscribe_real_time_updates(cls, app_id, app_secret, page_id, data):
         access_token = facebook.get_app_access_token(app_id, app_secret)
-        data.update({'access_token': access_token})
-        url = cls.api_real_time_subscription.format(app_id)
+        page_token = cls.get_page_token(access_token, page_id)
+        url = cls.api_app_page_subscription.format(page_id)
+        data.update({'page_token': page_token})
         resp = requests.post(url=url, data=data)
         resp_text = json.loads(resp.text)
         if resp.status_code and not 200 <= resp.status_code < 300:
-            err_msg = 'Error when trying to make the subscription to receive real time updates'
-            if 'error' in resp_text.keys():
-                if 'message' in resp_text['error'].keys():
-                    raise ConnectorError('{}. Message: {}'.format(err_msg, resp_text['error']['message']))
-                else:
-                    raise ConnectorError(err_msg)
+            raise ConnectorError(cls._get_req_error_msg(resp_text))
+        else:
+            data.update({'access_token': access_token})
+            url = cls.api_real_time_subscription.format(app_id)
+            resp = requests.post(url=url, data=data)
+            resp_text = json.loads(resp.text)
+            if resp.status_code and not 200 <= resp.status_code < 300:
+                raise ConnectorError(cls._get_req_error_msg(resp_text))
             else:
-                raise ConnectorError(err_msg)
-        return resp_text
+                return resp_text
 
     @classmethod
     def delete_subscription_real_time_updates(cls, app_id, app_secret, data):
@@ -325,16 +344,11 @@ class Facebook(SocialNetworkBase):
         data.update({'access_token': access_token})
         url = cls.api_real_time_subscription.format(app_id)
         resp = requests.delete(url=url, data=data)
+        resp_text = json.loads(resp.text)
         if resp.status_code and not 200 <= resp.status_code < 300:
-            err_msg = 'Error when trying to make the subscription to receive real time updates'
-            resp_text = json.loads(resp.text)
-            if 'error' in resp_text.keys():
-                if 'message' in resp_text['error'].keys():
-                    raise ConnectorError('{}. Message: {}'.format(err_msg, resp_text['error']['message']))
-                else:
-                    raise ConnectorError(err_msg)
-            else:
-                raise ConnectorError(err_msg)
+            raise ConnectorError(cls._get_req_error_msg(resp_text))
+        else:
+            return resp_text
 
 #if __name__ == "__main__":
 #Facebook.authenticate()
