@@ -30,7 +30,8 @@ def fb_real_time_updates(request):
             logger.info('There is an update!')
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
             logger.info(req_signature)
-            exp_signature = hashlib.sha1('sha1='+request.body+fb_app.app_secret).hexdigest()
+            exp_signature = hashlib.sha1(request.body+fb_app.app_secret).hexdigest()
+            exp_signature = 'sha1=' + exp_signature
             logger.info(exp_signature)
             req_json = json.loads(request.body)
             if req_signature == exp_signature:
