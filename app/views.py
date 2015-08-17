@@ -29,9 +29,12 @@ def fb_real_time_updates(request):
         elif request.method == 'POST':
             logger.info('There is an update!')
             req_signature = request.META.get('X_HUB_SIGNATURE')
+            logger.info(req_signature)
             exp_signature = hashlib.sha1('sha1='+request.body+fb_app.app_secret)
+            logger.info(exp_signature)
+            req_json = json.loads(request.body)
+            logger.info(req_json)
             if req_signature == exp_signature:
-                req_json = json.loads(request.body)
                 logger.info(req_json)
                 return HttpResponse()
             else:
