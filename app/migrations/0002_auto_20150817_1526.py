@@ -7,13 +7,13 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0008_auto_20150626_0958'),
+        ('app', '0001_initial'),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='initiative',
-            name='platform',
-            field=models.ForeignKey(editable=False, to='app.ConsultationPlatform'),
+            model_name='socialnetworkapp',
+            name='subscribed_read_time_updates',
+            field=models.BooleanField(default=False, editable=False),
         ),
     ]

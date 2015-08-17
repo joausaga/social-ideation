@@ -1,10 +1,9 @@
 import hashlib
 import os
-import requests
 
 from django.contrib import admin, messages
-from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetwork, Idea, Comment, Vote
-from app.tasks import synchronize_content, test_function
+from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetworkApp, Idea, Comment, Vote
+from app.tasks import test_function
 from app.error import AppError
 from connectors.admin import do_request, get_json_or_error, get_url_cb, build_request_url
 from connectors.error import ConnectorError
@@ -24,7 +23,7 @@ class SocialNetworkAdmin(admin.ModelAdmin):
                 sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
                 post_data = {'object': obj.object_real_time_updates}
                 try:
-                    sn.delete_subscription_real_time_updates(obj.connector.url_subscriptions, post_data)
+                    sn.delete_subscription_real_time_updates(obj.app_id, obj.app_secret, post_data)
                     obj.subscribed_read_time_updates = False
                     obj.token_real_time_updates = None
                     obj.save()
@@ -39,37 +38,33 @@ class SocialNetworkAdmin(admin.ModelAdmin):
     def subscribe_real_time_updates(self, request, queryset):
         try:
             for obj in queryset:
-                if not obj.connector.url_subscriptions:
-                    self.message_user(request, 'Please set in the connector the subscription URL',
-                                      level=messages.WARNING)
+                if not obj.callback_real_time_updates or not obj.field_real_time_updates or \
+                   not obj.object_real_time_updates:
+                    self.message_user(request, 'Please indicate the callback, field and object on which to receive '
+                                               'the updates', level=messages.WARNING)
                 else:
-                    if not obj.callback_real_time_updates or not obj.field_real_time_updates or \
-                       not obj.object_real_time_updates:
-                        self.message_user(request, 'Please indicate the callback, field and object on which to receive '
-                                                   'the updates', level=messages.WARNING)
-                    else:
-                        if not obj.subscribed_read_time_updates:
-                            connector = obj.connector
-                            sn_class = connector.connector_class.title()
-                            sn_module = connector.connector_module.lower()
-                            sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-                            token = hashlib.sha1(os.urandom(128)).hexdigest()
-                            obj.token_real_time_updates = token
+                    if not obj.subscribed_read_time_updates:
+                        connector = obj.connector
+                        sn_class = connector.connector_class.title()
+                        sn_module = connector.connector_module.lower()
+                        sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+                        token = hashlib.sha1(os.urandom(128)).hexdigest()
+                        obj.token_real_time_updates = token
+                        obj.save()
+                        post_data = {'object': obj.object_real_time_updates,
+                                     'fields': obj.field_real_time_updates,
+                                     'callback_url': obj.callback_real_time_updates,
+                                     'verify_token': token}
+                        try:
+                            sn.subscribe_real_time_updates(obj.app_id, obj.app_secret, post_data)
+                            obj.subscribed_read_time_updates = True
                             obj.save()
-                            post_data = {'object': obj.object_real_time_updates,
-                                         'fields': 'feed, category, description, website, picture',
-                                         'callback_url': obj.callback_real_time_updates,
-                                         'verify_token': token}
-                            try:
-                                sn.subscribe_real_time_updates(obj.connector.url_subscriptions, post_data)
-                                obj.subscribed_read_time_updates = True
-                                obj.save()
-                                self.message_user(request, 'Successful subscription to receive real time updates')
-                            except ConnectorError as e:
-                                self.message_user(request, e.reason, level=messages.ERROR)
-                        else:
-                            self.message_user(request, 'Please delete the current subscription to receive real time '
-                                                       'updates')
+                            self.message_user(request, 'Successful subscription to receive real time updates')
+                        except ConnectorError as e:
+                            self.message_user(request, e.reason, level=messages.ERROR)
+                    else:
+                        self.message_user(request, 'Please delete the current subscription to receive real time '
+                                                   'updates')
         except AppError as e:
             self.message_user(request, e.reason, level=messages.ERROR)
     subscribe_real_time_updates.short_description = 'Subscribe to receive real time updates'
@@ -264,10 +259,11 @@ class VoteAdmin(admin.ModelAdmin):
             return obj.source_social.name.title()
     vote_source.short_description = 'Source'
 
+
 admin.site.register(ConsultationPlatform, ConsultationPlatformAdmin)
 admin.site.register(Initiative, InitiativeAdmin)
 admin.site.register(Campaign, CampaignAdmin)
-admin.site.register(SocialNetwork, SocialNetworkAdmin)
+admin.site.register(SocialNetworkApp, SocialNetworkAdmin)
 admin.site.register(Idea, IdeaAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Vote, VoteAdmin)

@@ -2,7 +2,7 @@ import logging
 
 from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
-from app.models import SocialNetwork
+from app.models import SocialNetworkApp
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +12,7 @@ def fb_real_time_updates(request):
     if request.method == 'GET':
         challenge = request.GET.get('hub.challenge')
         token = request.GET.get('hub.verify_token')
-        fb = SocialNetwork.objects.get(name__contains='Facebook')
+        fb = SocialNetworkApp.objects.get(name__contains='Facebook')
         if fb.token_real_time_updates == token:
             logger.info('Token received!')
             return HttpResponse(challenge)

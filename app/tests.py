@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from app.models import Idea, Author, Location, ConsultationPlatform, Initiative, SocialNetwork
+from app.models import Idea, Author, Location, ConsultationPlatform, Initiative, SocialNetworkApp
 from app.tasks import pull_data, push_data, delete_data
 from utils import build_request_url, do_request, get_url_cb, get_json_or_error, build_request_body
 
@@ -22,7 +22,7 @@ class AppTestCase(TestCase):
     def setUp(self):
         self.consultation_platform = ConsultationPlatform.objects.get(url=self.consultation_platform_url)
         self.cp_connector = self.consultation_platform.connector
-        self.social_network = SocialNetwork.objects.get(url=self.social_network_url)
+        self.social_network = SocialNetworkApp.objects.get(url=self.social_network_url)
         fb_connector = self.social_network.connector
         sn_class = fb_connector.connector_class.title()
         sn_module = fb_connector.connector_module.lower()

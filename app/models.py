@@ -3,16 +3,21 @@ import connectors.models
 from django.db import models
 
 
-class SocialNetwork(models.Model):
+class SocialNetworkApp(models.Model):
     name = models.CharField(max_length=50)
     url = models.URLField(null=True, blank=True)
     connector = models.OneToOneField(connectors.models.SocialNetworkConnector)
     blocked = models.DateTimeField(null=True, editable=False, default=None)
-    callback_real_time_updates = models.URLField(null=True)
-    object_real_time_updates = models.CharField(max_length=50, null=True)
-    field_real_time_updates = models.CharField(max_length=50, null=True)
+    app_id = models.CharField(max_length=50)
+    app_secret = models.CharField(max_length=50, null=True, blank=True)
+    page_id = models.CharField(max_length=50, null=True, blank=True)
+    access_token = models.CharField(max_length=300, null=True)
+    page_token = models.CharField(max_length=300, null=True, blank=True)
+    callback_real_time_updates = models.URLField(null=True, blank=True)
+    object_real_time_updates = models.CharField(max_length=100, null=True, blank=True)
+    field_real_time_updates = models.CharField(max_length=50, null=True, blank=True)
     token_real_time_updates = models.CharField(max_length=100, null=True, editable=False)
-    subscribed_read_time_updates = models.BooleanField(default=False)
+    subscribed_read_time_updates = models.BooleanField(default=False, editable=False)
 
     def __unicode__(self):
         return self.name
@@ -31,7 +36,7 @@ class Initiative(models.Model):
     external_id = models.IntegerField(editable=False)
     name = models.CharField(max_length=50, editable=False)
     platform = models.ForeignKey(ConsultationPlatform, editable=False)
-    social_network = models.ManyToManyField(SocialNetwork, blank=True)
+    social_network = models.ManyToManyField(SocialNetworkApp, blank=True)
     hashtag = models.CharField(unique=True, max_length=14, null=True,
                                help_text="Max length 14 characters (do not include '#')")
     url = models.URLField(editable=False)
@@ -83,7 +88,7 @@ class Author(models.Model):
     url = models.URLField(null=True, blank=True)
     channel = models.CharField(max_length=50, choices=(('consultation_platform', 'Consultation Platform'),
                                                        ('social_network', 'Social Network'),))
-    social_network = models.ForeignKey(SocialNetwork, null=True)
+    social_network = models.ForeignKey(SocialNetworkApp, null=True)
     consultation_platform = models.ForeignKey(ConsultationPlatform, null=True)
     # Property to save any other information
     payload = models.TextField(null=True, editable=False)
@@ -106,7 +111,7 @@ class BaseContent(models.Model):
     source = models.CharField(max_length=50, choices=(('consultation_platform', 'Consultation Platform'),
                                                       ('social_network', 'Social Network'),))
     source_consultation = models.ForeignKey(ConsultationPlatform, null=True)
-    source_social = models.ForeignKey(SocialNetwork, null=True)
+    source_social = models.ForeignKey(SocialNetworkApp, null=True)
     # Property to save any other information
     payload = models.TextField(null=True, editable=False)
     # Flags
