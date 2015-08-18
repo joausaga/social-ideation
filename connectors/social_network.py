@@ -343,6 +343,8 @@ class Facebook(SocialNetworkBase):
         else:
             return resp_text
 
+
+
 #if __name__ == "__main__":
 #Facebook.authenticate()
 #print Facebook.get_posts()

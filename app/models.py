@@ -18,6 +18,7 @@ class SocialNetworkApp(models.Model):
     field_real_time_updates = models.CharField(max_length=50, null=True, blank=True)
     token_real_time_updates = models.CharField(max_length=100, null=True, editable=False)
     subscribed_read_time_updates = models.BooleanField(default=False, editable=False)
+    last_real_time_update_sig = models.CharField(max_length=100, null=True, editable=False)
 
     def __unicode__(self):
         return self.name

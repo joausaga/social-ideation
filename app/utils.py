@@ -3,6 +3,7 @@ import re
 import unicodedata
 import six
 
+from django.utils import timezone
 from celery.utils.log import get_task_logger
 from connectors.error import ConnectorError
 
@@ -129,29 +130,6 @@ def validate_email_local_part(str):
         return local
 
 
-def generate_idea_title_from_text(text):
-    title = ''
-    TITLE_LENGTH = 64  # Taking as reference IdeaScale's limitation
-
-    for word in text.split():
-        if not '#' in word:
-            if len(title) + len(word) <= TITLE_LENGTH:
-                title += ' ' + word
-            else:
-                break
-
-    return convert_to_utf8_str(title.strip().title())
-
-
-def remove_hashtags(text):
-    text_without_hashtags = ''
-
-    for word in text.split():
-        if not '#' in word:
-            text_without_hashtags += word + ' '
-
-    return text_without_hashtags
-
 def convert_to_utf8_str(arg):
     # written by Michael Norton (http://docondev.blogspot.com/)
     if isinstance(arg, six.text_type):
@@ -161,3 +139,7 @@ def convert_to_utf8_str(arg):
     elif isinstance(arg, bytes):
         arg = arg.decode('utf-8')
     return arg
+
+
+def get_timezone_aware_datetime(datetime):
+    return timezone.make_aware(datetime, timezone.get_default_timezone())
