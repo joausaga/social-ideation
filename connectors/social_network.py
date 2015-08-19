@@ -4,6 +4,7 @@ import abc
 import facebook
 import json
 import requests
+import urllib
 
 class SocialNetworkBase():
     # Abstract base class from where
@@ -237,13 +238,9 @@ class Facebook(SocialNetworkBase):
             return cls.graph.put_wall_post(message)
 
     @classmethod
-    def edit_post(cls, id_post, new_message, attachment=None):
-        if attachment:
-            attachment.update({'message': new_message})
-            return cls.graph.request(cls.graph.version + "/" + id_post, post_args=attachment, method="POST")
-        else:
-            return cls.graph.request(cls.graph.version + "/" + id_post, post_args={'message': new_message},
-                                     method="POST")
+    def edit_post(cls, id_post, new_message):
+        return cls.graph.request(cls.graph.version + "/" + id_post, post_args={'message': new_message},
+                                 method="POST")
         #  cls.graph.edit_message_post(post_id=id_post, message=new_message)
 
     @classmethod
@@ -273,7 +270,8 @@ class Facebook(SocialNetworkBase):
 
     @classmethod
     def edit_comment(cls, id_comment, message):
-        return cls.graph.request(cls.graph.version + "/" + id_comment, post_args={'message': message}, method="POST")
+        return cls.graph.request(cls.graph.version + "/" + id_comment, post_args={'message': message},
+                                 method="POST")
 
     @classmethod
     def delete_comment(cls, id_comment):
@@ -343,6 +341,26 @@ class Facebook(SocialNetworkBase):
         else:
             return resp_text
 
+    @classmethod
+    def create_batch_request(cls, uri, msg, attachment=None):
+        if attachment:
+            body = attachment
+            body.update({'message': msg})
+        else:
+            body = {'message': msg}
+        return {'method': 'POST', 'relative_url': uri,
+                'body': urllib.urlencode(body),
+                'omit_response_on_success': False}
+
+    @classmethod
+    def make_batch_request(cls, app, batch):
+        cls.authenticate(app)
+        ret = cls.graph.request(cls.graph.version + "/",
+                                post_args={'batch': json.dumps(batch),
+                                           'access_token': app.page_token,
+                                           'include_headers': 'false'},
+                                method="POST")
+        return json.load(ret)
 
 
 #if __name__ == "__main__":

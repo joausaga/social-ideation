@@ -19,6 +19,8 @@ class SocialNetworkApp(models.Model):
     token_real_time_updates = models.CharField(max_length=100, null=True, editable=False)
     subscribed_read_time_updates = models.BooleanField(default=False, editable=False)
     last_real_time_update_sig = models.CharField(max_length=100, null=True, editable=False)
+    batch_requests = models.BooleanField(default=False)
+    max_batch_requests = models.IntegerField(null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -46,6 +48,8 @@ class Initiative(models.Model):
     votes = models.IntegerField(editable=False, default=0)
     comments = models.IntegerField(editable=False, default=0)
     active = models.BooleanField(default=False)
+    language = models.CharField(max_length=5, default='en', choices=(('en', 'English'), ('es', 'Spanish'),
+                                                                     ('it', 'Italian'),))
 
     def __unicode__(self):
         return self.name

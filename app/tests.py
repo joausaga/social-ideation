@@ -27,7 +27,7 @@ class AppTestCase(TestCase):
         sn_class = fb_connector.connector_class.title()
         sn_module = fb_connector.connector_module.lower()
         self.sn_api = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-        self.sn_api.authenticate()
+        self.sn_api.authenticate(self.social_network)
         self._clean_up_facebook_page()
         self._clean_up_ideascale_community()
         self._set_ideascale_counters()

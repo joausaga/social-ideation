@@ -81,16 +81,26 @@ def pull_data():
 
 
 def push_data():
+    batch_req_ideas = {}
+    batch_req_comments = {}
     # Push ideas to consultation platforms and social networks
     logger.info('Pushing ideas to social networks and consultation platforms')
     existing_ideas = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
                      order_by('datetime')
+    tot_ideas = len(existing_ideas)
+    count_ideas = 0
     for idea in existing_ideas:
+        count_ideas += 1
         try:
             if idea.initiative.active:
-                if idea.source == 'social_network' and \
-                   not idea.source_social.subscribed_read_time_updates:
-                    do_push_content(idea, 'idea')
+                if idea.source == 'social_network':
+                    if not idea.source_social.subscribed_read_time_updates:
+                        do_push_content(idea, 'idea')
+                else:
+                    if count_ideas == tot_ideas:
+                        batch_req_ideas = do_push_content(idea, 'idea', True, batch_req_ideas)
+                    else:
+                        batch_req_ideas = do_push_content(idea, 'idea', False, batch_req_ideas)
         except Exception as e:
             if idea.source == 'consultation_platform':
                 logger.warning('Error when trying to publish the idea with the id={} on the social networks. '
@@ -103,12 +113,20 @@ def push_data():
     logger.info('Pushing comments to social networks and consultation platforms')
     existing_comments = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
                         order_by('datetime')
+    tot_comments = len(existing_comments)
+    count_comments = 0
     for comment in existing_comments:
+        count_comments += 1
         try:
             if comment.initiative.active:
-                if comment.source == 'social_network' and \
-                   not comment.source_social.subscribed_read_time_updates:
-                    do_push_content(comment, 'comment')
+                if comment.source == 'social_network':
+                    if not comment.source_social.subscribed_read_time_updates:
+                        do_push_content(comment, 'comment')
+                else:
+                    if count_comments == tot_comments:
+                        batch_req_comments = do_push_content(comment, 'comment', True, batch_req_comments)
+                    else:
+                        batch_req_comments = do_push_content(comment, 'comment', False, batch_req_comments)
         except Exception as e:
             if comment.source == 'consultation_platform':
                 logger.warning('Error when trying to publish the comment with the id={} on the social networks. '
@@ -126,8 +144,10 @@ def delete_data():
     for idea in unexisting_ideas:
         try:
             if idea.initiative.active:
-                if idea.source == 'social_network' and \
-                   not idea.source_social.subscribed_read_time_updates:
+                if idea.source == 'social_network':
+                    if not idea.source_social.subscribed_read_time_updates:
+                        do_delete_content(idea, 'idea')
+                else:
                     do_delete_content(idea, 'idea')
         except Exception as e:
             if idea.source == 'consultation_platform':
@@ -143,8 +163,10 @@ def delete_data():
     for comment in unexisting_comments:
         try:
             if comment.initiative.active:
-                if comment.source == 'social_network' and \
-                   not comment.source_social.subscribed_read_time_updates:
+                if comment.source == 'social_network':
+                    if not comment.source_social.subscribed_read_time_updates:
+                        do_delete_content(comment, 'comment')
+                else:
                     do_delete_content(comment, 'comment')
         except Exception as e:
             if comment.source == 'consultation_platform':
@@ -187,8 +209,5 @@ def synchronize_content():
         logger.info('The synchronization is already being executed by another worker')
 
 
-@shared_task
 def test_function():
-    x = 10
-    y = 10
-    print('The sum of {} + {} = {}'.format(x,y,x+y))
+    pass

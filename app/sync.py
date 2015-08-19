@@ -178,20 +178,45 @@ def do_create_update_vote(platform, initiative, vote, source):
                      format(vote['id'], vote['parent_type'], vote['parent_id']))
 
 
-def publish_idea_sn(idea, sn_app):
+def _get_str_language(lang, type):
+    if lang == 'es':
+        if type == 'votes':
+            return 'Votos +: {}/-: {}'
+        elif type == 'desc_attach':
+            return 'Idea enviada por {} en el marco de la iniciativa {}'
+        elif type == 'author':
+            return 'Autor: {} ({})'
+    elif lang == 'it':
+        if type == 'votes':
+            return 'Votos +: {}/-: {}'
+        elif type == 'desc_attach':
+            return 'L\' idea e stata inviata da {} per l\'iniziativa {}'
+        elif type == 'author':
+            return 'Autore: {} ({})'
+    else:  # lang == 'en'
+        if type == 'votes':
+            return 'Votes +: {}/-: {}'
+        elif type == 'desc_attach':
+            return 'Idea contributed by {} in the initiative {}'
+        elif type == 'author':
+            return 'Author: {} ({})'
+
+
+
+def publish_idea_sn(idea, sn_app, mode=None):
+    initiative = idea.initiative
     LOGO_IDEASCALE_VIA = 'https://dl.dropboxusercontent.com/u/55956367/via_is_white.png'
     template_idea_sn = '----------------\n' \
                        '{}\n' \
                        '----------------\n\n' \
                        '{}\n\n' \
                        '#{} #{}\n\n' \
-                       '----------------\n' \
-                       'Votes Up: {}/Down: {}'
-    desc_attachment = 'Idea contributed by {} in the initiative {}'
+                       '----------------\n{}'.format(_get_str_language(initiative.language, 'votes'))
+    desc_attachment = _get_str_language(initiative.language, 'desc_attach')
+    my_feed_uri = 'me/feed'
 
     text_uf8 = convert_to_utf8_str(idea.text)
     author_name_utf8 = convert_to_utf8_str(idea.author.screen_name)
-    initiative = idea.initiative
     campaign = idea.campaign
     ini_hashtag = initiative.hashtag
     cam_hashtag = campaign.hashtag
@@ -200,9 +225,9 @@ def publish_idea_sn(idea, sn_app):
     sn_class = connector.connector_class.title()
     sn_module = connector.connector_module.lower()
     sn_connector = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    sn_connector.authenticate(sn_app)
+    if not mode:
+        sn_connector.authenticate(sn_app)
     if idea.is_new:
-        idea.is_new = False
         title_utf8 = convert_to_utf8_str(idea.title)
         text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(),
                                              cam_hashtag.lower(), idea.positive_votes,
@@ -214,34 +239,42 @@ def publish_idea_sn(idea, sn_app):
             'description': desc_attachment.format(author_name_utf8, initiative.name),
             'picture': LOGO_IDEASCALE_VIA
         }
+        if mode and mode == 'batch':
+            return sn_connector.create_batch_request(my_feed_uri, text_to_sn, attachment)
         try:
             new_post = sn_connector.publish_post(text_to_sn, attachment)
             idea.sn_id = new_post['id']
+            idea.is_new = False
+            idea.sync = True
+            idea.save()
         except Exception as e:
             if 'blocked' in e.message:
                 sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
                 sn_app.save()
             raise AppError(e)
     elif idea.has_changed:
-        idea.has_changed = False
         title_utf8 = convert_to_utf8_str(idea.title)
         text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
                                              idea.positive_votes, idea.negative_votes)
+        if mode and mode == 'batch':
+            return sn_connector.create_batch_request(idea.sn_id, text_to_sn)
         try:
             sn_connector.edit_post(idea.sn_id, text_to_sn)
+            idea.has_changed = False
+            idea.sync = True
+            idea.save()
         except Exception as e:
             if 'blocked' in e.message:
                 sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
                 sn_app.save()
             raise AppError(e)
-    idea.sync = True
-    idea.save()
 
 
-def publish_comment_sn(comment, sn_app):
-    template_comment_sn = '{}\n\n----\n' \
-                          'Votes Up: {}/Down: {}\n' \
-                          'Author: {} ({})'
+def publish_comment_sn(comment, sn_app, mode=None):
+    initiative = comment.initiative
+    template_comment_sn = '{}\n\n----\n{}\n{}'.format(_get_str_language(initiative.language, 'votes'),
+                                                      _get_str_language(initiative.language, 'author'))
+    comment_uri = '{}/comments'
 
     text_uf8 = convert_to_utf8_str(comment.text)
     author_name_utf8 = convert_to_utf8_str(comment.author.screen_name)
@@ -249,17 +282,23 @@ def publish_comment_sn(comment, sn_app):
     sn_class = connector.connector_class.title()
     sn_module = connector.connector_module.lower()
     sn_connector = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    sn_connector.authenticate(sn_app)
+    if not mode:
+        sn_connector.authenticate(sn_app)
     if comment.is_new:
-        comment.is_new = False
         text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
                                                 author_name_utf8, comment.source_consultation.name)
         if comment.parent == 'idea':
             parent = Idea.objects.get(id=comment.parent_idea.id)
             if parent:
+                if mode and mode == 'batch':
+                    uri = comment_uri.format(parent.sn_id)
+                    return sn_connector.create_batch_request(uri, text_to_sn)
                 try:
                     new_comment = sn_connector.comment_post(parent.sn_id, text_to_sn)
                     comment.sn_id = new_comment['id']
+                    comment.is_new = False
+                    comment.sync = True
+                    comment.save()
                 except Exception as e:
                     if 'blocked' in e.message:
                         sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
@@ -271,9 +310,15 @@ def publish_comment_sn(comment, sn_app):
             try:
                 parent = Comment.objects.get(id=comment.parent_comment.id)
                 if parent:
+                    if mode and mode == 'batch':
+                        uri = comment_uri.format(parent.sn_id)
+                        return sn_connector.create_batch_request(uri, text_to_sn)
                     try:
                         new_comment = sn_connector.comment_comment(parent.sn_id, text_to_sn)
                         comment.sn_id = new_comment['id']
+                        comment.is_new = False
+                        comment.sync = True
+                        comment.save()
                     except Exception as e:
                         if 'blocked' in e.message:
                             sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
@@ -287,29 +332,31 @@ def publish_comment_sn(comment, sn_app):
         else:
             raise AppError('Unknown the type of the object\'s parent')
     elif comment.has_changed:
-        comment.has_changed = False
         text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
                                                 author_name_utf8, comment.source_consultation.name)
+        if mode and mode == 'batch':
+            return sn_connector.create_batch_request(comment.sn_id, text_to_sn)
         try:
             sn_connector.edit_comment(comment.sn_id, text_to_sn)
+            comment.has_changed = False
+            comment.sync = True
+            comment.save()
         except Exception as e:
             if 'blocked' in e.message:
                 sn_app.blocked = timezone.make_aware(datetime.now(),
                                                              timezone.get_default_timezone())
                 sn_app.save()
             raise AppError(e)
-    comment.sync = True
-    comment.save()
 
 
 def publish_idea_cp(idea):
-    template_idea_cp = '{}\n\n----------------\n\nAuthor: {}'
+    initiative = idea.initiative
+    template_idea_cp = '{}\n\n----------------\n\n{}'.format(_get_str_language(initiative.language, 'author'))
 
     text_uf8 = convert_to_utf8_str(idea.text)
     author_name_utf8 = convert_to_utf8_str(idea.author.screen_name)
     text_cplatform = remove_hashtags(text_uf8)
 
-    initiative = idea.initiative
     campaign = idea.campaign
     cplatform = initiative.platform
     connector = cplatform.connector
@@ -342,13 +389,13 @@ def publish_idea_cp(idea):
 
 
 def publish_comment_cp(comment):
-    template_comment_cp = '{}\nAuthor: {}'
+    initiative = comment.initiative
+    template_comment_cp = '{}\n{}'.format(_get_str_language(initiative.language, 'author'))
 
     text_uf8 = convert_to_utf8_str(comment.text)
     author_name_utf8 = convert_to_utf8_str(comment.author.screen_name)
     text_cplatform = remove_hashtags(text_uf8)
 
-    initiative = comment.initiative
     cplatform = initiative.platform
     connector = cplatform.connector
 
@@ -617,7 +664,7 @@ def _is_social_network_enabled(social_network):
         t_now = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
         t_delta = t_now - social_network.blocked
         if t_delta.seconds >= 600:
-            # Let's try again if 10 minutes have passed
+            # Let's try again if 10 minutes have already passed
             social_network.blocked = None
             social_network.save()
             return True
@@ -625,19 +672,70 @@ def _is_social_network_enabled(social_network):
             return False
 
 
-def do_push_content(obj, type):
+def _do_batch_request(sn_app, batch):
+    connector = sn_app.connector
+    sn_class = connector.connector_class.title()
+    sn_module = connector.connector_module.lower()
+    sn_connector = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+    return sn_connector.make_batch_request(batch)
+
+
+def _process_batch_request(resp_batch_req, objs):
+    for i in range(1,len(resp_batch_req)):
+        req = resp_batch_req[i]
+        obj = objs[i]
+        if req['code'] == 200:
+            obj.sn_id = req['body']['id']
+            obj.is_new = False
+            obj.has_change = False
+            obj.sync = True
+            obj.save()
+
+
+def do_push_content(obj, type, last_obj=None, batch_reqs=None):
     if obj.source == 'consultation_platform':
         # Push object to the initiative's social networks
         for social_network in obj.initiative.social_network.all():
             if _is_social_network_enabled(social_network):
                 if type == 'idea':
-                    publish_idea_sn(obj, social_network)
+                    if social_network.batch_requests:
+                        if not social_network.name.lower() in batch_reqs.keys():
+                            batch_reqs[social_network.name.lower()] = {'reqs': [], 'objs': []}
+                        batch_reqs[social_network.name.lower()]['reqs'].\
+                            append(publish_idea_sn(obj, social_network, 'batch'))
+                        batch_reqs[social_network.name.lower()]['objs'].append(obj)
+                        if len(batch_reqs[social_network.name.lower()]) == social_network.max_batch_requests:
+                            ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
+                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                            batch_reqs[social_network.name.lower()]['reqs'] = []
+                            batch_reqs[social_network.name.lower()]['objs'] = []
+                        elif last_obj:
+                            ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
+                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                    else:
+                        publish_idea_sn(obj, social_network)
                 elif type == 'comment':
-                    publish_comment_sn(obj, social_network)
+                    if social_network.batch_requests:
+                        if not social_network.name.lower() in batch_reqs.keys():
+                            batch_reqs[social_network.name.lower()] = {'reqs': [], 'objs': []}
+                        batch_reqs[social_network.name.lower()]['reqs'].\
+                            append(publish_comment_sn(obj, social_network, 'batch'))
+                        batch_reqs[social_network.name.lower()]['objs'].append(obj)
+                        if len(batch_reqs[social_network.name.lower()]) == social_network.max_batch_requests:
+                            ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
+                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                            batch_reqs[social_network.name.lower()]['reqs'] = []
+                            batch_reqs[social_network.name.lower()]['objs'] = []
+                        elif last_obj:
+                            ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
+                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                    else:
+                        publish_comment_sn(obj, social_network)
                 else:
                     logger.info('Objects of type {} are ignored and not synchronized'.format(type))
             else:
                 logger.info('Still blocked to post on {}'.format(social_network.name))
+        return batch_reqs
     else:
         # Push object to the initiative's consultation_platform
         if type == 'idea':
