@@ -16,6 +16,8 @@ urlpatterns = [
     url(r'^ideas/(?P<initiative_id>[0-9]+)$', views.Ideas.as_view()),
     # ex: /idea/idea_id
     url(r'^idea/(?P<idea_id>[0-9]+)$', views.IdeaDetail.as_view()),
+    # ex: /idea/attach/idea_id
+    url(r'^idea/attach-file/(?P<idea_id>[0-9]+)$', views.IdeaAttachFile.as_view()),
     # ex: /authors/initiative_id
     url(r'^authors/(?P<initiative_id>[0-9]+)$', views.Authors.as_view()),
     # ex: /author/user_id

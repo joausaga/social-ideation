@@ -1,4 +1,5 @@
 import logging
+import os
 
 from ideascale.models import Idea, Initiative, TestingParameter, Campaign, Client, Author, Location, Comment, Vote
 from ideascale.serializers import IdeaSerializer, InitiativeSerializer, CampaignSerializer, AuthorSerializer, \
@@ -477,6 +478,29 @@ class IdeaDetail(ISObjectDetail):
             api = get_api_obj(idea.campaign.initiative)
             api.delete_idea(idea_id)
             return super(IdeaDetail, self).delete(request, idea_id)
+        except IdeaScalyError as e:
+            return Response('Error: {}'.format(e.reason), status=status.HTTP_400_BAD_REQUEST)
+
+
+class IdeaAttachFile(APIView):
+    """
+    Attach a file to an idea
+    """
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, idea_id, format=None):
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, idea_id, format=None):
+        try:
+            file_name = request.data['file_name']
+            file_path = str(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                            'static/{}'.format(file_name)))
+            idea = Idea.objects.get(ideascale_id=idea_id)
+            api = get_api_obj(idea.campaign.initiative)
+            api.attach_file_to_idea(filename=file_path, ideaId=idea_id)
+            return Response(status=status.HTTP_200_OK)
         except IdeaScalyError as e:
             return Response('Error: {}'.format(e.reason), status=status.HTTP_400_BAD_REQUEST)
 

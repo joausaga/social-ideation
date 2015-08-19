@@ -371,6 +371,16 @@ def publish_idea_cp(idea):
         resp = do_request(connector, url, url_cb.callback.method, body_param)
         new_content = get_json_or_error(connector.name, url_cb.callback, resp)
         idea.cp_id = new_content['id']
+        try:
+            # Attach img to the new idea
+            url_cb = get_url_cb(connector, 'attach_img_idea_cb')
+            url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea.cp_id})
+            params = {'file_name': 'via_fb.png'}
+            body_param = build_request_body(connector, url_cb.callback, params)
+            do_request(connector, url, url_cb.callback.method, body_param)
+        except Exception as e:
+            logger.warning('An error occurred when trying to attach an image to the new idea. '
+                           'Reason: {}'.format(e))
     elif idea.has_changed:
         idea.has_changed = False
         text_to_cp = template_idea_cp.format(text_cplatform, author_name_utf8)
