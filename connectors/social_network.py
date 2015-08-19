@@ -20,7 +20,7 @@ class SocialNetworkBase():
 
     @classmethod
     @abc.abstractmethod
-    def get_posts(cls):
+    def get_posts(cls, page_id):
         """Search for posts published to the page"""
         raise NotImplementedError
 
@@ -225,8 +225,8 @@ class Facebook(SocialNetworkBase):
             return like_dict
 
     @classmethod
-    def get_posts(cls):
-        posts = cls.graph.get_connections(cls.config_manager.get('facebook', 'page_id'), 'feed')
+    def get_posts(cls, page_id):
+        posts = cls.graph.get_connections(page_id, 'feed')
         posts_array = cls.get_elements(posts, 'posts')
         return posts_array
 
@@ -360,7 +360,7 @@ class Facebook(SocialNetworkBase):
                                            'access_token': app.page_token,
                                            'include_headers': 'false'},
                                 method="POST")
-        return json.load(ret)
+        return ret
 
 
 #if __name__ == "__main__":

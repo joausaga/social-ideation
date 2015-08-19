@@ -21,25 +21,29 @@ def _pull_content_social_network(social_network):
     sn_module = connector.connector_module.lower()
     sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
     sn.authenticate(social_network)
-    posts = sn.get_posts()
-    for post in posts:
-        ret_data = save_sn_post(social_network, post)
-        if ret_data:
-            if 'comments_array' in post.keys():
-                for comment in post['comments_array']:
-                    save_sn_comment(social_network, comment)
-                    # Process comment's replies
-                    if 'comments_array' in comment.keys():
-                        for reply in comment['comments_array']:
-                            save_sn_comment(social_network, reply)
-                    # Process comment's votes
-                    if 'votes_array' in comment.keys():
-                        for vote in comment['votes_array']:
-                            save_sn_vote(social_network, vote)
-            # Save/Update votes
-            if 'votes_array' in post.keys():
-                for vote in post['votes_array']:
-                    save_sn_vote(social_network, vote)
+    if social_network.page_id:
+        posts = sn.get_posts(social_network.page_id)
+        for post in posts:
+            ret_data = save_sn_post(social_network, post)
+            if ret_data:
+                if 'comments_array' in post.keys():
+                    for comment in post['comments_array']:
+                        save_sn_comment(social_network, comment)
+                        # Process comment's replies
+                        if 'comments_array' in comment.keys():
+                            for reply in comment['comments_array']:
+                                save_sn_comment(social_network, reply)
+                        # Process comment's votes
+                        if 'votes_array' in comment.keys():
+                            for vote in comment['votes_array']:
+                                save_sn_vote(social_network, vote)
+                # Save/Update votes
+                if 'votes_array' in post.keys():
+                    for vote in post['votes_array']:
+                        save_sn_vote(social_network, vote)
+    else:
+        logger.warning('Cannot pull content from the social network {}. Reason: Page id not found'.
+                       format(social_network.name))
 
 
 def _pull_content_consultation_platform(platform, initiative):
@@ -87,17 +91,18 @@ def push_data():
     logger.info('Pushing ideas to social networks and consultation platforms')
     existing_ideas = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
                      order_by('datetime')
-    tot_ideas = len(existing_ideas)
-    count_ideas = 0
+    tot_ideas_to_sn = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
+                      filter(source='consultation_platform').filter(is_new=True).count()
+    count_ideas_to_sn = 0
     for idea in existing_ideas:
-        count_ideas += 1
         try:
             if idea.initiative.active:
                 if idea.source == 'social_network':
                     if not idea.source_social.subscribed_read_time_updates:
                         do_push_content(idea, 'idea')
                 else:
-                    if count_ideas == tot_ideas:
+                    if idea.is_new:  count_ideas_to_sn += 1
+                    if count_ideas_to_sn == tot_ideas_to_sn:
                         batch_req_ideas = do_push_content(idea, 'idea', True, batch_req_ideas)
                     else:
                         batch_req_ideas = do_push_content(idea, 'idea', False, batch_req_ideas)
@@ -113,17 +118,18 @@ def push_data():
     logger.info('Pushing comments to social networks and consultation platforms')
     existing_comments = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
                         order_by('datetime')
-    tot_comments = len(existing_comments)
-    count_comments = 0
+    tot_comments_to_sn = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
+                         filter(source='consultation_platform').filter(is_new=True).count()
+    count_comments_to_sn = 0
     for comment in existing_comments:
-        count_comments += 1
         try:
             if comment.initiative.active:
                 if comment.source == 'social_network':
                     if not comment.source_social.subscribed_read_time_updates:
                         do_push_content(comment, 'comment')
                 else:
-                    if count_comments == tot_comments:
+                    if comment.is_new: count_comments_to_sn += 1
+                    if count_comments_to_sn == tot_comments_to_sn:
                         batch_req_comments = do_push_content(comment, 'comment', True, batch_req_comments)
                     else:
                         batch_req_comments = do_push_content(comment, 'comment', False, batch_req_comments)

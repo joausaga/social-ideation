@@ -1,4 +1,5 @@
 import logging
+import json
 
 from app.error import AppError
 from app.models import Idea, Author, Location, Initiative, Comment, Vote, Campaign, ConsultationPlatform, \
@@ -185,6 +186,8 @@ def _get_str_language(lang, type):
         elif type == 'desc_attach':
             return 'Idea enviada por {} en el marco de la iniciativa {}'
         elif type == 'author':
+            return 'Autor: {}'
+        elif type == 'author_p':
             return 'Autor: {} ({})'
     elif lang == 'it':
         if type == 'votes':
@@ -192,15 +195,19 @@ def _get_str_language(lang, type):
         elif type == 'desc_attach':
             return 'L\' idea e stata inviata da {} per l\'iniziativa {}'
         elif type == 'author':
+            return 'Autore: {}'
+        elif type == 'author_p':
             return 'Autore: {} ({})'
-    else:  # lang == 'en'
+    else:
+        # default: lang == 'en'
         if type == 'votes':
             return 'Votes +: {}/-: {}'
         elif type == 'desc_attach':
             return 'Idea contributed by {} in the initiative {}'
         elif type == 'author':
+            return 'Author: {}'
+        elif type == 'author_p':
             return 'Author: {} ({})'
-
 
 
 def publish_idea_sn(idea, sn_app, mode=None):
@@ -211,7 +218,8 @@ def publish_idea_sn(idea, sn_app, mode=None):
                        '----------------\n\n' \
                        '{}\n\n' \
                        '#{} #{}\n\n' \
-                       '----------------\n{}'.format(_get_str_language(initiative.language, 'votes'))
+                       '----------------\n'
+    template_idea_sn = template_idea_sn + _get_str_language(initiative.language, 'votes')
     desc_attachment = _get_str_language(initiative.language, 'desc_attach')
     my_feed_uri = 'me/feed'
 
@@ -256,8 +264,6 @@ def publish_idea_sn(idea, sn_app, mode=None):
         title_utf8 = convert_to_utf8_str(idea.title)
         text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
                                              idea.positive_votes, idea.negative_votes)
-        if mode and mode == 'batch':
-            return sn_connector.create_batch_request(idea.sn_id, text_to_sn)
         try:
             sn_connector.edit_post(idea.sn_id, text_to_sn)
             idea.has_changed = False
@@ -272,8 +278,9 @@ def publish_idea_sn(idea, sn_app, mode=None):
 
 def publish_comment_sn(comment, sn_app, mode=None):
     initiative = comment.initiative
-    template_comment_sn = '{}\n\n----\n{}\n{}'.format(_get_str_language(initiative.language, 'votes'),
-                                                      _get_str_language(initiative.language, 'author'))
+    template_comment_sn = '{}\n\n----\n'
+    template_comment_sn += _get_str_language(initiative.language, 'votes') + '\n'
+    template_comment_sn += _get_str_language(initiative.language, 'author_p')
     comment_uri = '{}/comments'
 
     text_uf8 = convert_to_utf8_str(comment.text)
@@ -334,8 +341,6 @@ def publish_comment_sn(comment, sn_app, mode=None):
     elif comment.has_changed:
         text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
                                                 author_name_utf8, comment.source_consultation.name)
-        if mode and mode == 'batch':
-            return sn_connector.create_batch_request(comment.sn_id, text_to_sn)
         try:
             sn_connector.edit_comment(comment.sn_id, text_to_sn)
             comment.has_changed = False
@@ -351,8 +356,8 @@ def publish_comment_sn(comment, sn_app, mode=None):
 
 def publish_idea_cp(idea):
     initiative = idea.initiative
-    template_idea_cp = '{}\n\n----------------\n\n{}'.format(_get_str_language(initiative.language, 'author'))
-
+    template_idea_cp = '{}\n\n----------------\n\n'
+    template_idea_cp += _get_str_language(initiative.language, 'author_p')
     text_uf8 = convert_to_utf8_str(idea.text)
     author_name_utf8 = convert_to_utf8_str(idea.author.screen_name)
     text_cplatform = remove_hashtags(text_uf8)
@@ -360,9 +365,9 @@ def publish_idea_cp(idea):
     campaign = idea.campaign
     cplatform = initiative.platform
     connector = cplatform.connector
+    sn_source = idea.source_social.connector.name
+    text_to_cp = template_idea_cp.format(text_cplatform, author_name_utf8, sn_source)
     if idea.is_new:
-        idea.is_new = False
-        text_to_cp = template_idea_cp.format(text_cplatform, author_name_utf8)
         url_cb = get_url_cb(connector, 'create_idea_cb')
         url = build_request_url(url_cb.url, url_cb.callback, {'initiative_id': initiative.external_id})
         params = {'title': generate_idea_title_from_text(idea.text), 'text': text_to_cp,
@@ -371,19 +376,18 @@ def publish_idea_cp(idea):
         resp = do_request(connector, url, url_cb.callback.method, body_param)
         new_content = get_json_or_error(connector.name, url_cb.callback, resp)
         idea.cp_id = new_content['id']
+        idea.is_new = False
         try:
             # Attach img to the new idea
-            url_cb = get_url_cb(connector, 'attach_img_idea_cb')
+            url_cb = get_url_cb(connector, 'attach_file_idea_cb')
             url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea.cp_id})
-            params = {'file_name': 'via_fb.png'}
+            params = {'file_str': 'via_fb.png'}
             body_param = build_request_body(connector, url_cb.callback, params)
             do_request(connector, url, url_cb.callback.method, body_param)
         except Exception as e:
             logger.warning('An error occurred when trying to attach an image to the new idea. '
                            'Reason: {}'.format(e))
     elif idea.has_changed:
-        idea.has_changed = False
-        text_to_cp = template_idea_cp.format(text_cplatform, author_name_utf8)
         try:
             url_cb = get_url_cb(connector, 'update_idea_cb')
             url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea.cp_id})
@@ -391,6 +395,7 @@ def publish_idea_cp(idea):
                       'campaign_id': campaign.external_id}
             body_param = build_request_body(connector, url_cb.callback, params)
             do_request(connector, url, url_cb.callback.method, body_param)
+            idea.has_changed = False
         except:
             logger.info('Cannon\'t find the url of the callback to update ideas '
                         'through the API of {}'.format(cplatform.name))
@@ -400,19 +405,19 @@ def publish_idea_cp(idea):
 
 def publish_comment_cp(comment):
     initiative = comment.initiative
-    template_comment_cp = '{}\n{}'.format(_get_str_language(initiative.language, 'author'))
+    template_comment_cp = '{}\n'
+    template_comment_cp += _get_str_language(initiative.language, 'author_p')
 
     text_uf8 = convert_to_utf8_str(comment.text)
     author_name_utf8 = convert_to_utf8_str(comment.author.screen_name)
     text_cplatform = remove_hashtags(text_uf8)
 
+    sn_source = comment.source_social.connector.name
     cplatform = initiative.platform
     connector = cplatform.connector
-
-    text_to_cp = template_comment_cp.format(text_cplatform, author_name_utf8)
+    text_to_cp = template_comment_cp.format(text_cplatform, author_name_utf8, sn_source)
     params = {'text': text_to_cp}
     if comment.is_new:
-        comment.is_new = False
         if comment.parent == 'idea':
             url_cb = get_url_cb(connector, 'create_comment_idea_cb')
             url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': comment.parent_idea.cp_id})
@@ -425,15 +430,15 @@ def publish_comment_cp(comment):
         resp = do_request(connector, url, url_cb.callback.method, body_param)
         new_content = get_json_or_error(connector.name, url_cb.callback, resp)
         comment.cp_id = new_content['id']
+        comment.is_new = False
     elif comment.has_changed:
-        comment.has_changed = False
-        text_to_cp = template_comment_cp.format(text_cplatform, author_name_utf8)
         try:
             url_cb = get_url_cb(connector, 'update_comment_cb')
             url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': comment.cp_id})
             params = {'text': text_to_cp}
             body_param = build_request_body(connector, url_cb.callback, params)
             do_request(connector, url, url_cb.callback.method, body_param)
+            comment.has_changed = False
         except:
             logger.info('Cannon\'t find the url of the callback to update comments '
                         'through the API of {}'.format(cplatform.name))
@@ -498,9 +503,6 @@ def save_sn_post(sn_app, post):
         else:
             logger.warning('An error occurred when trying to create/update the post {}. '
                            'Reason: The initiative could not be found'.format(post))
-    else:
-        logger.warning('An error occurred when trying to create/update the post {}. '
-                       'Reason: The hashtags could not be found'.format(post))
     return None
 
 
@@ -687,15 +689,21 @@ def _do_batch_request(sn_app, batch):
     sn_class = connector.connector_class.title()
     sn_module = connector.connector_module.lower()
     sn_connector = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    return sn_connector.make_batch_request(batch)
+    return sn_connector.make_batch_request(sn_app, batch)
 
 
 def _process_batch_request(resp_batch_req, objs):
-    for i in range(1,len(resp_batch_req)):
+    for i in range(0,len(resp_batch_req)):
         req = resp_batch_req[i]
         obj = objs[i]
         if req['code'] == 200:
-            obj.sn_id = req['body']['id']
+            body_json = json.loads(req['body'])
+            sn_obj_id = body_json['id']
+            if type(sn_obj_id) == type(' '.decode()):
+                id = sn_obj_id.encode()
+            else:
+                id = sn_obj_id
+            obj.sn_id = id
             obj.is_new = False
             obj.has_change = False
             obj.sync = True
@@ -708,7 +716,7 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
         for social_network in obj.initiative.social_network.all():
             if _is_social_network_enabled(social_network):
                 if type == 'idea':
-                    if social_network.batch_requests:
+                    if social_network.batch_requests and obj.is_new:
                         if not social_network.name.lower() in batch_reqs.keys():
                             batch_reqs[social_network.name.lower()] = {'reqs': [], 'objs': []}
                         batch_reqs[social_network.name.lower()]['reqs'].\
@@ -725,7 +733,7 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
                     else:
                         publish_idea_sn(obj, social_network)
                 elif type == 'comment':
-                    if social_network.batch_requests:
+                    if social_network.batch_requests and obj.is_new:
                         if not social_network.name.lower() in batch_reqs.keys():
                             batch_reqs[social_network.name.lower()] = {'reqs': [], 'objs': []}
                         batch_reqs[social_network.name.lower()]['reqs'].\
