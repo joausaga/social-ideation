@@ -137,14 +137,13 @@ def fb_real_time_updates(request):
             challenge = request.GET.get('hub.challenge')
             token = request.GET.get('hub.verify_token')
             if fb_app.token_real_time_updates == token:
-                logger.info('Token received!')
                 return HttpResponse(challenge)
         elif request.method == 'POST':
-            logger.info(request.body)
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
             exp_signature = _calculate_signature(fb_app.app_secret,request.body)
             if req_signature == exp_signature and \
                not exp_signature == fb_app.last_real_time_update_sig:
+                logger.info(request.body)
                 # I'm comparing the current signature against the last one
                 # to discard duplicates that seem to arrive consecutively
                 _process_post_request(fb_app, exp_signature, request.body)
