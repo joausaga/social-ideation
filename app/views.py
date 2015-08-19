@@ -118,7 +118,10 @@ def _process_post_request(fb_app, exp_signature, payload):
 
 
 def _calculate_signature(app_secret, payload):
-    return 'sha1=' + hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+    logger.info('hi!')
+    sig = 'sha1=' + hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+    logger.info(sig)
+    return sig
 
 
 def _get_facebook_app():
@@ -140,9 +143,6 @@ def fb_real_time_updates(request):
         elif request.method == 'POST':
             logger.info(request.body)
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
-            logger.info(req_signature)
-            logger.info(fb_app)
-            logger.info(fb_app.name)
             exp_signature = _calculate_signature(fb_app.app_secret,request.body)
             logger.info(exp_signature)
             logger.info(fb_app.last_real_time_update_sig)
