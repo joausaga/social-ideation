@@ -24,8 +24,8 @@ def _process_post(post_id, update, fb_app, u_datetime):
         # Posts without text are ignored
         return None
     url = template_url_post.format(post_id.split('_')[0],post_id.split('_')[1])
-    post = {'id': post_id, 'text': update['message'], 'title': '',
-            'user_info': {'name': update['sender_name'], 'id': update['sender_id']},
+    post = {'id': post_id, 'text': str(update['message']), 'title': '',
+            'user_info': {'name': str(update['sender_name']), 'id': str(update['sender_id'])},
             'url': url, 'datetime': u_datetime, 'positive_votes': 0, 'negative_votes': 0,
             'comments': 0}
     ret_data = save_sn_post(fb_app, post)
@@ -40,10 +40,10 @@ def _process_comment(comment_id, comment_raw, fb_app, c_datetime):
         parent_type = 'post'
     else:
         parent_type = 'comment'
-    comment = {'id': comment_id, 'text': comment_raw['message'],
-               'user_info': {'name': comment_raw['sender_name'], 'id': comment_raw['sender_id']},
+    comment = {'id': comment_id, 'text': str(comment_raw['message']),
+               'user_info': {'name': str(comment_raw['sender_name']), 'id': str(comment_raw['sender_id'])},
                'datetime': c_datetime, 'positive_votes': 0, 'negative_votes': 0, 'url': None,
-               'parent_type': parent_type, 'parent_id': comment_raw['parent_id'], 'comments': 0}
+               'parent_type': parent_type, 'parent_id': str(comment_raw['parent_id']), 'comments': 0}
     ret_data = save_sn_comment(fb_app, comment)
     if ret_data: publish_comment_cp(ret_data['comment'])
 
@@ -57,27 +57,28 @@ def _process_like(like_raw, fb_app, l_datetime):
         parent_type = 'post'
     else:
         parent_type = 'comment'
-
     like = {'id': _generate_like_id(like_raw),
-            'user_info': {'id': like_raw['sender_id'], 'name': like_raw['sender_name']},
-            'parent_type': parent_type, 'parent_id': like_raw['parent_id'], 'value': 1,
+            'user_info': {'id': str(like_raw['sender_id']), 'name': str(like_raw['sender_name'])},
+            'parent_type': parent_type, 'parent_id': str(like_raw['parent_id']), 'value': 1,
             'datetime': l_datetime}
     save_sn_vote(fb_app, like)
 
 
 def _process_update(fb_app, update, u_datetime):
-    logger.info('Update is going to be process')
+    logger.info('Update is going to be processed')
 
     if update['item'] == 'post' or update['item'] == 'share':
-        post_id = update['post_id']
+        logger.info('Item of type {}'.format(update['item']))
+        post_id = str(update['post_id'])
         if update['verb'] == 'add':
             _process_post(post_id, update, fb_app, u_datetime)
         elif update['verb'] == 'remove':
+            logger.info('Post is going to be deleted')
             delete_post(post_id)
         else:
             logger.info('Action type {} are ignored'.format(update['verb']))
     elif update['item'] == 'comment':
-        comment_id = update['comment_id']
+        comment_id = str(update['comment_id'])
         if update['verb'] == 'add':
             _process_comment(comment_id, update, fb_app, u_datetime)
         elif update['verb'] == 'remove':
