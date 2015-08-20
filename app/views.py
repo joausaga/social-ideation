@@ -94,12 +94,16 @@ def _process_update(fb_app, update, u_datetime):
 
 
 def _get_datetime(raw_datetime):
-    dt = datetime.datetime.fromtimestamp(raw_datetime)
-    if timezone.is_naive(dt):
-        return get_timezone_aware_datetime(dt).isoformat()
-    else:
-        return dt.isoformat()
-
+    try:
+        dt = datetime.datetime.fromtimestamp(raw_datetime)
+        if timezone.is_naive(dt):
+            return get_timezone_aware_datetime(dt).isoformat()
+        else:
+            return dt.isoformat()
+    except Exception as e:
+        logger.warning('Error when trying to calculate the update datetime. Reason: {}'.format(e))
+        logger.warning(traceback.format_exc())
+        return None
 
 def _encode_payload(payload):
     try:
@@ -117,24 +121,23 @@ def _process_post_request(fb_app, exp_signature, payload):
     # Save the current signature
     fb_app.last_real_time_update_sig = str(exp_signature)
     fb_app.save()
-    logger.info('Before converting to json')
     req_json = json.loads(payload)
-    logger.info(req_json)
     req_json = _encode_payload(req_json)
     if req_json['object'] == fb_app.object_real_time_updates:
         entries = req_json['entry']
         for entry in entries:
-            logger.info(entry)
             if entry['id'] == fb_app.page_id:
-                logger.info(entry['time'])
+                logger.info(entry)
                 e_datetime = _get_datetime(entry['time'])
-                changes = entry['changes']
-                for change in changes:
-                    if change['field'] == fb_app.field_real_time_updates:
-                        _process_update(fb_app, change['value'], e_datetime)
-                    else:
-                        logger.info('Unknown update field. Expected: {}, received: {}'.
-                                    format(fb_app.field_real_time_updates, change['field']))
+                logger.info(e_datetime)
+                if e_datetime:
+                    changes = entry['changes']
+                    for change in changes:
+                        if change['field'] == fb_app.field_real_time_updates:
+                            _process_update(fb_app, change['value'], e_datetime)
+                        else:
+                            logger.info('Unknown update field. Expected: {}, received: {}'.
+                                        format(fb_app.field_real_time_updates, change['field']))
             else:
                 logger.info('Unknown page id {}. Update will be ignored'.format(entry['id']))
     else:
