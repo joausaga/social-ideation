@@ -66,7 +66,7 @@ def _process_like(like_raw, fb_app, l_datetime):
 
 
 def _process_update(fb_app, update, u_datetime):
-    if update['item'] == 'post':
+    if update['item'] == 'post' or update['item'] == 'share':
         post_id = update['post_id']
         if update['verb'] == 'add':
             _process_post(post_id, update, fb_app, u_datetime)
@@ -153,6 +153,7 @@ def fb_real_time_updates(request):
             if fb_app.token_real_time_updates == token:
                 return HttpResponse(challenge)
         elif request.method == 'POST':
+            logger.info(request.body)
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
             exp_signature = _calculate_signature(fb_app.app_secret, request.body)
             if req_signature == exp_signature and \
