@@ -121,13 +121,13 @@ def _process_post_request(fb_app, exp_signature, payload):
 def _calculate_signature(app_secret, payload):
     logger.info('before calculating the signature!')
     try:
-        hex_sig = hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+        hex_sig = hmac.new(app_secret, msg=payload, digestmod=hashlib.sha1).hexdigest()
         logger.info('hex: '.format(hex_sig))
         sig = 'sha1=' + hex_sig
         logger.info(sig)
         return sig
     except Exception as e:
-        logger.warning(e)
+        logger.warning('Signature could not be generated. Reason: {}'.format(e))
         logger.warning(traceback.format_exc())
         return None
 
