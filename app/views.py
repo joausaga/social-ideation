@@ -102,10 +102,15 @@ def _get_datetime(raw_datetime):
 
 
 def _encode_payload(payload):
-    if type(payload) == type(' '.decode()):
-        return payload.encode()
-    else:
-        id = payload
+    try:
+        if type(payload) == type(' '.decode()):
+            return payload.encode()
+        else:
+            return payload
+    except Exception as e:
+        logger.warning('Error when trying to encode a payload. Reason: {}'.format(e))
+        logger.warning(traceback.format_exc())
+        return None
 
 
 def _process_post_request(fb_app, exp_signature, payload):
