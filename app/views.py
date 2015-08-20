@@ -3,6 +3,7 @@ import logging
 import hashlib
 import hmac
 import json
+import traceback
 
 from app.models import SocialNetworkApp
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
@@ -120,11 +121,14 @@ def _process_post_request(fb_app, exp_signature, payload):
 def _calculate_signature(app_secret, payload):
     logger.info('before calculating the signature!')
     try:
-        sig = 'sha1=' + hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+        hex_sig = hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+        logger.info('hex: '.format(hex_sig))
+        sig = 'sha1=' + hex_sig
         logger.info(sig)
         return sig
     except Exception as e:
-        logger.info(e)
+        logger.warning(e)
+        logger.warning(traceback.format_exc())
         return None
 
 
