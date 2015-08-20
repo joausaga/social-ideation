@@ -8,7 +8,7 @@ import traceback
 from app.models import SocialNetworkApp
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
                      delete_post, delete_comment, delete_vote
-from app.utils import get_timezone_aware_datetime
+from app.utils import get_timezone_aware_datetime, convert_to_utf8_str
 from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -107,8 +107,8 @@ def _process_post_request(fb_app, exp_signature, payload):
     fb_app.save()
     logger.info('Before converting to json')
     req_json = json.loads(payload)
-    logger.info(req_json)
     if req_json['object'] == fb_app.object_real_time_updates:
+        logger.info(req_json)
         entries = req_json['entry']
         for entry in entries:
             if entry['id'] == fb_app.page_id:
@@ -121,7 +121,7 @@ def _process_post_request(fb_app, exp_signature, payload):
 
 def _calculate_signature(app_secret, payload):
     try:
-        return 'sha1=' + hmac.new(str(app_secret), msg=unicode(str(payload)), digestmod=hashlib.sha1).hexdigest()
+        return 'sha1=' + hmac.new(str(app_secret), msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
     except Exception as e:
         logger.warning('Signature could not be generated. Reason: {}'.format(e))
         logger.warning(traceback.format_exc())
@@ -146,12 +146,13 @@ def fb_real_time_updates(request):
                 return HttpResponse(challenge)
         elif request.method == 'POST':
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
-            exp_signature = _calculate_signature(fb_app.app_secret,request.body)
+            payload_str = convert_to_utf8_str(request.body)
+            exp_signature = _calculate_signature(fb_app.app_secret, payload_str)
             if req_signature == exp_signature and \
                not exp_signature == fb_app.last_real_time_update_sig:
                 # I'm comparing the current signature against the last one
                 # to discard duplicates that seem to arrive consecutively
-                _process_post_request(fb_app, exp_signature, request.body)
+                _process_post_request(fb_app, exp_signature, payload_str)
                 return HttpResponse()
             else:
                 logger.info('The received signature does not correspond to the expected one!')
