@@ -390,7 +390,8 @@ def publish_idea_cp(idea):
             url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea.cp_id})
             params = {'file_str': 'via_fb.png'}
             body_param = build_request_body(connector, url_cb.callback, params)
-            do_request(connector, url, url_cb.callback.method, body_param)
+            resp = do_request(connector, url, url_cb.callback.method, body_param)
+            get_json_or_error(connector.name, url_cb.callback, resp)
         except Exception as e:
             logger.warning('An error occurred when trying to attach an image to the new idea. '
                            'Reason: {}'.format(e))
@@ -484,7 +485,6 @@ def _get_campaign(hashtags, initiative):
 
 
 def save_sn_post(sn_app, post):
-    logger.info('Hi from save sn post!')
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0:
         initiative = _get_initiative(hashtags, sn_app)
@@ -492,7 +492,6 @@ def save_sn_post(sn_app, post):
             campaign = _get_campaign(hashtags, initiative)
             if campaign:
                 try:
-                    logger.info('Post: {}'.format(post))
                     filters = {'sn_id': post['id']}
                     idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
                                   'title': post['title'], 'text': post['text'], 'url': post['url'],
