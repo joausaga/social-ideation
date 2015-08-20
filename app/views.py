@@ -8,7 +8,7 @@ import traceback
 from app.models import SocialNetworkApp
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
                      delete_post, delete_comment, delete_vote
-from app.utils import get_timezone_aware_datetime, convert_to_utf8_str
+from app.utils import get_timezone_aware_datetime
 from django.http import HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -101,12 +101,21 @@ def _get_datetime(raw_datetime):
         return dt.isoformat()
 
 
+def _encode_payload(payload):
+    if type(payload) == type(' '.decode()):
+        return payload.encode()
+    else:
+        id = payload
+
+
 def _process_post_request(fb_app, exp_signature, payload):
     # Save the current signature
     fb_app.last_real_time_update_sig = str(exp_signature)
     fb_app.save()
     logger.info('Before converting to json')
-    req_json = convert_to_utf8_str(json.loads(payload))
+    req_json = json.loads(payload)
+    logger.info(req_json)
+    req_json = _encode_payload(req_json)
     if req_json['object'] == fb_app.object_real_time_updates:
         logger.info(req_json)
         entries = req_json['entry']
