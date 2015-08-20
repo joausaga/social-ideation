@@ -68,12 +68,10 @@ def _process_update(fb_app, update, u_datetime):
     logger.info('Update is going to be processed')
 
     if update['item'] == 'post' or update['item'] == 'share':
-        logger.info('Item of type {}'.format(update['item']))
         post_id = str(update['post_id'])
         if update['verb'] == 'add':
             _process_post(post_id, update, fb_app, u_datetime)
         elif update['verb'] == 'remove':
-            logger.info('Post is going to be deleted')
             delete_post(post_id)
         else:
             logger.info('Action type {} are ignored'.format(update['verb']))

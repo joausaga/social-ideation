@@ -548,41 +548,38 @@ def save_sn_vote(sn_app, vote):
 
 def delete_post(post_id):
     try:
-        idea_objs = Idea.objects.filter(sn_id=post_id)
-        for idea_obj in idea_objs:
-            platform = idea_obj.initiative.platform
-            connector = platform.connector
-            url_cb = get_url_cb(connector, 'delete_idea_cb')
-            url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea_obj.cp_id})
-            do_request(connector, url, url_cb.callback.method)
-            logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
-                         format(idea_obj.id, idea_obj.source_social, platform))
-            idea_obj.delete()
+        idea_obj = Idea.objects.get(sn_id=post_id)
+        platform = idea_obj.initiative.platform
+        connector = platform.connector
+        url_cb = get_url_cb(connector, 'delete_idea_cb')
+        url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea_obj.cp_id})
+        do_request(connector, url, url_cb.callback.method)
+        logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
+                     format(idea_obj.id, idea_obj.source_social, platform))
+        idea_obj.delete()
     except Idea.DoesNotExist:
         logger.warning('The idea corresponding to the social network post could not be found')
 
 
 def delete_comment(comment_id):
     try:
-        comment_objs = Comment.objects.filter(sn_id=comment_id)
-        for comment_obj in comment_objs:
-            platform = comment_obj.initiative.platform
-            connector = platform.connector
-            url_cb = get_url_cb(connector, 'delete_comment_cb')
-            url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': comment_obj.cp_id})
-            do_request(connector, url, url_cb.callback.method)
-            logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
-                         format(comment_obj.id, comment_obj.source_social, platform))
-            comment_obj.delete()
+        comment_obj = Comment.objects.get(sn_id=comment_id)
+        platform = comment_obj.initiative.platform
+        connector = platform.connector
+        url_cb = get_url_cb(connector, 'delete_comment_cb')
+        url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': comment_obj.cp_id})
+        do_request(connector, url, url_cb.callback.method)
+        logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
+                     format(comment_obj.id, comment_obj.source_social, platform))
+        comment_obj.delete()
     except Comment.DoesNotExist:
         logger.warning('The comment corresponding to the social network comment could not be found')
 
 
 def delete_vote(vote_id):
     try:
-        vote_objs = Vote.objects.filter(sn_id=vote_id)
-        for vote_obj in vote_objs:
-            vote_obj.delete()
+        vote_obj = Vote.objects.filter(sn_id=vote_id)
+        vote_obj.delete()
     except Vote.DoesNotExist:
         logger.warning('The social network vote could not be found')
 
