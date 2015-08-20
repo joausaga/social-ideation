@@ -23,17 +23,11 @@ def _process_post(post_id, update, fb_app, u_datetime):
     if not 'message' in update.keys() or not update['message'].strip():
         # Posts without text are ignored
         return None
-
-    logger.info('A post corresponding to the update {} is going to be created'.format(update))
-
     url = template_url_post.format(post_id.split('_')[0],post_id.split('_')[1])
     post = {'id': post_id, 'text': update['message'], 'title': '',
             'user_info': {'name': update['sender_name'], 'id': str(update['sender_id'])},
             'url': url, 'datetime': u_datetime, 'positive_votes': 0, 'negative_votes': 0,
             'comments': 0}
-
-    logger.info('Post: {}'.format(post))
-
     ret_data = save_sn_post(fb_app, post)
     if ret_data: publish_idea_cp(ret_data['idea'])
 
@@ -71,8 +65,6 @@ def _process_like(like_raw, fb_app, l_datetime):
 
 
 def _process_update(fb_app, update, u_datetime):
-    logger.info('Update is going to be processed')
-
     if update['item'] == 'post' or update['item'] == 'share':
         post_id = str(update['post_id'])
         if update['verb'] == 'add':

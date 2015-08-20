@@ -313,12 +313,6 @@ class ISObjectDetail(APIView):
     queryset = None
     serializer_class = None
 
-    def get_object(self, obj_id):
-        try:
-            return self.queryset.objects.get(ideascale_id=obj_id)
-        except self.queryset.DoesNotExist:
-            return Http404
-
     def get(self, request, obj_id, format=None):
         try:
             api = get_api_obj(self.initiative)
@@ -337,7 +331,7 @@ class ISObjectDetail(APIView):
 
     def delete(self, request, obj_id, format=None):
         try:
-            obj = self.get_object(obj_id)
+            obj = self.queryset.objects.get(ideascale_id=obj_id)
             obj.delete()
             content = JSONRenderer().render({'text': 'The object was deleted correctly'})
             resp = Response(status=status.HTTP_200_OK)
@@ -496,14 +490,12 @@ class IdeaAttachFile(APIView):
     def post(self, request, idea_id, format=None):
         try:
             file_name = request.data['file_str']
-            logger.info(file_name)
             file_path = str(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),
                                          'static/{}'.format(file_name)))
-            logger.info(file_path)
             idea = Idea.objects.get(ideascale_id=idea_id)
             api = get_api_obj(idea.campaign.initiative)
             api.attach_file_to_idea(filename=file_path, ideaId=idea_id)
-            return Response(status=status.HTTP_200_OK)
+            return HttpResponse('OK', status=status.HTTP_200_OK)
         except IdeaScalyError as e:
             return Response('Error: {}'.format(e.reason), status=status.HTTP_400_BAD_REQUEST)
 
