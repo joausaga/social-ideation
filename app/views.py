@@ -122,10 +122,11 @@ def _process_post_request(fb_app, exp_signature, payload):
     logger.info(req_json)
     req_json = _encode_payload(req_json)
     if req_json['object'] == fb_app.object_real_time_updates:
-        logger.info(req_json)
         entries = req_json['entry']
         for entry in entries:
+            logger.info(entry)
             if entry['id'] == fb_app.page_id:
+                logger.info(entry['time'])
                 e_datetime = _get_datetime(entry['time'])
                 changes = entry['changes']
                 for change in changes:
