@@ -146,7 +146,9 @@ def fb_real_time_updates(request):
                 return HttpResponse(challenge)
         elif request.method == 'POST':
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
+            logger.info(request.body)
             payload_str = convert_to_utf8_str(request.body)
+            logger.info(payload_str)
             exp_signature = _calculate_signature(fb_app.app_secret, payload_str)
             if req_signature == exp_signature and \
                not exp_signature == fb_app.last_real_time_update_sig:
