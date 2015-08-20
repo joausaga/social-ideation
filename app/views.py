@@ -73,7 +73,7 @@ def _process_update(fb_app, update, u_datetime):
         elif update['verb'] == 'remove':
             delete_post(post_id)
         else:
-            pass # Ignore other (e.g., hide)
+            logger.info('Action type {} are ignored'.format(update['verb']))
     elif update['item'] == 'comment':
         comment_id = update['comment_id']
         if update['verb'] == 'add':
@@ -81,16 +81,17 @@ def _process_update(fb_app, update, u_datetime):
         elif update['verb'] == 'remove':
             delete_comment(comment_id)
         else:
-            pass # Ignore other (e.g., hide)
+            logger.info('Action type {} are ignored'.format(update['verb']))
     elif update['item'] == 'like':
         if update['verb'] == 'add':
             _process_like(update, fb_app, u_datetime)
         elif update['verb'] == 'remove':
             delete_vote(_generate_like_id(update))
         else:
-            pass # Ignore other
+            logger.info('Action type {} are ignored'.format(update['verb']))
     else:
-        pass # Ignore (e.g., status)
+        # Ignore the rest (e.g., status)
+        logger.info('Update of type {} are ignored'.format(update['item']))
 
 
 def _get_datetime(raw_datetime):
@@ -129,7 +130,6 @@ def _process_post_request(fb_app, exp_signature, payload):
             if entry['id'] == fb_app.page_id:
                 logger.info(entry)
                 e_datetime = _get_datetime(entry['time'])
-                logger.info(e_datetime)
                 if e_datetime:
                     changes = entry['changes']
                     for change in changes:
