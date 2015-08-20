@@ -28,7 +28,7 @@ def _process_post(post_id, update, fb_app, u_datetime):
 
     url = template_url_post.format(post_id.split('_')[0],post_id.split('_')[1])
     post = {'id': post_id, 'text': update['message'], 'title': '',
-            'user_info': {'name': update['sender_name'], 'id': update['sender_id']},
+            'user_info': {'name': update['sender_name'], 'id': str(update['sender_id'])},
             'url': url, 'datetime': u_datetime, 'positive_votes': 0, 'negative_votes': 0,
             'comments': 0}
 
@@ -46,16 +46,16 @@ def _process_comment(comment_id, comment_raw, fb_app, c_datetime):
         parent_type = 'post'
     else:
         parent_type = 'comment'
-    comment = {'id': comment_id, 'text': str(comment_raw['message']),
-               'user_info': {'name': str(comment_raw['sender_name']), 'id': str(comment_raw['sender_id'])},
+    comment = {'id': comment_id, 'text': comment_raw['message'],
+               'user_info': {'name': comment_raw['sender_name'], 'id': str(comment_raw['sender_id'])},
                'datetime': c_datetime, 'positive_votes': 0, 'negative_votes': 0, 'url': None,
-               'parent_type': parent_type, 'parent_id': str(comment_raw['parent_id']), 'comments': 0}
+               'parent_type': parent_type, 'parent_id': comment_raw['parent_id'], 'comments': 0}
     ret_data = save_sn_comment(fb_app, comment)
     if ret_data: publish_comment_cp(ret_data['comment'])
 
 
 def _generate_like_id(like_raw):
-    return like_raw['parent_id'].split('_')[1]+'_'+like_raw['sender_id']
+    return like_raw['parent_id'].split('_')[1]+'_'+str(like_raw['sender_id'])
 
 
 def _process_like(like_raw, fb_app, l_datetime):
@@ -64,8 +64,8 @@ def _process_like(like_raw, fb_app, l_datetime):
     else:
         parent_type = 'comment'
     like = {'id': _generate_like_id(like_raw),
-            'user_info': {'id': str(like_raw['sender_id']), 'name': str(like_raw['sender_name'])},
-            'parent_type': parent_type, 'parent_id': str(like_raw['parent_id']), 'value': 1,
+            'user_info': {'id': str(like_raw['sender_id']), 'name': like_raw['sender_name']},
+            'parent_type': parent_type, 'parent_id': like_raw['parent_id'], 'value': 1,
             'datetime': l_datetime}
     save_sn_vote(fb_app, like)
 

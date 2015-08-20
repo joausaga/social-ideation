@@ -461,7 +461,7 @@ def _get_initiative(hashtags, social_network):
     try:
         initiatives = Initiative.objects.filter(social_network=social_network)
         for initiative in initiatives:
-            if initiative.hashtag in hashtags:
+            if initiative.active and initiative.hashtag in hashtags:
                 return initiative
         return None
     except ValueError:
