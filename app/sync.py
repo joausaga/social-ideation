@@ -477,6 +477,7 @@ def _get_campaign(hashtags, initiative):
 
 
 def save_sn_post(sn_app, post):
+    logger.info('Hi from save sn post!')
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0:
         initiative = _get_initiative(hashtags, sn_app)
@@ -484,6 +485,7 @@ def save_sn_post(sn_app, post):
             campaign = _get_campaign(hashtags, initiative)
             if campaign:
                 try:
+                    logger.info('Post: {}'.format(post))
                     filters = {'sn_id': post['id']}
                     idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
                                   'title': post['title'], 'text': post['text'], 'url': post['url'],
