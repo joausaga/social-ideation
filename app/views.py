@@ -66,6 +66,8 @@ def _process_like(like_raw, fb_app, l_datetime):
 
 
 def _process_update(fb_app, update, u_datetime):
+    logger.info('Update is going to be process')
+
     if update['item'] == 'post' or update['item'] == 'share':
         post_id = update['post_id']
         if update['verb'] == 'add':
@@ -128,11 +130,11 @@ def _process_post_request(fb_app, exp_signature, payload):
         entries = req_json['entry']
         for entry in entries:
             if entry['id'] == fb_app.page_id:
-                logger.info(entry)
                 e_datetime = _get_datetime(entry['time'])
                 if e_datetime:
                     changes = entry['changes']
                     for change in changes:
+                        logger.info(change)
                         if change['field'] == fb_app.field_real_time_updates:
                             _process_update(fb_app, change['value'], e_datetime)
                         else:
