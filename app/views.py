@@ -106,7 +106,7 @@ def _process_post_request(fb_app, exp_signature, payload):
     fb_app.last_real_time_update_sig = str(exp_signature)
     fb_app.save()
     logger.info('Before converting to json')
-    req_json = json.loads(payload)
+    req_json = convert_to_utf8_str(json.loads(payload))
     if req_json['object'] == fb_app.object_real_time_updates:
         logger.info(req_json)
         entries = req_json['entry']
@@ -117,11 +117,19 @@ def _process_post_request(fb_app, exp_signature, payload):
                 for change in changes:
                     if change['field'] == fb_app.field_real_time_updates:
                         _process_update(fb_app, change['value'], e_datetime)
+                    else:
+                        logger.info('Unknown update field. Expected: {}, received: {}'.
+                                    format(fb_app.field_real_time_updates, change['field']))
+            else:
+                logger.info('Unknown page id {}. Update will be ignored'.format(entry['id']))
+    else:
+        logger.info('Unknown update objects. Expected: {}, received: {}'.
+                    format(fb_app.object_real_time_updates, req_json['object']))
 
 
 def _calculate_signature(app_secret, payload):
     try:
-        return 'sha1=' + hmac.new(str(app_secret), msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+        return 'sha1=' + hmac.new(str(app_secret), msg=unicode(str(payload)), digestmod=hashlib.sha1).hexdigest()
     except Exception as e:
         logger.warning('Signature could not be generated. Reason: {}'.format(e))
         logger.warning(traceback.format_exc())
@@ -146,15 +154,12 @@ def fb_real_time_updates(request):
                 return HttpResponse(challenge)
         elif request.method == 'POST':
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
-            logger.info(request.body)
-            payload_str = convert_to_utf8_str(request.body)
-            logger.info(payload_str)
-            exp_signature = _calculate_signature(fb_app.app_secret, payload_str)
+            exp_signature = _calculate_signature(fb_app.app_secret, request.body)
             if req_signature == exp_signature and \
                not exp_signature == fb_app.last_real_time_update_sig:
                 # I'm comparing the current signature against the last one
                 # to discard duplicates that seem to arrive consecutively
-                _process_post_request(fb_app, exp_signature, payload_str)
+                _process_post_request(fb_app, exp_signature, request.body)
                 return HttpResponse()
             else:
                 logger.info('The received signature does not correspond to the expected one!')
