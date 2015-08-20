@@ -65,7 +65,9 @@ def _process_like(like_raw, fb_app, l_datetime):
 
 
 def _process_update(fb_app, update, u_datetime):
-    if update['item'] == 'post' or update['item'] == 'share':
+    if update['item'] == 'post' or \
+       update['item'] == 'share' or \
+       update['item'] == 'status':
         post_id = str(update['post_id'])
         if update['verb'] == 'add':
             _process_post(post_id, update, fb_app, u_datetime)
@@ -89,7 +91,7 @@ def _process_update(fb_app, update, u_datetime):
         else:
             logger.info('Action type {} are ignored'.format(update['verb']))
     else:
-        # Ignore the rest (e.g., status)
+        # Ignore the rest
         logger.info('Update of type {} are ignored'.format(update['item']))
 
 
