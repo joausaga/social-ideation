@@ -118,10 +118,14 @@ def _process_post_request(fb_app, exp_signature, payload):
 
 
 def _calculate_signature(app_secret, payload):
-    logger.info('hi!')
-    sig = 'sha1=' + hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
-    logger.info(sig)
-    return sig
+    logger.info('before calculating the signature!')
+    try:
+        sig = 'sha1=' + hmac.new(app_secret, msg=unicode(payload), digestmod=hashlib.sha1).hexdigest()
+        logger.info(sig)
+        return sig
+    except Exception as e:
+        logger.info(e)
+        return None
 
 
 def _get_facebook_app():
