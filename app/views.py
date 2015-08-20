@@ -103,8 +103,9 @@ def _get_datetime(raw_datetime):
 
 def _process_post_request(fb_app, exp_signature, payload):
     # Save the current signature
-    fb_app.last_real_time_update_sig = exp_signature
+    fb_app.last_real_time_update_sig = str(exp_signature)
     fb_app.save()
+    logger.info('Before converting to json')
     req_json = json.loads(payload)
     logger.info(req_json)
     if req_json['object'] == fb_app.object_real_time_updates:
@@ -119,13 +120,8 @@ def _process_post_request(fb_app, exp_signature, payload):
 
 
 def _calculate_signature(app_secret, payload):
-    logger.info('before calculating the signature!')
     try:
-        hex_sig = hmac.new(str(app_secret), msg=unicode(str(payload)), digestmod=hashlib.sha1).hexdigest()
-        logger.info('hex: '.format(hex_sig))
-        sig = 'sha1=' + hex_sig
-        logger.info(sig)
-        return sig
+        return 'sha1=' + hmac.new(str(app_secret), msg=unicode(str(payload)), digestmod=hashlib.sha1).hexdigest()
     except Exception as e:
         logger.warning('Signature could not be generated. Reason: {}'.format(e))
         logger.warning(traceback.format_exc())
@@ -149,14 +145,10 @@ def fb_real_time_updates(request):
             if fb_app.token_real_time_updates == token:
                 return HttpResponse(challenge)
         elif request.method == 'POST':
-            logger.info(request.body)
             req_signature = request.META.get('HTTP_X_HUB_SIGNATURE')
             exp_signature = _calculate_signature(fb_app.app_secret,request.body)
-            logger.info(exp_signature)
-            logger.info(fb_app.last_real_time_update_sig)
             if req_signature == exp_signature and \
                not exp_signature == fb_app.last_real_time_update_sig:
-                logger.info('Valid request!')
                 # I'm comparing the current signature against the last one
                 # to discard duplicates that seem to arrive consecutively
                 _process_post_request(fb_app, exp_signature, request.body)
