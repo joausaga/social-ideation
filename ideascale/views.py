@@ -496,12 +496,10 @@ class IdeaAttachFile(APIView):
     def post(self, request, idea_id, format=None):
         try:
             file_name = request.data['file_str']
-            try:
-                file_path = str(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                             'static/{}'.format(file_name)))
-            except NameError:
-                file_path = str(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))),
-                                             'static/{}'.format(file_name)))
+            logger.info(file_name)
+            file_path = str(os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])),
+                                         'static/{}'.format(file_name)))
+            logger.info(file_path)
             idea = Idea.objects.get(ideascale_id=idea_id)
             api = get_api_obj(idea.campaign.initiative)
             api.attach_file_to_idea(filename=file_path, ideaId=idea_id)

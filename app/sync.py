@@ -189,6 +189,8 @@ def _get_str_language(lang, type):
             return 'Autor: {}'
         elif type == 'author_p':
             return 'Autor: {} ({})'
+        elif type == 'link':
+            return 'Link: {}'
     elif lang == 'it':
         if type == 'votes':
             return 'Votos +: {}/-: {}'
@@ -198,6 +200,8 @@ def _get_str_language(lang, type):
             return 'Autore: {}'
         elif type == 'author_p':
             return 'Autore: {} ({})'
+        elif type == 'link':
+            return 'Link: {}'
     else:
         # default: lang == 'en'
         if type == 'votes':
@@ -208,6 +212,8 @@ def _get_str_language(lang, type):
             return 'Author: {}'
         elif type == 'author_p':
             return 'Author: {} ({})'
+        elif type == 'link':
+            return 'Link: {}'
 
 
 def publish_idea_sn(idea, sn_app, mode=None):
@@ -358,6 +364,7 @@ def publish_idea_cp(idea):
     initiative = idea.initiative
     template_idea_cp = '{}\n\n----------------\n\n'
     template_idea_cp += _get_str_language(initiative.language, 'author_p')
+    template_idea_cp += '\n' + _get_str_language(initiative.language, 'link')
     text_uf8 = convert_to_utf8_str(idea.text)
     author_name_utf8 = convert_to_utf8_str(idea.author.screen_name)
     text_cplatform = remove_hashtags(text_uf8)
@@ -366,7 +373,7 @@ def publish_idea_cp(idea):
     cplatform = initiative.platform
     connector = cplatform.connector
     sn_source = idea.source_social.connector.name
-    text_to_cp = template_idea_cp.format(text_cplatform, author_name_utf8, sn_source)
+    text_to_cp = template_idea_cp.format(text_cplatform, author_name_utf8, sn_source, idea.url)
     if idea.is_new:
         url_cb = get_url_cb(connector, 'create_idea_cb')
         url = build_request_url(url_cb.url, url_cb.callback, {'initiative_id': initiative.external_id})
