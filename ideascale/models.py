@@ -40,9 +40,10 @@ class Location(models.Model):
     city = models.CharField(max_length=50)
     latitude = models.FloatField(null=True)
     longitude = models.FloatField(null=True)
+    code = models.CharField(max_length=100, unique=True, null=True)
 
     def __unicode__(self):
-        return self.county + ', ' + self.city
+        return self.country + ', ' + self.city
 
 
 class Idea(models.Model):
