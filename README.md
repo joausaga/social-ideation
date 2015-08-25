@@ -10,12 +10,17 @@ large and diverse community of Facebook users. Apart from reaching wider and lar
 reducing as much as possible the participation barrier, enabling people to take part on crowdsourcing ideation processes 
 by using only Facebook elements, namely facebook pages, hashtags, posts, comments, and likes.
 
+Examples
+-------------
+
+![app_scenarios](https://dl.dropboxusercontent.com/u/55956367/app_scenarios.png "Mapping Model")
+
 Mapping Model
 -------------
 
 Social Ideation proposes the model outlined in the next figure to map Facebook posts with IdeaScale.
 
-![handout](https://dl.dropboxusercontent.com/u/55956367/mapping_model.png "Mapping Model")
+![mapping_model](https://dl.dropboxusercontent.com/u/55956367/mapping_model.png "Mapping Model")
 
 As it is possible to appreciated in the figure the proposed model is based entirely on native elements of Facebook, 
 namely posts, comments, pages, and hashtags. Posts published on the Facebook page that corresponds to an IdeaScale 
@@ -32,7 +37,7 @@ The integration between the two platforms are performed mainly through API funct
 primitives through which is possible to read and create new content. The following figure presents the details of how 
 the integration works.
 
-![handout](https://dl.dropboxusercontent.com/u/55956367/app_model.png "Social Ideation Model")
+![integration_model](https://dl.dropboxusercontent.com/u/55956367/app_model.png "Social Ideation Model")
 
 The app maintains records about the mapping between IdeaScale initiatives and Facebook pages. Each record saves also the 
 hashtags that identify IdeaScale initiatives and their campaigns. To get content from IdeaScale, the app hits the API 
