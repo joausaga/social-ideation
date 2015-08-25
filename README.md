@@ -112,8 +112,8 @@ auth_token (username = admin)
 
 13. Create a consultation platform choosing IdeaScale as the connector (Home->App->Consultation platforms->Add) 
 
-14. Import the consultation platform initiatives. Select the new consultation platform in Home->App->Consultation Platforms
-and choose the option 'Get Initiatives' from the Action menu located on top of the list.
+14. Import the consultation platform initiatives. Select the new consultation platform in 
+Home->App->Consultation Platforms and choose the option 'Get Initiatives' from the Action menu located on top of the list.
 
 15. Create a social network app choosing Facebook as the connector, configuring the app id and app secret of the created 
 Facebook App, and setting the page id and access token of the recently created Facebook Page. Set also the callback field
