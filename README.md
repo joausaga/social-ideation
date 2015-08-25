@@ -102,18 +102,18 @@ Getting started
 
 9. Hit the social ideation URL, i.e., http://socialideation.com, and log in with the admin credentials
 
-10. Create a new IdeaScale initiative (Home->IdeaScale->Initiative->Add)
+10. Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*)
 
 11. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
-(Home->Connectors->URL Callbacks)
+(*Home->Connectors->URL Callbacks*)
 
 12. Update IdeaScale connector token (Home->Connectors->IdeaScale) The correct token should be located in the table 
 auth_token (username = admin)
 
 13. Create a consultation platform choosing IdeaScale as the connector (Home->App->Consultation platforms->Add) 
 
-14. Import the consultation platform initiatives. Select the new consultation platform in 
-Home->App->Consultation Platforms and choose the option 'Get Initiatives' from the Action menu located on top of the list.
+14. Import the consultation platform initiatives. Select the new consultation platform in Home->App->Consultation Platforms 
+and choose the option 'Get Initiatives' from the Action menu located on top of the list.
 
 15. Create a social network app choosing Facebook as the connector, configuring the app id and app secret of the created 
 Facebook App, and setting the page id and access token of the recently created Facebook Page. Set also the callback field
