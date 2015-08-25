@@ -63,6 +63,7 @@ Installation
 
 5. Set the configuration parameters of the database in social-ideation/settings.py
 
+    ```
     DATABASES = {
         ...
             'NAME': '',
@@ -72,6 +73,7 @@ Installation
             'PORT': '',
         ...
     }
+    ```
 
 6. Run `python manage.py migrate` to set up the database schema
 
