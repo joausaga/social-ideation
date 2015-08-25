@@ -28,7 +28,9 @@ transformed into IdeaScale comments.
 Integration Model
 -----------------
 
-The app leverages the next model to integrate both platforms.
+The integration between the two platforms are performed mainly through API functions. Either Facebook and IdeaScale offer
+primitives through which is possible to read and create new content. The following figure presents the details of how 
+the integration works.
 
 ![handout](https://dl.dropboxusercontent.com/u/55956367/app_model.png "Social Ideation Model")
 
