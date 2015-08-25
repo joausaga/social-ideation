@@ -140,3 +140,9 @@ Technologies
 6. [Celery for Django](http://docs.celeryproject.org/en/latest/django/first-steps-with-django.html)
 
 7. [Rabbit MQ](http://www.rabbitmq.com)
+
+Let me know
+-----------
+
+If you use social ideation, please [write me](mailto:jorgesaldivar@gmail.com) a short message with a link to your project. 
+It is not mandatory, but I will really appreciate it!
