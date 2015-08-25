@@ -47,3 +47,58 @@ are posted on IdeaScale by calling the corresponding API function (2).
 Every time a new idea or comment are placed on the Facebook pages that correspond to the IdeaScale initiatives, Facebook 
 API pushes a notification to the app (3). The ideas and comments gathered from the IdeaScale initiatives are posted to 
 the Facebook pages by calling the corresponding Facebook API function.
+
+Installation
+------------
+
+1. Clone the repository `git clone https://github.com/joausaga/social-ideation.git`
+
+2. Go inside the repository folder and execute `pip install -r requirements.txt` to install dependencies
+
+3. Clone Facebook API client library `git clone https://github.com/pythonforfacebook/facebook-sdk`
+
+4. Go inside Facebook API client library and install it `python setup.py install`
+
+4. Create a mysql database
+
+5. Set the configuration parameters of the database in social-ideation/settings.py
+
+    DATABASES = {
+        ...
+            'NAME': '',
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': '',
+            'PORT': '',
+        ...
+    }
+
+6. Run `python manage.py migrate` to set up the database schema
+
+7. Create a Facebook App
+
+8. Create a Facebook Page
+
+9. Obtain a Facebook OAuth token
+
+10. Install Rabbit MQ broker. Unix installation instructions
+
+Getting started
+---------------
+
+1.
+
+License
+-------
+MIT
+
+Technologies
+------------
+
+1. [Django Framework 1.8](https://www.djangoproject.com/)
+2. [MySQL](http://www.mysql.com) database and its corresponding python package
+3. [Facebook SDK](https://github.com/pythonforfacebook/facebook-sdk) a python-based Facebook API client
+4. [IdeaScaly](https://github.com/joausaga/ideascaly) a python-based IdeaScale API client
+5. [Celery](http://www.celeryproject.org)
+6. [Celery for Django](http://docs.celeryproject.org/en/latest/django/first-steps-with-django.html)
+7. [Rabbit MQ](http://www.rabbitmq.com)
