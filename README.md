@@ -20,8 +20,10 @@ Social Ideation proposes the model outlined in the next figure to map Facebook p
 As it is possible to appreciated in the figure the proposed model is based entirely on native elements of Facebook, 
 namely posts, comments, pages, and hashtags. Posts published on the Facebook page that corresponds to an IdeaScale 
 initiative and contain the hashtag of the initiative and the hashtag of one of initiative's campaigns are mapped to an 
-idea. As the figure shows, all the comments placed to the Facebook posts that are mapped ideas are taken and transformed 
-into IdeaScale comments.
+idea. 
+
+As the figure also shows, all the comments placed to the Facebook posts that are mapped ideas are taken and 
+transformed into IdeaScale comments.
 
 Integration Model
 -----------------
