@@ -77,15 +77,9 @@ Installation
 
 6. Run `python manage.py migrate` to set up the database schema
 
-7. Create a Facebook App
+7. Install Rabbit MQ broker. [Unix installation instructions](http://www.rabbitmq.com/install-generic-unix.html)
 
-8. Create a Facebook Page
-
-9. Obtain a Facebook OAuth token
-
-10. Install Rabbit MQ broker. [Unix installation instructions](http://www.rabbitmq.com/install-generic-unix.html)
-
-11. Set the static url in social-ideation/settings.py
+8. Set the static url in social-ideation/settings.py
 
 Getting started
 ---------------
@@ -98,24 +92,30 @@ Getting started
 
 4. [Enable attachments for ideas](http://support.ideascale.com/customer/portal/articles/1001385-how-to-upload-an-attachment-to-an-idea-or-comment)
 
-4. Go inside social ideation directory and create an admin user `python manage.py createsuperuser`
+5. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html)
 
-5. Hit the social ideation URL, i.e., http://socialideation.com, and log in with the admin credentials
+6. Create a Facebook Page
 
-6. Create a new IdeaScale initiative (Home->IdeaScale->Initiative->Add)
+7. Obtain a Facebook OAuth token
 
-7. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
+8. Go inside social ideation directory and create an admin user `python manage.py createsuperuser`
+
+9. Hit the social ideation URL, i.e., http://socialideation.com, and log in with the admin credentials
+
+10. Create a new IdeaScale initiative (Home->IdeaScale->Initiative->Add)
+
+11. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
 (Home->Connectors->URL Callbacks)
 
-8. Update IdeaScale connector token (Home->Connectors->IdeaScale) The correct token should be located in the table 
+12. Update IdeaScale connector token (Home->Connectors->IdeaScale) The correct token should be located in the table 
 auth_token (username = admin)
 
-9. Create a consultation platform choosing IdeaScale as the connector (Home->App->Consultation platforms->Add) 
+13. Create a consultation platform choosing IdeaScale as the connector (Home->App->Consultation platforms->Add) 
 
-10. Import the consultation platform initiatives. Select the new consultation platform in Home->App->Consultation Platforms
+14. Import the consultation platform initiatives. Select the new consultation platform in Home->App->Consultation Platforms
 and choose the option 'Get Initiatives' from the Action menu located on top of the list.
 
-11. Create a social network app choosing Facebook as the connector, configuring the app id and app secret of the created 
+15. Create a social network app choosing Facebook as the connector, configuring the app id and app secret of the created 
 Facebook App, and setting the page id and access token of the recently created Facebook Page. Set also the callback field
 if you want to receive notification from Facebook every time a new post or comment is placed in the page
 (Home->App->Social network apps->Add)
