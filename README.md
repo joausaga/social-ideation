@@ -100,20 +100,20 @@ Getting started
 
 4. Go inside social ideation directory and create an admin user `python manage.py createsuperuser`
 
-5. Hit social ideation URL, i.e., http://socialideation.com, and log in with the admin credentials
+5. Hit the social ideation URL, i.e., http://socialideation.com, and log in with the admin credentials
 
 6. Create a new IdeaScale initiative (Home->IdeaScale->Initiative->Add)
 
-7. Update the URLs of the callbacks replacing the host part of the URI with the URL where the app is installed 
+7. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
 (Home->Connectors->URL Callbacks)
 
 8. Update IdeaScale connector token (Home->Connectors->IdeaScale) The correct token should be located in the table 
-auth_token row with username = admin
+auth_token (username = admin)
 
 9. Create a consultation platform choosing IdeaScale as the connector (Home->App->Consultation platforms->Add) 
 
-10. Import consultation platform's initiatives. Select the new consultation platform in Home->App->Consultation Platforms
-and choose the option 'Get Initiatives' from the Action menu located on the top of the list.
+10. Import the consultation platform initiatives. Select the new consultation platform in Home->App->Consultation Platforms
+and choose the option 'Get Initiatives' from the Action menu located on top of the list.
 
 11. Create a social network app choosing Facebook as the connector, configuring the app id and app secret of the created 
 Facebook App, and setting the page id and access token of the recently created Facebook Page. Set also the callback field
