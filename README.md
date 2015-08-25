@@ -35,9 +35,10 @@ the integration works.
 ![handout](https://dl.dropboxusercontent.com/u/55956367/app_model.png "Social Ideation Model")
 
 The app maintains records about the mapping between IdeaScale initiatives and Facebook pages. Each record saves also the 
-hashtags that identify IdeaScale initiatives and their campaigns. To get content from IdeaScale, the app hits API 
-asking for the ideas and comments of the registered initiatives (1). Also, the ideas and comment collected from Facebook
-are posted on IdeaScale by calling the corresponding API function (2). On the other hand, every time a new idea or 
-comment are placed on the Facebook pages that correspond IdeaScale initiatives, Facebook API pushes a notification 
-to the app (3). The ideas and comments get from IdeaScale initiatives are posted to the Facebook pages by calling the
-corresponding Facebook API function.
+hashtags that identify IdeaScale initiatives and their campaigns. To get content from IdeaScale, the app hits the API 
+asking for the ideas and comments of the registered initiatives (1). The ideas and comment collected from Facebook
+are posted on IdeaScale by calling the corresponding API function (2). 
+
+Every time a new idea or comment are placed on the Facebook pages that correspond to the IdeaScale initiatives, Facebook 
+API pushes a notification to the app (3). The ideas and comments gathered from the IdeaScale initiatives are posted to 
+the Facebook pages by calling the corresponding Facebook API function.
