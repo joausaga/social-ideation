@@ -95,9 +95,9 @@ def update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edita
         for editable_field in editable_fields:
             obj_field = getattr(content_obj, editable_field)
             if obj_field != raw_obj[editable_field]:
-                logger.info('The object with the id {} has changed its {}. '
-                            'Before {}, now {}'.format(content_obj.id, editable_field,
-                                                       obj_field, raw_obj[editable_field]))
+                logger.info('The object with the id {} has changed its {}\n.'.format(content_obj.id, editable_field))
+                logger.info('Before {}, now {}'.format(convert_to_utf8_str(obj_field),
+                                                       convert_to_utf8_str(raw_obj[editable_field])))
                 content_obj.has_changed = True
                 setattr(content_obj, editable_field, raw_obj[editable_field])
     content_obj.save()
@@ -301,7 +301,7 @@ def publish_comment_sn(comment, sn_app, mode=None):
         text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
                                                 author_name_utf8, comment.source_consultation.name)
         if comment.parent == 'idea':
-            parent = Idea.objects.get(id=comment.parent_idea.id)
+            parent = Idea.objects.get(id=comment.parent_idea.id, exist=True)
             if parent:
                 if mode and mode == 'batch':
                     uri = comment_uri.format(parent.sn_id)
@@ -321,7 +321,7 @@ def publish_comment_sn(comment, sn_app, mode=None):
                 raise AppError('Comment\'s parent does not exist')
         elif comment.parent == 'comment':
             try:
-                parent = Comment.objects.get(id=comment.parent_comment.id)
+                parent = Comment.objects.get(id=comment.parent_comment.id, exist=True)
                 if parent:
                     if mode and mode == 'batch':
                         uri = comment_uri.format(parent.sn_id)
@@ -506,11 +506,14 @@ def save_sn_post(sn_app, post):
                     logger.warning('An error occurred when trying to create/update the post {}. '
                                    'Reason: {}'.format(post, e))
             else:
-                logger.warning('An error occurred when trying to create/update the post {}. '
-                               'Reason: The campaign could not be found'.format(post))
+                logger.info('The post {} could not be created/updated. Reason: The campaign could not be identified '
+                               'from the hashtags'.format(post))
         else:
-            logger.warning('An error occurred when trying to create/update the post {}. '
-                           'Reason: The initiative could not be found'.format(post))
+            logger.info('The post {} could not be created/updated. Reason: The initiative could not be identified '
+                           'from the hashtags'.format(post))
+    else:
+        logger.info('The post {} could not be created/updated. Reason: It seems it does not have hashtags'.
+                       format(post))
     return None
 
 
@@ -564,9 +567,10 @@ def delete_post(post_id):
         do_request(connector, url, url_cb.callback.method)
         logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
                      format(idea_obj.id, idea_obj.source_social, platform))
-        idea_obj.delete()
+        _delete_obj(idea_obj)
+        #idea_obj.delete()
     except Idea.DoesNotExist:
-        logger.warning('The idea corresponding to the social network post could not be found')
+        logger.warning('The social network idea (id={}) could not be found in the system'.format(post_id))
 
 
 def delete_comment(comment_id):
@@ -579,18 +583,26 @@ def delete_comment(comment_id):
         do_request(connector, url, url_cb.callback.method)
         logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
                      format(comment_obj.id, comment_obj.source_social, platform))
-        comment_obj.delete()
+        _delete_obj(comment_obj)
+        #comment_obj.delete()
     except Comment.DoesNotExist:
-        logger.warning('The comment corresponding to the social network comment could not be found')
+        logger.warning('The social network comment (id={}) could not be found in the system'.format(comment_id))
 
 
 def delete_vote(vote_id):
     try:
         vote_obj = Vote.objects.filter(sn_id=vote_id)
-        vote_obj.delete()
+        _delete_obj(vote_obj)
+        #vote_obj.delete()
     except Vote.DoesNotExist:
-        logger.warning('The social network vote could not be found')
+        logger.warning('The social network vote (id={}) could not be found in the system'.format(vote_id))
 
+
+def _delete_obj(obj):
+    obj.cp = None
+    obj.sn = None
+    obj.exist = False
+    obj.save()
 
 ##
 # General synchronization method
@@ -602,6 +614,12 @@ def invalidate_initiative_content(**kwargs):
     Comment.objects.filter(**kwargs).update(exist=False)
     Vote.objects.filter(**kwargs).update(exist=False)
 
+
+def revalidate_initiative_content(**kwargs):
+    # The re-validation process consist in re-validating the ideas, comments, and votes that were invalided before
+    Idea.objects.filter(**kwargs).update(exist=True)
+    Comment.objects.filter(**kwargs).update(exist=True)
+    Vote.objects.filter(**kwargs).update(exist=True)
 
 def _do_data_consolidation(type_obj, filters):
     objs_consolidated = 0
@@ -785,7 +803,8 @@ def do_delete_content(obj, type):
                 sn.delete_comment(obj.sn_id)
                 logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
                             format(obj.id, obj.source_consultation, social_network))
-        obj.delete()
+        #obj.delete()
+        _delete_obj(obj)
     else:
         # Delete object from the initiative's consultation platform
         if type == 'idea':
@@ -829,9 +848,9 @@ def cud_initiative_comments(platform, initiative):
     for delayed_comment in delayed_comments:
         comment_obj = do_create_update_comment(platform, initiative, delayed_comment, 'consultation_platform')
         if not comment_obj:
-            logger.warning('Comment {} couldn\'t be synchronized because its parent {} with id {} couldn\'t be found. {}'.
-                           format(delayed_comment['id'], delayed_comment['parent_type'], delayed_comment['parent_id'],
-                                  delayed_comment['text']))
+            logger.warning('Comment {} couldn\'t be synchronized because its parent {} with id {} couldn\'t be found. '
+                           '{}'.format(delayed_comment['id'], delayed_comment['parent_type'],
+                                       delayed_comment['parent_id'], delayed_comment['text']))
 
 
 def cud_initiative_ideas(platform, initiative):

@@ -178,7 +178,7 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
 
 
 class IdeaAdmin(admin.ModelAdmin):
-    list_display = ('idea_id', 'idea_source', 'initiative', 'campaign', 'author', 'datetime', 'title', 'text',
+    list_display = ('cpid', 'snid', 'idea_source', 'initiative', 'campaign', 'author', 'datetime', 'title', 'text',
                     're_posts', 'bookmarks', 'positive_votes', 'negative_votes', 'comments', 'sync', 'has_changed')
     ordering = ('initiative', 'campaign', 'author', 'datetime', 'positive_votes', 'negative_votes', 'comments')
     list_filter = ['initiative']
@@ -203,6 +203,14 @@ class IdeaAdmin(admin.ModelAdmin):
         else:
             return obj.source_social.name.title()
     idea_source.short_description = 'Source'
+
+    def cpid(self, obj):
+        return obj.cp_id
+    cpid.short_description = 'Consultation Platform Id'
+
+    def snid(self, obj):
+        return obj.sn_id
+    snid.short_description = 'Social Network Id'
 
 
 class CommentAdmin(admin.ModelAdmin):

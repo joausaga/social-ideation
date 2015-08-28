@@ -2,8 +2,10 @@ from __future__ import absolute_import
 
 from app.models import ConsultationPlatform, Initiative, Idea, Comment, SocialNetworkApp
 from app.sync import save_sn_post, save_sn_comment, save_sn_vote, cud_initiative_votes, cud_initiative_ideas, \
-                     cud_initiative_comments, invalidate_initiative_content, do_push_content, do_delete_content
+                     cud_initiative_comments, invalidate_initiative_content, do_push_content, do_delete_content, \
+                     revalidate_initiative_content
 from app.utils import convert_to_utf8_str
+from app.error import AppError
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from django.core.cache import cache
@@ -64,10 +66,10 @@ def pull_data():
                 try:
                     _pull_content_consultation_platform(cplatform, initiative)
                 except Exception as e:
+                    revalidate_initiative_content(source_consultation=cplatform, initiative=initiative)
                     logger.warning('Problem when trying to pull content of the initiative {} from platform {}. '
-                                   'Message: {}'.
-                                   format(initiative, cplatform, e))
-                    logger.warning(traceback.format_exc())
+                                   'The content was re-validated.'.format(initiative, cplatform))
+                    raise AppError(e)
     # Pull data from social networks that are not subscribe to receive real time notifications
     for socialnetwork in SocialNetworkApp.objects.all():
         if not socialnetwork.subscribed_read_time_updates:
@@ -79,9 +81,13 @@ def pull_data():
             try:
                 _pull_content_social_network(socialnetwork)
             except Exception as e:
-                logger.warning('Problem when trying to pull content posted on {}. Message: {}'.
-                               format(socialnetwork, e))
-                logger.warning(traceback.format_exc())
+                initiatives = Initiative.objects.filter(social_network=socialnetwork)
+                for initiative in initiatives:
+                    if initiative.active:
+                        revalidate_initiative_content(source_social=socialnetwork, initiative=initiative)
+                logger.warning('Problem when trying to pull content posted on {}. The content was re-validated.'
+                               .format(socialnetwork))
+                raise AppError(e)
 
 
 def push_data():
@@ -109,11 +115,11 @@ def push_data():
         except Exception as e:
             if idea.source == 'consultation_platform':
                 logger.warning('Error when trying to publish the idea with the id={} on the social networks. '
-                               'Message: {}'.format(idea.id, convert_to_utf8_str(e)))
+                               .format(idea.id))
             else:
-                logger.warning('Error when trying to publish the idea with the id={} on the consultation platforms. '
-                               'Message: {}'.format(idea.id, idea.source_social, convert_to_utf8_str(e)))
-            logger.warning(traceback.format_exc())
+                logger.warning('Error when trying to publish the idea with the id={} on the consultation platforms.'
+                               .format(idea.id))
+            raise AppError(e)
     # Push comments to consultation platforms and social networks
     logger.info('Pushing comments to social networks and consultation platforms')
     existing_comments = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
@@ -135,12 +141,12 @@ def push_data():
                         batch_req_comments = do_push_content(comment, 'comment', False, batch_req_comments)
         except Exception as e:
             if comment.source == 'consultation_platform':
-                logger.warning('Error when trying to publish the comment with the id={} on the social networks. '
-                               'Message: {}'.format(comment.id, comment.source_consultation, convert_to_utf8_str(e)))
+                logger.warning('Error when trying to publish the comment with the id={} on the social networks.'
+                               .format(comment.id))
             else:
-                logger.warning('Error when trying to publish the comment with the id={} on the consultation platforms. '
-                               'Message: {}'.format(comment.id, comment.source_social, convert_to_utf8_str(e)))
-            logger.warning(traceback.format_exc())
+                logger.warning('Error when trying to publish the comment with the id={} on the consultation platforms.'
+                               .format(comment.id))
+            raise AppError(e)
 
 
 def delete_data():
@@ -158,11 +164,11 @@ def delete_data():
         except Exception as e:
             if idea.source == 'consultation_platform':
                 logger.warning('Error when trying to delete the idea with the id={} from {}. '
-                               'Message: {}'.format(idea.id, idea.source_consultation, e))
+                               .format(idea.id, idea.source_consultation))
             else:
-                logger.warning('Error when trying to delete the idea with the id={} from {}. '
-                               'Message: {}'.format(idea.id, idea.source_social, e))
-            logger.warning(traceback.format_exc())
+                logger.warning('Error when trying to delete the idea with the id={} from {}. '.
+                               format(idea.id, idea.source_social))
+            raise AppError(e)
     # Delete comments that don't exist anymore in their original social networks or consultation platforms
     logger.info('Checking whether exists comments that do not exist anymore')
     unexisting_comments = Comment.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
@@ -177,10 +183,10 @@ def delete_data():
         except Exception as e:
             if comment.source == 'consultation_platform':
                 logger.warning('Error when trying to delete the comment with the id={} from {}. '
-                               'Message: {}'.format(comment.id, comment.source_consultation, e))
+                               .format(comment.id, comment.source_consultation))
             else:
                 logger.warning('Error when trying to delete the comment with the id={} from {}. '
-                               'Message: {}'.format(comment.id, comment.source_social, e))
+                               .format(comment.id, comment.source_social))
             logger.warning(traceback.format_exc())
 
 @shared_task
@@ -199,16 +205,17 @@ def synchronize_content():
     if acquire_lock():
         try:
             # Lock is used to ensure that synchronization is only executed one at time
-            logger.info('Starting the synchronization')
+            logger.info('\nStarting the synchronization')
             logger.info('----------------------------')
             pull_data()
             push_data()
             delete_data()
-            logger.info('----------------------------')
             logger.info('The synchronization has successfully finished!')
+            logger.info('----------------------------')
         except Exception as e:
-            logger.critical('Error!, the synchronization could not finish. Message: {}'.format(e))
-            logger.critical(traceback.format_exc())
+            logger.error('The synchronization could not finish successfully. '
+                         'Message: {}'.format(convert_to_utf8_str(e)))
+            logger.error(traceback.format_exc())
         finally:
             release_lock()
     else:
