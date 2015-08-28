@@ -25,9 +25,9 @@ class Campaign(models.Model):
 
 
 class Author(models.Model):
-    ideascale_id = models.PositiveIntegerField(unique=True)
+    ideascale_id = models.PositiveIntegerField()
     name = models.CharField(max_length=100)
-    email = models.EmailField()
+    email = models.EmailField(null=True)
     initiative = models.ForeignKey(Initiative)
     sync = models.BooleanField(default=False)
 

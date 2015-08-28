@@ -59,13 +59,18 @@ def cru_author(author_id, initiative, author_info=None):
         if author_info:
             # Update obj before returning
             author.name = author_info.name
-            author.email = author_info.email
+            if hasattr(author_info, "email"):
+                author.email = author_info.email
             author.save()
         return author
     except Author.DoesNotExist:
         if not author_info:
             author_info = get_ideascale_data(initiative, 'get_member_info_by_id', {'memberId': author_id})
-        author = Author(ideascale_id=author_info.id, name=author_info.name, email=author_info.email, initiative=initiative)
+        if hasattr(author_info, "email"):
+            author = Author(ideascale_id=author_info.id, name=author_info.name, email=author_info.email,
+                            initiative=initiative)
+        else:
+            author = Author(ideascale_id=author_info.id, name=author_info.name, initiative=initiative)
         author.save()
         return author
 
