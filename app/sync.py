@@ -182,7 +182,7 @@ def do_create_update_vote(platform, initiative, vote, source):
 def _get_str_language(lang, type):
     if lang == 'es':
         if type == 'votes':
-            return 'Votos +: {}/-: {}'
+            return '[Votos +: {}/-: {}]'
         elif type == 'desc_attach':
             return 'Idea enviada por {} en el marco de la iniciativa {}'
         elif type == 'author':
@@ -193,7 +193,7 @@ def _get_str_language(lang, type):
             return 'Link: {}'
     elif lang == 'it':
         if type == 'votes':
-            return 'Votos +: {}/-: {}'
+            return '[Voti +: {}/-: {}]'
         elif type == 'desc_attach':
             return 'L\' idea e stata inviata da {} per l\'iniziativa {}'
         elif type == 'author':
@@ -205,7 +205,7 @@ def _get_str_language(lang, type):
     else:
         # default: lang == 'en'
         if type == 'votes':
-            return 'Votes +: {}/-: {}'
+            return '[Votes +: {}/-: {}]'
         elif type == 'desc_attach':
             return 'Idea contributed by {} in the initiative {}'
         elif type == 'author':
@@ -219,18 +219,22 @@ def _get_str_language(lang, type):
 def publish_idea_sn(idea, sn_app, mode=None):
     initiative = idea.initiative
     LOGO_IDEASCALE_VIA = 'https://dl.dropboxusercontent.com/u/55956367/via_is_white.png'
-    template_idea_sn = '----------------\n' \
-                       '{}\n' \
-                       '----------------\n\n' \
-                       '{}\n\n' \
-                       '#{} #{}\n\n' \
-                       '----------------\n'
-    template_idea_sn = template_idea_sn + _get_str_language(initiative.language, 'votes')
+    template_idea_header_sn = '----------------\n' \
+                              '{}\n'
+    template_idea_header_sn += '----------------\n\n'
+    template_idea_header_sn += _get_str_language(initiative.language, 'votes') + '\n\n'
+    template_idea_body_sn = '{}\n\n' \
+                            '#{} #{}\n\n' \
+                            '----------------\n'
+    template_idea_sn = template_idea_header_sn + template_idea_body_sn
+    template_idea_sn += _get_str_language(initiative.language, 'author_p') + '\n'
+    template_idea_sn += _get_str_language(initiative.language, 'link')
     desc_attachment = _get_str_language(initiative.language, 'desc_attach')
     my_feed_uri = 'me/feed'
 
     text_uf8 = convert_to_utf8_str(idea.text)
     author_name_utf8 = convert_to_utf8_str(idea.author.screen_name)
+    platform_name_utf8 = convert_to_utf8_str(idea.source_consultation.name.title())
     campaign = idea.campaign
     ini_hashtag = initiative.hashtag
     cam_hashtag = campaign.hashtag
@@ -243,9 +247,9 @@ def publish_idea_sn(idea, sn_app, mode=None):
         sn_connector.authenticate(sn_app)
     if idea.is_new:
         title_utf8 = convert_to_utf8_str(idea.title)
-        text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(),
-                                             cam_hashtag.lower(), idea.positive_votes,
-                                             idea.negative_votes)
+        text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
+                                             text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
+                                             author_name_utf8, platform_name_utf8, idea.url)
         attachment = {
             'name': title_utf8,
             'link':  idea.url,
@@ -253,10 +257,11 @@ def publish_idea_sn(idea, sn_app, mode=None):
             'description': desc_attachment.format(author_name_utf8, initiative.name),
             'picture': LOGO_IDEASCALE_VIA
         }
+        # From now, let's don't include the attachment
         if mode and mode == 'batch':
-            return sn_connector.create_batch_request(my_feed_uri, text_to_sn, attachment)
+            return sn_connector.create_batch_request(my_feed_uri, text_to_sn)
         try:
-            new_post = sn_connector.publish_post(text_to_sn, attachment)
+            new_post = sn_connector.publish_post(text_to_sn)
             idea.sn_id = new_post['id']
             idea.is_new = False
             idea.sync = True
@@ -384,17 +389,20 @@ def publish_idea_cp(idea):
         new_content = get_json_or_error(connector.name, url_cb.callback, resp)
         idea.cp_id = new_content['id']
         idea.is_new = False
-        try:
-            # Attach img to the new idea
-            url_cb = get_url_cb(connector, 'attach_file_idea_cb')
-            url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea.cp_id})
-            params = {'file_str': 'via_fb.png'}
-            body_param = build_request_body(connector, url_cb.callback, params)
-            resp = do_request(connector, url, url_cb.callback.method, body_param)
-            get_json_or_error(connector.name, url_cb.callback, resp)
-        except Exception as e:
-            logger.warning('An error occurred when trying to attach an image to the new idea. '
-                           'Reason: {}'.format(e))
+        # From now, don't attach fb icon to the ideas
+        # It could introduce some bias by leading the attention of the participants
+        # mainly toward the ideas with the icon
+        # try:
+        #     # Attach img to the new idea
+        #     url_cb = get_url_cb(connector, 'attach_file_idea_cb')
+        #     url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea.cp_id})
+        #     params = {'file_str': 'via_fb.png'}
+        #     body_param = build_request_body(connector, url_cb.callback, params)
+        #     resp = do_request(connector, url, url_cb.callback.method, body_param)
+        #     get_json_or_error(connector.name, url_cb.callback, resp)
+        # except Exception as e:
+        #     logger.warning('An error occurred when trying to attach an image to the new idea. '
+        #                    'Reason: {}'.format(e))
     elif idea.has_changed:
         try:
             url_cb = get_url_cb(connector, 'update_idea_cb')
@@ -506,14 +514,23 @@ def save_sn_post(sn_app, post):
                     logger.warning('An error occurred when trying to create/update the post {}. '
                                    'Reason: {}'.format(post, e))
             else:
-                logger.info('The post {} could not be created/updated. Reason: The campaign could not be identified '
-                               'from the hashtags'.format(post))
+                if 'text' in post.keys():
+                    logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
+                                'identified from the hashtags'.format(post['text']))
+                else:
+                    logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
         else:
-            logger.info('The post {} could not be created/updated. Reason: The initiative could not be identified '
-                           'from the hashtags'.format(post))
+            if 'text' in post.keys():
+                logger.info('The post \'{}\' could not be created/updated. Reason: The initiative could not be '
+                            'identified from the hashtags'.format(post['text']))
+            else:
+                logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
     else:
-        logger.info('The post {} could not be created/updated. Reason: It seems it does not have hashtags'.
-                       format(post))
+        if 'text' in post.keys():
+            logger.info('The post \'{}\' could not be created/updated. Reason: It seems it does not have hashtags'.
+                        format(post['text']))
+        else:
+            logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
     return None
 
 

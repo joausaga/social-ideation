@@ -205,7 +205,7 @@ def synchronize_content():
     if acquire_lock():
         try:
             # Lock is used to ensure that synchronization is only executed one at time
-            logger.info('\nStarting the synchronization')
+            logger.info('Starting the synchronization')
             logger.info('----------------------------')
             pull_data()
             push_data()
@@ -213,8 +213,7 @@ def synchronize_content():
             logger.info('The synchronization has successfully finished!')
             logger.info('----------------------------')
         except Exception as e:
-            logger.error('The synchronization could not finish successfully. '
-                         'Message: {}'.format(convert_to_utf8_str(e)))
+            logger.error('The synchronization could not finish successfully. {}'.format(convert_to_utf8_str(e)))
             logger.error(traceback.format_exc())
         finally:
             release_lock()
