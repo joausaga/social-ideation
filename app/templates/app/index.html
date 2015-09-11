@@ -1,0 +1,73 @@
+{% extends 'app/base.html' %}
+
+{% block script %}
+    <script type="text/javascript">
+        function startConnect(){
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    window.location = window.location + 'login_fb' +
+                            '?access_token=' + response.authResponse.accessToken +
+                            '&expires=' + response.authResponse.expiresIn +
+                            '&signed_request=' + response.authResponse.signedRequest +
+                            '&user_id=' + response.authResponse.userID;
+                } else {
+                    checkStatusCallback(response);
+                }
+            }, {scope: 'public_profile,email,publish_actions,user_friends'})
+        };
+        function checkStatusCallback(response) {
+            if (response.status === 'connected') {
+                //document.getElementById('button').style.visibility = 'hidden';
+                document.getElementById('status').innerHTML = 'You have already accept to ' +
+                    'use Social Ideation App. Please join the Facebook group [link] of the initiatives.';
+            } else if (response.status === 'not_authorized') {
+                // The person is logged into Facebook, but not your app.
+                document.getElementById('button').style.visibility = 'visible';
+                document.getElementById('status').innerHTML = 'Please accept to use Social Ideation App';
+            } else {
+                // The person is not logged into Facebook, so we're not sure if
+                // they are logged into this app or not.
+                document.getElementById('button').style.visibility = 'visible';
+                document.getElementById('status').innerHTML = 'Please log into Facebook';
+            }
+        }
+    </script>
+{% endblock %}
+
+{% block main %}
+<div>
+    <h1> [LOGO] Welcome to Social Ideation App</h1>
+    <p>[Project explanation Message]</p>
+    <p>Term of use</p>
+    <!-- <a href="#" onclick="startConnect(); return false;">Click to connect and authenticate</a>
+    <form action="{% url 'app:login_fb' %}">
+        <input type="submit" value="I agree to use the app">
+    </form> -->
+    <div id="button"><button type="button" onclick="startConnect(); return false;">I agree to use the app</button></div>
+    <p><div id="status"></div></p>
+</div>
+<div id="fb-root"></div>
+<script type="text/javascript">
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId: '1639456526287470',
+            status: true,
+            cookie: true,
+            xfbml: true,
+            oauth: true
+        });
+
+        FB.getLoginStatus(function(response) {
+            checkStatusCallback(response);
+        });
+    };
+
+    (function() {
+        var e = document.createElement('script'); e.async = true;
+        e.src = document.location.protocol +
+                '//connect.facebook.net/ru_RU/all.js';
+        document.getElementById('fb-root').appendChild(e);
+    }());
+</script>
+{% endblock %}
+
