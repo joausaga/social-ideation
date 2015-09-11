@@ -1,10 +1,14 @@
+from app.utils import calculate_token_expiration_time
 from connectors.error import ConnectorError
 
 import abc
 import facebook
+import logging
 import json
 import requests
 import urllib
+
+logger = logging.getLogger(__name__)
 
 class SocialNetworkBase():
     # Abstract base class from where
@@ -20,86 +24,92 @@ class SocialNetworkBase():
 
     @classmethod
     @abc.abstractmethod
-    def get_posts(cls, page_id):
+    def get_posts(cls, app):
         """Search for posts published to the page"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def publish_post(cls, message):
+    def publish_post(cls, app, message):
         """Publish a new post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def edit_post(cls, id_post, message):
+    def edit_post(cls, app, id_post, message):
         """Edit the post identified by id_post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def delete_post(cls, id_post):
+    def delete_post(cls, app, id_post):
         """Delete the post identified by id_post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def get_post(cls, id_post):
+    def get_post(cls, app, id_post):
         """Get the post identified by id_post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def vote_post(cls, id_post, type_vote=None):
+    def vote_post(cls, app, id_post, type_vote=None):
         """Vote up/down (type_vote) post identified by id_post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def delete_vote_post(cls, id_post, id_vote):
+    def delete_vote_post(cls, app, id_post, id_vote):
         """Remove vote (id_vote) placed for the post identified by id_post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def comment_post(cls, id_post, message):
+    def comment_post(cls, app, id_post, message):
         """Comment the post identified by id_post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def comment_comment(cls, id_comment, message):
+    def comment_comment(cls, app, id_comment, message):
         """Comment the comment identified by id_comment"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def edit_comment(cls, id_comment, message):
+    def edit_comment(cls, app, id_comment, message):
         """Edit the comment identified by id_comment"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def delete_comment(cls, id_comment):
+    def delete_comment(cls, app, id_comment):
         """Remove comment (id_comment) placed for the post identified by id_post"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def delete_vote_comment(cls, id_comment, id_vote):
+    def delete_vote_comment(cls, app, id_comment, id_vote):
         """Remove vote (id_vote) placed for the comment identified by id_comment"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def get_comment(cls, id_comment):
+    def get_comment(cls, app, id_comment):
         """Get the comment identified by id_comment"""
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def get_info_user(cls, id_user):
+    def get_info_user(cls, app, id_user):
         """Get information about a particular user"""
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def error_handler(cls, method, error_obj):
+        """Handler request errors"""
         raise NotImplementedError
 
 
@@ -120,28 +130,59 @@ class Facebook(SocialNetworkBase):
             raise ConnectorError('Error when trying to get long-lived access token')
         else:
             str_resp = resp.text
-            return str_resp.split('&')[0].split('=')[1]
+            resps = str_resp.split('&')
+            return {'access_token': resps[0].split('=')[1], 'expiration': resps[1].split('=')[1]}
 
     @classmethod
     def get_long_lived_page_token(cls, app_id, app_secret, access_token, page_id):
-        access_token = cls.get_long_lived_access_token(app_id, app_secret, access_token)
+        access_token = cls.get_long_lived_access_token(app_id, app_secret, access_token)['access_token']
         graph = facebook.GraphAPI(access_token)
         # Get page token to post as the page
         resp = graph.get_object('me/accounts')
         for page in resp['data']:
             if page['id'] == page_id:
                 return page['access_token']
-        raise ConnectorError('Couldn\'t get long-lived page token')
+        raise ConnectorError('Couldn\'t get page long-lived token')
 
     @classmethod
-    def authenticate(cls, app):
-        if not app.page_token:
-            page_token = cls.get_long_lived_page_token(app.app_id, app.app_secret, app.access_token, app.page_id)
-            app.page_token = page_token
-            app.save() # Save page token to use later
+    def get_code(cls, app_id, app_secret, app_redirect_uri, access_token):
+        url = cls.host + \
+             '/oauth/client_code?access_token={}&client_secret={}&redirect_uri={}&client_id={}'
+        resp = requests.get(url=url.format(access_token, app_secret, app_redirect_uri, app_id))
+        if resp.status_code and not 200 <= resp.status_code < 300:
+            raise ConnectorError('Error when trying to get the code')
         else:
-            page_token = app.page_token
-        cls.graph = facebook.GraphAPI(page_token)
+            json_resp = json.loads(resp.text)
+            return json_resp['code']
+
+    @classmethod
+    def authenticate(cls, app, type_auth=None, app_user=None):
+        if app.community.type == 'page':
+            if not app.community.token:
+                token = cls.get_long_lived_page_token(app.app_id, app.app_secret,
+                                                      app.app_access_token,
+                                                      app.community.external_id)
+                app.community.token = token
+                app.community.save()
+            else:
+                token = app.community.token
+        else:  # community type = group
+            if type_auth == 'write':  # User access_token
+                code = cls.get_code(app.app_id, app.app_secret, app.redirect_uri, app_user.access_token)
+                access_token_info = facebook.get_access_token_from_code(code, app.redirect_uri,
+                                                                        app.app_id, app.app_secret)
+                token = access_token_info['access_token']
+                app_user.access_token = token
+                app_user.access_token_exp = calculate_token_expiration_time(access_token_info['expires_in'])
+                app_user.save()
+            else:
+                if app.app_access_token:
+                    token = app.app_access_token
+                else:
+                    token = facebook.get_app_access_token(app.app_id, app.app_secret)
+                    app.app_access_token = token
+                    app.save()
+        cls.graph = facebook.GraphAPI(token)
 
     @classmethod
     def build_post_dict(cls, post_raw):
@@ -225,75 +266,108 @@ class Facebook(SocialNetworkBase):
             return like_dict
 
     @classmethod
-    def get_posts(cls, page_id):
-        posts = cls.graph.get_connections(page_id, 'feed')
+    def get_posts(cls, app):
+        cls.authenticate(app)
+        posts = cls.graph.get_connections(app.community.external_id, 'feed')
         posts_array = cls.get_elements(posts, 'posts')
         return posts_array
 
     @classmethod
-    def publish_post(cls, message, attachment=None):
-        if attachment:
-            return cls.graph.put_wall_post(message, attachment=attachment)
+    def publish_post(cls, app, message, msg_attachment=None, app_user=None):
+        cls.authenticate(app, 'write', app_user)
+        if msg_attachment:
+            return cls.graph.put_object(app.community.external_id, 'feed', message,
+                                        attachment=msg_attachment)
         else:
-            return cls.graph.put_wall_post(message)
+            return cls.graph.put_object(app.community.external_id, 'feed', message)
 
     @classmethod
-    def edit_post(cls, id_post, new_message):
-        return cls.graph.request(cls.graph.version + "/" + id_post, post_args={'message': new_message},
-                                 method="POST")
+    def edit_post(cls, app, id_post, new_message, app_user=None):
+        cls.authenticate(app, 'write', app_user)
+        return cls.graph.request(cls.graph.version + '/' + id_post,
+                                 post_args={'message': new_message},
+                                 method='POST')
         #  cls.graph.edit_message_post(post_id=id_post, message=new_message)
 
     @classmethod
-    def delete_post(cls, id_post):
+    def delete_post(cls, app, id_post, app_user=None):
+        cls.authenticate(app, 'write', app_user)
         cls.graph.delete_object(id=id_post)
 
     @classmethod
-    def get_post(cls, id_post):
+    def get_post(cls, app, id_post):
         try:
+            cls.authenticate(app)
             raw_post = cls.graph.get_object(id=id_post)
             return cls.get_element(raw_post, 'post')
         except facebook.GraphAPIError as e:
             return None
 
     @classmethod
-    def vote_post(cls, id_post, type_vote=None):
+    def vote_post(cls, app, id_post, type_vote=None, app_user=None):
+        cls.authenticate(app, 'write', app_user)
         cls.graph.put_like(object_id=id_post)
 
     @classmethod
-    def delete_vote_post(cls, id_post, id_vote):
-        cls.graph.request(cls.graph.version + "/" + id_post + "/likes", method="DELETE")
+    def delete_vote_post(cls, app, id_post, id_vote, app_user=None):
+        cls.authenticate(app, 'write', app_user)
+        cls.graph.request(cls.graph.version + '/' + id_post + '/likes', method='DELETE')
         # cls.graph.delete_like(id_post)
 
     @classmethod
-    def comment_post(cls, id_post, message):
+    def comment_post(cls, app, id_post, message, app_user=None):
+        cls.authenticate(app, 'write', app_user)
         return cls.graph.put_comment(object_id=id_post, message=message)
 
     @classmethod
-    def edit_comment(cls, id_comment, message):
-        return cls.graph.request(cls.graph.version + "/" + id_comment, post_args={'message': message},
-                                 method="POST")
+    def edit_comment(cls, app, id_comment, message, app_user=None):
+        cls.authenticate(app, 'write', app_user)
+        return cls.graph.request(cls.graph.version + '/' + id_comment,
+                                 post_args={'message': message}, method='POST')
 
     @classmethod
-    def delete_comment(cls, id_comment):
+    def delete_comment(cls, app, id_comment, app_user=None):
+        cls.authenticate(app, 'write', app_user)
         cls.graph.delete_object(id=id_comment)
 
     @classmethod
-    def delete_vote_comment(cls, id_comment, id_vote):
-        cls.graph.request(cls.graph.version + "/" + id_comment + "/likes", method="DELETE")
+    def delete_vote_comment(cls, app, id_comment, id_vote, app_user=None):
+        cls.authenticate(app, 'write', app_user)
+        cls.graph.request(cls.graph.version + '/' + id_comment + '/likes',
+                          method='DELETE')
         # cls.graph.delete_like(id_comment)
 
     @classmethod
-    def get_comment(cls, id_comment):
+    def get_comment(cls, app, id_comment):
         try:
+            cls.authenticate(app)
             raw_comment = cls.graph.get_object(id=id_comment)
             return cls.get_element(raw_comment, 'comment')
         except facebook.GraphAPIError as e:
             return None
 
     @classmethod
-    def get_info_user(cls, id_user):
+    def get_info_user(cls, app, id_user, access_token=None):
+        if access_token:
+            cls.graph = facebook.GraphAPI(access_token)
+        else:
+            cls.authenticate(app)
         raw_user = cls.graph.get_object(id_user)
-        return {'id': raw_user['id'], 'name': raw_user['name'], 'url': raw_user['link']}
+        if 'link' in raw_user.keys():
+            return {'id': raw_user['id'], 'name': raw_user['name'], 'url': raw_user['link'],
+                    'email': raw_user['email']}
+        else:
+            return {'id': raw_user['id'], 'name': raw_user['name'], 'email': raw_user['email']}
+
+    @classmethod
+    def error_handler(cls, method, error_obj, params=None):
+        logger.warning('Error when trying to call the method {}. Reason: {}'.format(method, error_obj))
+        if 'Error validating access token' in error_obj:
+            # TODO: There is a problem with the access token, notify the user.
+            # User's email is saved in params
+            pass
+        else:
+            raise ConnectorError(error_obj)
 
     @classmethod
     def _get_req_error_msg(cls, resp_text):
@@ -305,21 +379,18 @@ class Facebook(SocialNetworkBase):
 
     @classmethod
     def subscribe_real_time_updates(cls, app, data):
-        if not app.page_token:
-            page_token = cls.get_long_lived_page_token(app.app_id, app.app_secret,
-                                                       app.access_token, app.page_id)
-            app.page_token = page_token
-            app.save()
-        else:
-            page_token = app.page_token
-        url = cls.api_app_page_subscription.format(app.page_id)
-        data_token = ({'access_token': page_token})
+        cls.authenticate(app)
+        url = cls.api_app_page_subscription.format(app.community.external_id)
+        data_token = ({'access_token': app.community.token})
         resp = requests.post(url=url, data=data_token)
         resp_text = json.loads(resp.text)
         if resp.status_code and not 200 <= resp.status_code < 300:
             raise ConnectorError(cls._get_req_error_msg(resp_text))
         else:
-            access_token = facebook.get_app_access_token(app.app_id, app.app_secret)
+            if not app.app_access_token:
+                access_token = facebook.get_app_access_token(app.app_id, app.app_secret)
+            else:
+                access_token = app.app_access_token
             data.update({'access_token': access_token})
             url = cls.api_real_time_subscription.format(app.app_id)
             resp = requests.post(url=url, data=data)
@@ -331,7 +402,10 @@ class Facebook(SocialNetworkBase):
 
     @classmethod
     def delete_subscription_real_time_updates(cls, app, data):
-        access_token = facebook.get_app_access_token(app.app_id, app.app_secret)
+        if not app.app_access_token:
+            access_token = facebook.get_app_access_token(app.app_id, app.app_secret)
+        else:
+            access_token = app.app_access_token
         data.update({'access_token': access_token})
         url = cls.api_real_time_subscription.format(app.app_id)
         resp = requests.delete(url=url, data=data)
@@ -342,25 +416,42 @@ class Facebook(SocialNetworkBase):
             return resp_text
 
     @classmethod
-    def create_batch_request(cls, uri, msg, attachment=None):
-        if attachment:
-            body = attachment
+    def create_batch_request(cls, msg, uri, msg_attachment=None, access_token=None):
+        if access_token:
+            req_uri = uri + '?access_token={}'.format(access_token)
+        else:
+            req_uri = uri
+        if msg_attachment:
+            body = msg_attachment
             body.update({'message': msg})
         else:
             body = {'message': msg}
-        return {'method': 'POST', 'relative_url': uri,
+        return {'method': 'POST', 'relative_url': req_uri,
                 'body': urllib.urlencode(body),
                 'omit_response_on_success': False}
 
     @classmethod
     def make_batch_request(cls, app, batch):
-        cls.authenticate(app)
+        if not app.app_access_token:
+            access_token = facebook.get_app_access_token(app.app_id, app.app_secret)
+        else:
+            access_token = app.app_access_token
         ret = cls.graph.request(cls.graph.version + "/",
                                 post_args={'batch': json.dumps(batch),
-                                           'access_token': app.page_token,
+                                           'access_token': access_token,
                                            'include_headers': 'false'},
-                                method="POST")
+                                method='POST')
         return ret
+
+    @classmethod
+    def get_community_member_list(cls, app, group_id):
+        cls.authenticate(app)
+        members_email = []
+        member_list = cls.graph.get_connections(group_id, 'members')
+        print member_list
+        for member in member_list['data']:
+            members_email.append(member['id'])
+        return members_email
 
 
 #if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import datetime
 import requests
 import re
 import unicodedata
@@ -143,3 +144,25 @@ def convert_to_utf8_str(arg):
 
 def get_timezone_aware_datetime(datetime):
     return timezone.make_aware(datetime, timezone.get_default_timezone())
+
+
+def calculate_token_expiration_time(secs):
+    str_secs = convert_to_utf8_str(secs)
+    int_secs = int(str_secs)
+    return datetime.datetime.now() + datetime.timedelta(seconds=int_secs)
+
+
+def call_social_network_api(connector, method, params=None, error_handler_method=None):
+    sn_class = connector.connector_class.title()
+    sn_module = connector.connector_module.lower()
+    sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
+    try:
+        if params:
+            return getattr(sn, method)(**params)
+        else:
+            return getattr(sn, method)()
+    except Exception as e:
+        if not error_handler_method:
+            getattr(sn, 'error_handler')(method, e, params)
+        else:
+            getattr(sn, error_handler_method)(method, e, params)

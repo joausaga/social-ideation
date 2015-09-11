@@ -2,14 +2,14 @@ from django.test import TestCase
 
 from app.models import Idea, Author, Location, ConsultationPlatform, Initiative, SocialNetworkApp
 from app.tasks import pull_data, push_data, delete_data
-from utils import build_request_url, do_request, get_url_cb, get_json_or_error, build_request_body
+from utils import build_request_url, do_request, get_url_cb, get_json_or_error, build_request_body, \
+                  call_social_network_api
 
 
 class AppTestCase(TestCase):
     fixtures = ['initial_data.json']
     cp_connector = None
     testing_initiative = Initiative.objects.get(url='http://fiveheads.ideascale.com')
-    sn_api = None
     consultation_platform = None
     consultation_platform_url = 'http://www.ideascale.com'
     social_network = None
@@ -23,11 +23,6 @@ class AppTestCase(TestCase):
         self.consultation_platform = ConsultationPlatform.objects.get(url=self.consultation_platform_url)
         self.cp_connector = self.consultation_platform.connector
         self.social_network = SocialNetworkApp.objects.get(url=self.social_network_url)
-        fb_connector = self.social_network.connector
-        sn_class = fb_connector.connector_class.title()
-        sn_module = fb_connector.connector_module.lower()
-        self.sn_api = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-        self.sn_api.authenticate(self.social_network)
         self._clean_up_facebook_page()
         self._clean_up_ideascale_community()
         self._set_ideascale_counters()
@@ -37,18 +32,22 @@ class AppTestCase(TestCase):
         return platform_name.lower() in text.lower()
 
     def _clean_up_facebook_page(self):
-        posts = self.sn_api.get_posts()
+        params = {'app': self.social_network}
+        posts = call_social_network_api(self.social_network.connector, 'get_posts', params)
         for post in posts:
             if 'comments_array' in post.keys():
                 for comment in post['comments_array']:
                     if 'comments_array' in comment.keys():
                         for reply in comment['comments_array']:
                             if self._exist_platform_name_in_text(self.consultation_platform.name, reply['text']):
-                                self.sn_api.delete_comment(reply['id'])
+                                params = {'app': self.social_network, 'id_comment': reply['id']}
+                                call_social_network_api(self.social_network.connector, 'delete_comment', params)
                     if self._exist_platform_name_in_text(self.consultation_platform.name, comment['text']):
-                        self.sn_api.delete_comment(comment['id'])
+                        params = {'app': self.social_network, 'id_comment': comment['id']}
+                        call_social_network_api(self.social_network.connector, 'delete_comment', params)
             if self._exist_platform_name_in_text(self.consultation_platform.name, post['text']):
-                self.sn_api.delete_post(post['id'])
+                params = {'app': self.social_network, 'id_post': post['id']}
+                call_social_network_api(self.social_network.connector, 'delete_post', params)
 
     def _clean_up_ideascale_community(self):
         connector = self.cp_connector
@@ -101,7 +100,8 @@ class AppTestCase(TestCase):
         self.num_initial_comments_ideascale = len(comments)
 
     def _set_facebook_counters(self):
-        posts = self.sn_api.get_posts()
+        params = {'app': self.social_network}
+        posts = call_social_network_api(self.social_network.connector, 'get_posts', params)
         self.num_initial_ideas_fb = len(posts)
         for post in posts:
             if 'comments_array' in post.keys():
@@ -135,7 +135,8 @@ class TestAppBehavior(AppTestCase):
             if self._exist_platform_name_in_text(self.social_network.name, comment['text']):
                 replicated_comments += 1
         self.assertEqual(replicated_comments, self.num_initial_comments_fb)
-        posts = self.sn_api.get_posts()
+        params = {'app': self.social_network}
+        posts = call_social_network_api(self.social_network.connector, 'get_posts', params)
         replicated_ideas = 0
         replicated_comments = 0
         for post in posts:
@@ -188,15 +189,18 @@ class TestAppBehavior(AppTestCase):
         # 4. Add new comment to a facebook idea
         idea = Idea.objects.get(sn_id='437938162969648_817265021703625')
         idea_mod_4 = idea
-        new_comment_fb = self.sn_api.comment_post(idea.sn_id, 'Testing comment 3!')
+        params = {'app': self.social_network, 'id_post': idea.sn_id, 'message': 'Testing comment 3!'}
+        new_comment_fb = call_social_network_api(self.social_network.connector, 'comment_post', params)
 
         # 5. Add new comment to an ideascale idea
         idea = Idea.objects.get(title='Testing param')
         idea_mod_5 = idea
-        self.sn_api.comment_post(idea.sn_id, 'Testing comment 4!')
+        params = {'app': self.social_network, 'id_post': idea.sn_id, 'message': 'Testing comment 4!'}
+        call_social_network_api(self.social_network.connector, 'comment_post', params)
 
         # 6. Create new idea on facebook
-        new_idea_fb = self.sn_api.publish_post('Testing Idea!')
+        params = {'app': self.social_network, 'message': 'Testing Idea!'}
+        new_idea_fb = call_social_network_api(self.social_network.connector, 'publish_post', params)
 
         # 7. Create new idea on ideascale
         url_cb = get_url_cb(self.cp_connector, 'create_idea_cb')
@@ -213,17 +217,20 @@ class TestAppBehavior(AppTestCase):
 
         # Check if modification 1) was replicated on facebook
         idea = Idea.objects.get(text='Terere Machine')
-        post = self.sn_api.get_post(idea.sn_id)
+        params = {'app': self.social_network, 'id_post': idea.sn_id}
+        post = call_social_network_api(self.social_network.connector, 'get_post', params)
         self.assertEqual(len(post['comments_array']), idea_mod_1.comments+1)
 
         # Check if modification 2) was replicated on facebook
         idea = Idea.objects.get(cp_id='721262')
-        post = self.sn_api.get_post(idea.sn_id)
+        params = {'app': self.social_network, 'id_post': idea.sn_id}
+        post = call_social_network_api(self.social_network.connector, 'get_post', params)
         self.assertEqual(len(post['comments_array']), idea_mod_2.comments+1)
 
         # Check if modification 3) was replicated on facebook
         idea = Idea.objects.get(cp_id='718882')
-        post = self.sn_api.get_post(idea.sn_id)
+        params = {'app': self.social_network, 'id_post': idea.sn_id}
+        post = call_social_network_api(self.social_network.connector, 'get_post', params)
         if idea_vote_value == 1:
             self.assertEqual(post['positive_votes'], idea_mod_3.positive_votes+1)
         else:
@@ -254,13 +261,15 @@ class TestAppBehavior(AppTestCase):
         url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': content_to_del['id_is_new_idea']})
         do_request(self.cp_connector, url, url_cb.callback.method)
         # 2. Delete idea created on facebook
-        self.sn_api.delete_post(content_to_del['id_fb_new_idea'])
+        params = {'app': self.social_network, 'id_post': content_to_del['id_fb_new_idea']}
+        call_social_network_api(self.social_network.connector, 'delete_post', params)
         # 3. Delete comment created on ideascale
         url_cb = get_url_cb(self.cp_connector, 'delete_comment_cb')
         url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': content_to_del['id_is_comment']})
         do_request(self.cp_connector, url, url_cb.callback.method)
         # 4. Delete comment created on facebook
-        self.sn_api.delete_comment(content_to_del['id_fb_comment'])
+        params = {'app': self.social_network, 'id_comment': content_to_del['id_fb_comment']}
+        call_social_network_api(self.social_network.connector, 'delete_comment', params)
         # Sync modifications
         pull_data()
         delete_data()
@@ -270,7 +279,8 @@ class TestAppBehavior(AppTestCase):
         resp = do_request(self.cp_connector, url, url_cb.callback.method)
         self.assertEqual(resp.status_code, 400)
         # Check if the deletion of the idea created on facebook was replicated (2)
-        del_post = self.sn_api.get_post(content_to_del['id_fb_new_idea'])
+        params = {'app': self.social_network, 'id_post': content_to_del['id_fb_new_idea']}
+        del_post = call_social_network_api(self.social_network.connector, 'get_post', params)
         self.assertIsNone(del_post)
         # Check if the deletion of the comment created on ideascale was replicated (3)
         url_cb = get_url_cb(self.cp_connector, 'get_comment_cb')
@@ -278,7 +288,8 @@ class TestAppBehavior(AppTestCase):
         resp = do_request(self.cp_connector, url, url_cb.callback.method)
         self.assertEqual(resp.status_code, 400)
         # Check if the deletion of the comment created on facebook was replicated (4)
-        del_comment = self.sn_api.get_post(content_to_del['id_fb_comment'])
+        params = {'app': self.social_network, 'id_post': content_to_del['id_fb_comment']}
+        del_comment = call_social_network_api(self.social_network.connector, 'get_post', params)
         self.assertIsNone(del_comment)
 
     def test_synchronization(self):

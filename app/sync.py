@@ -1,11 +1,12 @@
 import logging
 import json
+import traceback
 
 from app.error import AppError
 from app.models import Idea, Author, Location, Initiative, Comment, Vote, Campaign, ConsultationPlatform, \
-                       SocialNetworkApp
+                       SocialNetworkApp, SocialNetworkAppUser
 from app.utils import do_request, get_json_or_error, get_url_cb, build_request_url, convert_to_utf8_str, \
-                      build_request_body
+                      build_request_body, call_social_network_api
 from datetime import datetime
 from django.utils import timezone
 
@@ -54,11 +55,13 @@ def _update_or_create_author(platform, author, source):
                 author = get_json_or_error(connector.name, url_cb.callback, resp)
             else:
                 # Fetch author inform from social network
-                sn_class = connector.connector_class.title()
-                sn_module = connector.connector_module.lower()
-                sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-                sn.authenticate(platform)
-                author = sn.get_info_user(author['id'])
+                try:
+                    app_user = SocialNetworkAppUser.objects.get(external_id=author['id'])
+                    author = {'id': app_user.external_id, 'name': app_user.name, 'email': app_user.email,
+                              'url': app_user.url}
+                except SocialNetworkAppUser.DoesNotExist:
+                    params = {'app': platform, 'id_user': author['id']}
+                    author = call_social_network_api(connector, 'get_info_user', params)
         attr_new_author = {'screen_name': author['name'], 'channel': source, 'external_id': author['id']}
         if 'email' in author.keys():
             attr_new_author.update({'email': author['email']})
@@ -191,6 +194,8 @@ def _get_str_language(lang, type):
             return 'Autor: {} ({})'
         elif type == 'link':
             return 'Link: {}'
+        elif type == 'source':
+            return 'Desde: {}'
     elif lang == 'it':
         if type == 'votes':
             return '[Voti +: {}/-: {}]'
@@ -202,6 +207,8 @@ def _get_str_language(lang, type):
             return 'Autore: {} ({})'
         elif type == 'link':
             return 'Link: {}'
+        elif type == 'source':
+            return 'Da: {}'
     else:
         # default: lang == 'en'
         if type == 'votes':
@@ -214,6 +221,55 @@ def _get_str_language(lang, type):
             return 'Author: {} ({})'
         elif type == 'link':
             return 'Link: {}'
+        elif type == 'source':
+            return 'From: {}'
+
+
+def _do_publish_idea_sn(sn_app, idea, text_to_sn, mode, app_user=None):
+    if mode and mode == 'batch':
+        uri = '{}/feed'.format(sn_app.community.external_id)
+        params = {'msg': text_to_sn, 'access_token': app_user.access_token, 'uri': uri}
+        return call_social_network_api(sn_app.connector, 'create_batch_request', params)
+    try:
+        params = {'app': sn_app, 'message': text_to_sn, 'app_user': app_user}
+        new_post = call_social_network_api(sn_app.connector, 'publish_post', params)
+        idea.sn_id = new_post['id']
+        idea.is_new = False
+        idea.sync = True
+        idea.save()
+    except Exception as e:
+        if 'blocked' in e.message:
+            sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
+            sn_app.save()
+        raise AppError(e)
+
+
+def _do_edit_idea_sn(sn_app, idea, text_to_sn, app_user=None):
+    try:
+        params = {'app': sn_app, 'id_post': idea.sn_id, 'new_message': text_to_sn, 'app_user': app_user}
+        call_social_network_api(sn_app.connector, 'edit_post', params)
+        idea.has_changed = False
+        idea.sync = True
+        idea.save()
+    except Exception as e:
+        if 'blocked' in e.message:
+            sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
+            sn_app.save()
+        raise AppError(e)
+
+
+def _is_user_community_member(sn_app, app_user):
+    app_community = sn_app.community
+    for reg_member in app_community.members.all():
+        if reg_member == app_user:
+            return True
+    params = {'app': sn_app, 'group_id': sn_app.community.external_id}
+    members = call_social_network_api(sn_app.connector, 'get_community_member_list', params)
+    for member in members:
+        if member == app_user.external_id:
+            app_community.members.add(app_user)
+            return True
+    return False
 
 
 def publish_idea_sn(idea, sn_app, mode=None):
@@ -221,16 +277,15 @@ def publish_idea_sn(idea, sn_app, mode=None):
     LOGO_IDEASCALE_VIA = 'https://dl.dropboxusercontent.com/u/55956367/via_is_white.png'
     template_idea_header_sn = '----------------\n' \
                               '{}\n'
+    template_idea_header_sn += _get_str_language(initiative.language, 'votes') + '\n'
     template_idea_header_sn += '----------------\n\n'
-    template_idea_header_sn += _get_str_language(initiative.language, 'votes') + '\n\n'
     template_idea_body_sn = '{}\n\n' \
                             '#{} #{}\n\n' \
                             '----------------\n'
     template_idea_sn = template_idea_header_sn + template_idea_body_sn
-    template_idea_sn += _get_str_language(initiative.language, 'author_p') + '\n'
+    template_idea_sn += _get_str_language(initiative.language, 'source') + '\n'
     template_idea_sn += _get_str_language(initiative.language, 'link')
     desc_attachment = _get_str_language(initiative.language, 'desc_attach')
-    my_feed_uri = 'me/feed'
 
     text_uf8 = convert_to_utf8_str(idea.text)
     author_name_utf8 = convert_to_utf8_str(idea.author.screen_name)
@@ -239,51 +294,88 @@ def publish_idea_sn(idea, sn_app, mode=None):
     ini_hashtag = initiative.hashtag
     cam_hashtag = campaign.hashtag
     # TODO: New text should be bounded by the social network's text length restriction
-    connector = sn_app.connector
-    sn_class = connector.connector_class.title()
-    sn_module = connector.connector_module.lower()
-    sn_connector = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    if not mode:
-        sn_connector.authenticate(sn_app)
     if idea.is_new:
         title_utf8 = convert_to_utf8_str(idea.title)
         text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
                                              text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                             author_name_utf8, platform_name_utf8, idea.url)
-        attachment = {
-            'name': title_utf8,
-            'link':  idea.url,
-            'caption': initiative.name.upper(),
-            'description': desc_attachment.format(author_name_utf8, initiative.name),
-            'picture': LOGO_IDEASCALE_VIA
-        }
-        # From now, let's don't include the attachment
-        if mode and mode == 'batch':
-            return sn_connector.create_batch_request(my_feed_uri, text_to_sn)
-        try:
-            new_post = sn_connector.publish_post(text_to_sn)
-            idea.sn_id = new_post['id']
-            idea.is_new = False
-            idea.sync = True
-            idea.save()
-        except Exception as e:
-            if 'blocked' in e.message:
-                sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
-                sn_app.save()
-            raise AppError(e)
+                                             platform_name_utf8, idea.url)
+        if sn_app.community.type == 'page':
+            return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode)
+        else:
+            if not idea.author.email:
+                logger.info('The author of the idea (user: {}) has not provided an email address, therefore '
+                            'his/her credentials to publish the idea on behalf of him/her on the social network '
+                            'cannot be found'.format(idea.author.email if idea.author.email else author_name_utf8))
+                return None
+            else:
+                if not SocialNetworkAppUser.objects.filter(email=idea.author.email).exists():
+                    logger.info('It seems the user {} has not logged into the app, his/her idea '
+                                'cannot be published in the initiative\'s group'.
+                                format(idea.author.email if idea.author.email else author_name_utf8))
+                    return None
+                else:
+                    app_user = SocialNetworkAppUser.objects.get(email=idea.author.email)
+                    if _is_user_community_member(sn_app, app_user):
+                        #attachment = {
+                        #    'name': title_utf8,
+                        #    'link':  idea.url,
+                        #    'caption': initiative.name.upper(),
+                        #    'description': desc_attachment.format(author_name_utf8, initiative.name),
+                        #    'picture': LOGO_IDEASCALE_VIA
+                        #}
+                        # From now, let's don't include the attachment
+                        return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode, app_user)
+                    else:
+                        logger.info('The author {} is not member of the initiative\'s group, '
+                                    'his/her ideas cannot be published'.
+                                    format(idea.author.email if idea.author.email else author_name_utf8))
+                        return None
     elif idea.has_changed:
         title_utf8 = convert_to_utf8_str(idea.title)
-        text_to_sn = template_idea_sn.format(title_utf8, text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                             idea.positive_votes, idea.negative_votes)
-        try:
-            sn_connector.edit_post(idea.sn_id, text_to_sn)
-            idea.has_changed = False
-            idea.sync = True
-            idea.save()
-        except Exception as e:
-            if 'blocked' in e.message:
-                sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
-                sn_app.save()
+        text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
+                                             text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
+                                             platform_name_utf8, idea.url)
+        if sn_app.community.type == 'page':
+            _do_edit_idea_sn(sn_app, idea, text_to_sn)
+        else:
+            app_user = SocialNetworkAppUser.objects.get(email=idea.author.email)
+            _do_edit_idea_sn(sn_app, idea, text_to_sn, app_user)
+
+
+def _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, type='post', app_user=None):
+    if mode and mode == 'batch':
+        uri = '{}/comments'.format(parent.sn_id)
+        params = {'msg': text_to_sn, 'uri': uri,'access_token': app_user.access_token}
+        return call_social_network_api(sn_app.connector, 'create_batch_request', params)
+    try:
+        if type == 'post':
+            params = {'app': sn_app, 'id_post': parent.sn_id, 'message': text_to_sn,'app_user': app_user}
+            new_comment = call_social_network_api(sn_app.connector, 'comment_post', params)
+        else:
+            params = {'app': sn_app, 'id_comment': parent.sn_id, 'message': text_to_sn,'app_user': app_user}
+            new_comment = call_social_network_api(sn_app.connector, 'comment_comment', params)
+        comment.sn_id = new_comment['id']
+        comment.is_new = False
+        comment.sync = True
+        comment.save()
+    except Exception as e:
+        if 'blocked' in e.message:
+            sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
+            sn_app.save()
+        raise AppError(e)
+
+
+def _do_edit_comment_sn(sn_app, comment, text_to_sn, app_user=None):
+    try:
+        params = {'app': sn_app, 'id_comment': comment.sn_id, 'message': text_to_sn,'app_user': app_user}
+        call_social_network_api(sn_app.connector, 'edit_comment', params)
+        comment.has_changed = False
+        comment.sync = True
+        comment.save()
+    except Exception as e:
+        if 'blocked' in e.message:
+            sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
+            sn_app.save()
             raise AppError(e)
 
 
@@ -291,78 +383,68 @@ def publish_comment_sn(comment, sn_app, mode=None):
     initiative = comment.initiative
     template_comment_sn = '{}\n\n----\n'
     template_comment_sn += _get_str_language(initiative.language, 'votes') + '\n'
-    template_comment_sn += _get_str_language(initiative.language, 'author_p')
-    comment_uri = '{}/comments'
+    template_comment_sn += _get_str_language(initiative.language, 'source')
 
     text_uf8 = convert_to_utf8_str(comment.text)
     author_name_utf8 = convert_to_utf8_str(comment.author.screen_name)
-    connector = sn_app.connector
-    sn_class = connector.connector_class.title()
-    sn_module = connector.connector_module.lower()
-    sn_connector = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    if not mode:
-        sn_connector.authenticate(sn_app)
     if comment.is_new:
         text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
-                                                author_name_utf8, comment.source_consultation.name)
-        if comment.parent == 'idea':
-            parent = Idea.objects.get(id=comment.parent_idea.id, exist=True)
-            if parent:
-                if mode and mode == 'batch':
-                    uri = comment_uri.format(parent.sn_id)
-                    return sn_connector.create_batch_request(uri, text_to_sn)
-                try:
-                    new_comment = sn_connector.comment_post(parent.sn_id, text_to_sn)
-                    comment.sn_id = new_comment['id']
-                    comment.is_new = False
-                    comment.sync = True
-                    comment.save()
-                except Exception as e:
-                    if 'blocked' in e.message:
-                        sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
-                        sn_app.save()
-                    raise AppError(e)
-            else:
-                raise AppError('Comment\'s parent does not exist')
-        elif comment.parent == 'comment':
+                                                comment.source_consultation.name)
+        if sn_app.community.type == 'page':
             try:
-                parent = Comment.objects.get(id=comment.parent_comment.id, exist=True)
-                if parent:
-                    if mode and mode == 'batch':
-                        uri = comment_uri.format(parent.sn_id)
-                        return sn_connector.create_batch_request(uri, text_to_sn)
-                    try:
-                        new_comment = sn_connector.comment_comment(parent.sn_id, text_to_sn)
-                        comment.sn_id = new_comment['id']
-                        comment.is_new = False
-                        comment.sync = True
-                        comment.save()
-                    except Exception as e:
-                        if 'blocked' in e.message:
-                            sn_app.blocked = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
-                            sn_app.save()
-                        raise AppError(e)
+                if comment.parent == 'idea':
+                    parent = Idea.objects.get(id=comment.parent_idea.id, exist=True)
+                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'post')
+                elif comment.parent == 'comment':
+                    parent = Comment.objects.get(id=comment.parent_comment.id, exist=True)
+                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'comment')
                 else:
-                    raise AppError('Comment\'s parent does not exist')
-            except:
-                logger.info('Replies to comments cannot be posted through the API of {}'.
-                            format(sn_app.name))
+                    raise AppError('Unknown the type of the object\'s parent')
+            except Exception as e:
+                raise AppError('Something went wrong when trying to publish a comment. Reason: {}'.format(e))
         else:
-            raise AppError('Unknown the type of the object\'s parent')
+            if not comment.author.email:
+                logger.info('The author of the comment (user: {}) has not provided an email address, therefore '
+                            'his/her credentials to publish the idea on behalf of him/her on the social network '
+                            'cannot be found'.
+                            format(comment.author.email if comment.author.email else author_name_utf8))
+                return None
+            else:
+                if not SocialNetworkAppUser.objects.filter(email=comment.author.email).exists():
+                    logger.info('It seems the user {} has not logged into the app, his/her comment '
+                                'cannot be published in the initiative\'s group'.
+                                format(comment.author.email if comment.author.email else author_name_utf8))
+                    return None
+                else:
+                    app_user = SocialNetworkAppUser.objects.get(email=comment.author.email)
+                    if _is_user_community_member(sn_app, app_user):
+                        try:
+                            if comment.parent == 'idea':
+                                parent = Idea.objects.get(id=comment.parent_idea.id, exist=True)
+                                return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
+                                                              'post', app_user)
+                            elif comment.parent == 'comment':
+                                parent = Comment.objects.get(id=comment.parent_comment.id, exist=True)
+                                return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
+                                                              'comment', app_user)
+                            else:
+                                raise AppError('Unknown the type of the object\'s parent')
+                        except Exception as e:
+                            raise AppError('Something went wrong when trying to publish a comment. '
+                                           'Reason: {}'.format(e))
+                    else:
+                        logger.info('The author {} is not member of the initiative\'s group, '
+                                    'his/her comment cannot be published'.
+                                    format(comment.author.email if comment.author.email else author_name_utf8))
+                        return None
     elif comment.has_changed:
         text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
-                                                author_name_utf8, comment.source_consultation.name)
-        try:
-            sn_connector.edit_comment(comment.sn_id, text_to_sn)
-            comment.has_changed = False
-            comment.sync = True
-            comment.save()
-        except Exception as e:
-            if 'blocked' in e.message:
-                sn_app.blocked = timezone.make_aware(datetime.now(),
-                                                             timezone.get_default_timezone())
-                sn_app.save()
-            raise AppError(e)
+                                                comment.source_consultation.name)
+        if sn_app.community.type == 'page':
+            _do_edit_comment_sn(sn_app, comment, text_to_sn)
+        else:
+            app_user = SocialNetworkAppUser.objects.get(email=comment.author.email)
+            _do_edit_comment_sn(sn_app, comment, text_to_sn, app_user)
 
 
 def publish_idea_cp(idea):
@@ -511,8 +593,9 @@ def save_sn_post(sn_app, post):
                                                     'social_network')
                     return {'idea': idea, 'initiative': initiative, 'campaign': campaign}
                 except Exception as e:
-                    logger.warning('An error occurred when trying to create/update the post {}. '
+                    logger.warning('An error occurred when trying to insert/update the post {} in the db. '
                                    'Reason: {}'.format(post, e))
+                    logger.warning(traceback.format_exc())
             else:
                 if 'text' in post.keys():
                     logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
@@ -616,8 +699,8 @@ def delete_vote(vote_id):
 
 
 def _delete_obj(obj):
-    obj.cp = None
-    obj.sn = None
+    obj.cp_id = None
+    obj.sn_id = None
     obj.exist = False
     obj.save()
 
@@ -725,11 +808,12 @@ def _is_social_network_enabled(social_network):
 
 
 def _do_batch_request(sn_app, batch):
-    connector = sn_app.connector
-    sn_class = connector.connector_class.title()
-    sn_module = connector.connector_module.lower()
-    sn_connector = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    return sn_connector.make_batch_request(sn_app, batch)
+    if len(batch) > 0:
+        connector = sn_app.connector
+        params = {'app': sn_app, 'batch': batch}
+        return call_social_network_api(connector, 'make_batch_request', params)
+    else:
+        return None
 
 
 def _process_batch_request(resp_batch_req, objs):
@@ -759,34 +843,42 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
                     if social_network.batch_requests and obj.is_new:
                         if not social_network.name.lower() in batch_reqs.keys():
                             batch_reqs[social_network.name.lower()] = {'reqs': [], 'objs': []}
-                        batch_reqs[social_network.name.lower()]['reqs'].\
-                            append(publish_idea_sn(obj, social_network, 'batch'))
-                        batch_reqs[social_network.name.lower()]['objs'].append(obj)
+                        req = publish_idea_sn(obj, social_network, 'batch')
+                        if req:
+                            batch_reqs[social_network.name.lower()]['reqs'].\
+                                append(req)
+                            batch_reqs[social_network.name.lower()]['objs'].append(obj)
                         if len(batch_reqs[social_network.name.lower()]) == social_network.max_batch_requests:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
-                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
-                            batch_reqs[social_network.name.lower()]['reqs'] = []
-                            batch_reqs[social_network.name.lower()]['objs'] = []
+                            if ret:
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                                batch_reqs[social_network.name.lower()]['reqs'] = []
+                                batch_reqs[social_network.name.lower()]['objs'] = []
                         elif last_obj:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
-                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                            if ret:
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
                     else:
                         publish_idea_sn(obj, social_network)
                 elif type == 'comment':
                     if social_network.batch_requests and obj.is_new:
                         if not social_network.name.lower() in batch_reqs.keys():
                             batch_reqs[social_network.name.lower()] = {'reqs': [], 'objs': []}
-                        batch_reqs[social_network.name.lower()]['reqs'].\
-                            append(publish_comment_sn(obj, social_network, 'batch'))
-                        batch_reqs[social_network.name.lower()]['objs'].append(obj)
+                        req = publish_comment_sn(obj, social_network, 'batch')
+                        if req:
+                            batch_reqs[social_network.name.lower()]['reqs'].\
+                                append(req)
+                            batch_reqs[social_network.name.lower()]['objs'].append(obj)
                         if len(batch_reqs[social_network.name.lower()]) == social_network.max_batch_requests:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
-                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
-                            batch_reqs[social_network.name.lower()]['reqs'] = []
-                            batch_reqs[social_network.name.lower()]['objs'] = []
+                            if ret:
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                                batch_reqs[social_network.name.lower()]['reqs'] = []
+                                batch_reqs[social_network.name.lower()]['objs'] = []
                         elif last_obj:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
-                            _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                            if ret:
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
                     else:
                         publish_comment_sn(obj, social_network)
                 else:
@@ -804,25 +896,25 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
 
 def do_delete_content(obj, type):
     initiative = obj.initiative
-    if obj.source == 'consultation_platform':
+    if obj.source == 'consultation_platform' and obj.sn_id:
         # Delete object from the initiative's social networks
         for social_network in initiative.social_network.all():
             connector = social_network.connector
-            sn_class = connector.connector_class.title()
-            sn_module = connector.connector_module.lower()
-            sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-            sn.authenticate(social_network)
-            if type == 'idea':
-                sn.delete_post(obj.sn_id)
-                logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
-                            format(obj.id, obj.source_consultation, social_network))
-            else:
-                sn.delete_comment(obj.sn_id)
-                logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
-                            format(obj.id, obj.source_consultation, social_network))
+            app_user = SocialNetworkAppUser.objects.filter(email=obj.author.email, snapp=social_network)[0]
+            if app_user:
+                if type == 'idea':
+                    params = {'app': social_network, 'id_post': obj.sn_id, 'app_user': app_user}
+                    call_social_network_api(connector, 'delete_post', params)
+                    logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
+                                format(obj.id, obj.source_consultation, social_network))
+                else:
+                    params = {'app': social_network, 'id_comment': obj.sn_id, 'app_user': app_user}
+                    call_social_network_api(connector, 'delete_comment', params)
+                    logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
+                                format(obj.id, obj.source_consultation, social_network))
         #obj.delete()
         _delete_obj(obj)
-    else:
+    elif obj.cp_id:
         # Delete object from the initiative's consultation platform
         if type == 'idea':
             delete_post(obj.sn_id)

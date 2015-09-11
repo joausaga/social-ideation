@@ -4,7 +4,7 @@ from app.models import ConsultationPlatform, Initiative, Idea, Comment, SocialNe
 from app.sync import save_sn_post, save_sn_comment, save_sn_vote, cud_initiative_votes, cud_initiative_ideas, \
                      cud_initiative_comments, invalidate_initiative_content, do_push_content, do_delete_content, \
                      revalidate_initiative_content
-from app.utils import convert_to_utf8_str
+from app.utils import convert_to_utf8_str, call_social_network_api
 from app.error import AppError
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -18,13 +18,9 @@ logger = get_task_logger(__name__)
 
 
 def _pull_content_social_network(social_network):
-    connector = social_network.connector
-    sn_class = connector.connector_class.title()
-    sn_module = connector.connector_module.lower()
-    sn = getattr(__import__(sn_module, fromlist=[sn_class]), sn_class)
-    sn.authenticate(social_network)
-    if social_network.page_id:
-        posts = sn.get_posts(social_network.page_id)
+    if social_network.community:
+        params = {'app': social_network}
+        posts = call_social_network_api(social_network.connector, 'get_posts', params)
         for post in posts:
             ret_data = save_sn_post(social_network, post)
             if ret_data:
@@ -44,7 +40,7 @@ def _pull_content_social_network(social_network):
                     for vote in post['votes_array']:
                         save_sn_vote(social_network, vote)
     else:
-        logger.warning('Cannot pull content from the social network {}. Reason: Page id not found'.
+        logger.warning('Cannot pull content from the social network {}. Reason: Community not found'.
                        format(social_network.name))
 
 
@@ -116,6 +112,7 @@ def push_data():
             if idea.source == 'consultation_platform':
                 logger.warning('Error when trying to publish the idea with the id={} on the social networks. '
                                .format(idea.id))
+                logger.warning(traceback.format_exc())
             else:
                 logger.warning('Error when trying to publish the idea with the id={} on the consultation platforms.'
                                .format(idea.id))

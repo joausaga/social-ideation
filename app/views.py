@@ -5,11 +5,13 @@ import hmac
 import json
 import traceback
 
-from app.models import SocialNetworkApp
+from app.models import SocialNetworkApp, SocialNetworkAppUser
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
                      delete_post, delete_comment, delete_vote
-from app.utils import get_timezone_aware_datetime
+from app.utils import get_timezone_aware_datetime, calculate_token_expiration_time
+from connectors.social_network import Facebook
 from django.http import HttpResponse, HttpResponseForbidden
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
@@ -181,3 +183,34 @@ def fb_real_time_updates(request):
                 logger.info('The received signature does not correspond to the expected one or '
                             'the request is a duplicate')
     return HttpResponseForbidden()
+
+
+def index(request):
+    return render(request, 'app/index.html')
+
+
+def login_fb(request):
+    fb_app = _get_facebook_app()
+
+    access_token = request.GET.get('access_token')
+    user_id = request.GET.get('user_id')
+    ret_token = Facebook.get_long_lived_access_token(fb_app.app_id, fb_app.app_secret,
+                                                     access_token)
+    try:
+        user = SocialNetworkAppUser.objects.get(external_id=user_id)
+        user.access_token = ret_token['access_token']
+        user.access_token_exp = calculate_token_expiration_time(ret_token['expiration'])
+        user.save()
+    except SocialNetworkAppUser.DoesNotExist:
+        user_fb = Facebook.get_info_user(fb_app, user_id, access_token)
+        new_app_user = {'email': user_fb['email'], 'snapp': fb_app, 'access_token': ret_token['access_token'],
+                        'access_token_exp': calculate_token_expiration_time(ret_token['expiration']),
+                        'external_id': user_id}
+        if 'name' in user_fb.keys:
+            new_app_user.update({'name': user_fb['name']})
+        if 'link' in user_fb.keys:
+            new_app_user.update({'url': user_fb['link']})
+        user = SocialNetworkAppUser(**new_app_user)
+        user.save()
+
+    return redirect('/app')

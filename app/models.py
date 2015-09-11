@@ -3,6 +3,31 @@ import connectors.models
 from django.db import models
 
 
+class SocialNetworkAppUser(models.Model):
+    external_id = models.CharField(max_length=50, editable=False)
+    name = models.CharField(max_length=100, null=True)
+    url = models.URLField(null=True, blank=True)
+    email = models.EmailField(editable=False)
+    snapp = models.ForeignKey('SocialNetworkApp', editable=False)
+    access_token = models.CharField(max_length=300, editable=False)
+    access_token_exp = models.DateTimeField(editable=False)
+
+    def __unicode__(self):
+        return self.external_id
+
+
+class SocialNetworkAppCommunity(models.Model):
+    external_id = models.CharField(max_length=50)
+    name = models.CharField(max_length=50)
+    token = models.CharField(max_length=300, null=True, editable=False)
+    type = models.CharField(max_length=5, default='en', choices=(('page', 'Page'), ('group', 'Group'),
+                                                                 ('user_account', 'User Account'),))
+    members = models.ManyToManyField(SocialNetworkAppUser, editable=False)
+
+    def __unicode__(self):
+        return self.name
+
+
 class SocialNetworkApp(models.Model):
     name = models.CharField(max_length=50)
     url = models.URLField(null=True, blank=True)
@@ -10,9 +35,9 @@ class SocialNetworkApp(models.Model):
     blocked = models.DateTimeField(null=True, editable=False, default=None)
     app_id = models.CharField(max_length=50)
     app_secret = models.CharField(max_length=50, null=True, blank=True)
-    page_id = models.CharField(max_length=50, null=True, blank=True)
-    access_token = models.CharField(max_length=300, null=True)
-    page_token = models.CharField(max_length=300, null=True, blank=True)
+    redirect_uri = models.URLField(null=True, blank=True)
+    community = models.ForeignKey(SocialNetworkAppCommunity, default=None)
+    app_access_token = models.CharField(max_length=300, null=True, blank=True)
     callback_real_time_updates = models.URLField(null=True, blank=True)
     object_real_time_updates = models.CharField(max_length=100, null=True, blank=True, default='page')
     field_real_time_updates = models.CharField(max_length=50, null=True, blank=True, default='feed')
@@ -59,7 +84,8 @@ class Campaign(models.Model):
     external_id = models.IntegerField(editable=False)
     name = models.CharField(max_length=100)
     initiative = models.ForeignKey(Initiative)
-    hashtag = models.CharField(max_length=14, null=True, help_text="Max length 14 characters (do not include '#')")
+    hashtag = models.CharField(max_length=14, null=True, help_text="Max length 14 characters "
+                                                                   "(do not include '#')")
 
     def __unicode__(self):
         return self.name
