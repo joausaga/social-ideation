@@ -193,8 +193,6 @@ def is_supported_language(language_code):
 
 
 def index(request):
-    logger.info('The request has arrived!')
-
     # Detect the default language to show the page
     # If the preferred language is supported, the page will be presented in that language
     # Otherwise english will be chosen
@@ -211,14 +209,19 @@ def index(request):
                 language_to_render = language_code
                 break
 
+    logger.info('The request has arrived!')
+
     if not language_to_render:
         activate('en')
     else:
         activate(language_to_render)
 
-    # Hardcoded take the first initiative
-    initiative = Initiative.objects.all()[0]
-    context = {'url_fb_group': initiative.social_network.all()[0].community.url}
+    # Hardcoded taking the first initiative active run on Facebook
+    context = {'url_fb_group': None}
+    fb_app = _get_facebook_app()
+    for initiative in fb_app.initiative_set.all():
+        if initiative.active:
+            context = {'url_fb_group': initiative.social_network.all()[0].community.url}
 
     return render(request, 'app/index.html', context)
 
