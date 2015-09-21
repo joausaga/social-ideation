@@ -5,15 +5,17 @@ import hmac
 import json
 import traceback
 
-from app.models import SocialNetworkApp, SocialNetworkAppUser
+from app.models import SocialNetworkApp, SocialNetworkAppUser, Initiative
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
                      delete_post, delete_comment, delete_vote
 from app.utils import get_timezone_aware_datetime, calculate_token_expiration_time
 from connectors.social_network import Facebook
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.utils.translation import activate
 
 
 logger = logging.getLogger(__name__)
@@ -185,8 +187,38 @@ def fb_real_time_updates(request):
     return HttpResponseForbidden()
 
 
+def is_supported_language(language_code):
+    supported_languages = dict(settings.LANGUAGES).keys()
+    return language_code in supported_languages
+
+
 def index(request):
-    return render(request, 'app/index.html')
+    # Detect the default language to show the page
+    # If the preferred language is supported, the page will be presented in that language
+    # Otherwise english will be chosen
+    language_to_render = None
+
+    browser_language_code = request.META.get('HTTP_ACCEPT_LANGUAGE', None)
+
+    if browser_language_code:
+        languages = [language for language in browser_language_code.split(',') if
+                     '=' not in language]
+        for language in languages:
+            language_code = language.split('-')[0]
+            if is_supported_language(language_code):
+                language_to_render = language_code
+                break
+
+    if not language_to_render:
+        activate('en')
+    else:
+        activate(language_to_render)
+
+    # Hardcoded take the first initiative
+    initiative = Initiative.objects.all()[0]
+    context = {'url_fb_group': initiative.social_network.all()[0].community.url}
+
+    return render(request, 'app/index.html', context)
 
 
 def login_fb(request):

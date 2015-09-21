@@ -1,6 +1,13 @@
 {% extends 'app/base.html' %}
 
+{% load i18n %}
+
 {% block script %}
+    <style>
+        div.my-hidden {
+            display: none;
+        }
+    </style>
     <script type="text/javascript">
         function startConnect(){
             FB.login(function(response) {
@@ -17,35 +24,84 @@
         };
         function checkStatusCallback(response) {
             if (response.status === 'connected') {
-                //document.getElementById('button').style.visibility = 'hidden';
-                document.getElementById('status').innerHTML = 'You have already accept to ' +
-                    'use Social Ideation App. Please join the Facebook group [link] of the initiatives.';
+                document.getElementById('button').style.display = 'block';
+                document.getElementById('pushing-msg').style.display= 'block';
+                document.getElementById('status').className = 'alert alert-info';
+                document.getElementById('status').style.display = 'block';
             } else if (response.status === 'not_authorized') {
                 // The person is logged into Facebook, but not your app.
-                document.getElementById('button').style.visibility = 'visible';
-                document.getElementById('status').innerHTML = 'Please accept to use Social Ideation App';
+                document.getElementById('button').style.display = 'block';
+                document.getElementById('pushing-msg').style.display = 'block';
+                document.getElementById('status').style.display = 'none';
             } else {
                 // The person is not logged into Facebook, so we're not sure if
                 // they are logged into this app or not.
-                document.getElementById('button').style.visibility = 'visible';
-                document.getElementById('status').innerHTML = 'Please log into Facebook';
+                document.getElementById('button').style.display = 'block';
+                document.getElementById('pushing-msg').style.display = 'block';
+                document.getElementById('status').style.display = 'none';
             }
         }
     </script>
 {% endblock %}
 
 {% block main %}
+{% trans "participate" as participate %}
+{% trans "Facebook group" as facebook_group %}
+{% trans "without leaving Facebook" as without_leave_facebook %}
+{% trans "only" as only %}
+{% trans "You are logged into Social Ideation App" as already_logged %}
 <div>
-    <h1> [LOGO] Welcome to Social Ideation App</h1>
-    <p>[Project explanation Message]</p>
-    <p>Term of use</p>
-    <!-- <a href="#" onclick="startConnect(); return false;">Click to connect and authenticate</a>
-    <form action="{% url 'app:login_fb' %}">
-        <input type="submit" value="I agree to use the app">
-    </form> -->
-    <div id="button"><button type="button" onclick="startConnect(); return false;">I agree to use the app</button></div>
-    <p><div id="status"></div></p>
+    <div class="container">
+      <div class="header clearfix">
+        <nav>
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation" class="active"><a href="#">Home</a></li>
+            <li role="presentation"><a href="https://github.com/joausaga/social-ideation" target="_blank">Github Repo</a></li>
+            <li role="presentation"><a href="mailto:jorge.saldivargalli@disi.unitn.com" target="_blank">Contact</a></li>
+          </ul>
+        </nav>
+        <img src="/static/img/app_icon.png" alt="App Icon" height="80" width="80">
+        <!--<h3 class="text-muted">Social Ideation App</h3>-->
+      </div>
+      <div id="status" role="alert" class="my-hidden">
+          {% trans "Congrats!" %}, <b>{{ already_logged }}</b>. {% trans "Join the" %}
+          <a href="{{ url_fb_group }}" target="_blank"><u>{{facebook_group}}</u></a> {% trans "of the initiative" %}
+          {% trans "to start participate from Facebook" %}.
+      </div>
+      <div class="jumbotron">
+        <h1>Social Ideation App</h1>
+        <p align="left">
+            {% trans "Social Ideation is an open-source application that connects" %}
+            <a href=\"http://www.ideascale.com\" target=\"_blank\">IdeaScale</a> &#8212;
+            {% trans "one of today's leading online idea management platforms" %} &#8212;
+            {% trans "with the largest virtual space of participation and socialization" %}, Facebook,
+            {% trans "allowing people to participate on IdeaScale-based civic participation initiatives from Facebook" %}.
+            <br><br>
+            {% trans "More specifically, with the app you will be able to" %} <b>{{participate}}</b>
+            {% trans "(submit ideas, place comments) on IdeaScale initiatives" %} <b>{{without_leave_facebook}}</b>
+            {% trans "and using" %} <i>{{only}}</i>
+            {% trans "Facebook's native features: posts, hashtags, comments, and groups. At the same time, the ideas and" %}
+            {% trans "comments you publish on the IdeaScale site of the initiative will be automatically replicated on" %}
+            {% trans "your behalf on the Facebook group linked to the initiative" %}.
+            <div id="pushing-msg" align="left" class="my-hidden">
+                <br>
+                    <b>{% trans "If you want to make use of this advantage, please log into the app by clicking on the next button" %}</b>
+                <br>
+            </div>
+        </p>
+        <div id="button" class="my-hidden">
+            <button class="btn btn-lg btn-primary" type="button" onclick="startConnect(); return false;">
+                {% trans "I agree to use the app" %}
+            </button>
+        </div>
+        <!--<p id="status"></p>-->
+      </div>
+      <footer class="footer">
+        <p><a href="http://lifeparticipation.org/">Life Participation Research Group - University of Trento, Italy</a></p>
+      </footer>
+    </div> <!-- /container -->
 </div>
+
 <div id="fb-root"></div>
 <script type="text/javascript">
     window.fbAsyncInit = function() {
