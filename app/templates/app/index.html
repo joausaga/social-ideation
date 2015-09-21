@@ -24,10 +24,18 @@
         };
         function checkStatusCallback(response) {
             if (response.status === 'connected') {
-                document.getElementById('button').style.display = 'block';
-                document.getElementById('pushing-msg').style.display= 'block';
-                document.getElementById('status').className = 'alert alert-info';
-                document.getElementById('status').style.display = 'block';
+                $.ajax({
+                    url: window.location + 'app/check_user' + '?user_id=' + response.authResponse.userID,
+                    success: function(result) {
+                        if (result) {
+                            document.getElementById('button').style.display = 'block';
+                            document.getElementById('pushing-msg').style.display= 'block';
+                            document.getElementById('status').className = 'alert alert-info';
+                            document.getElementById('status').style.display = 'block';
+                            document.getElementById('status').innerHTML = result;
+                        }
+                    }
+                });
             } else if (response.status === 'not_authorized') {
                 // The person is logged into Facebook, but not your app.
                 document.getElementById('button').style.display = 'block';
@@ -46,10 +54,8 @@
 
 {% block main %}
 {% trans "participate" as participate %}
-{% trans "Facebook group" as facebook_group %}
 {% trans "without leaving Facebook" as without_leave_facebook %}
 {% trans "only" as only %}
-{% trans "You are logged into Social Ideation App" as already_logged %}
 <div>
     <div class="container">
       <div class="header clearfix">
@@ -63,11 +69,7 @@
         <img src="/static/img/app_icon.png" alt="App Icon" height="80" width="80">
         <!--<h3 class="text-muted">Social Ideation App</h3>-->
       </div>
-      <div id="status" role="alert" class="my-hidden">
-          {% trans "Congrats!" %}, <b>{{ already_logged }}</b>. {% trans "Join the" %}
-          <a href="{{ url_fb_group }}" target="_blank"><u>{{facebook_group}}</u></a> {% trans "of the initiative" %}
-          {% trans "to start participate from Facebook" %}.
-      </div>
+      <div id="status" role="alert" class="my-hidden"></div>
       <div class="jumbotron">
         <h1>Social Ideation App</h1>
         <p align="left">
@@ -91,7 +93,7 @@
         </p>
         <div id="button" class="my-hidden">
             <button class="btn btn-lg btn-primary" type="button" onclick="startConnect(); return false;">
-                {% trans "I agree to use the app" %}
+                {% trans "I agree to use the App" %}
             </button>
         </div>
         <!--<p id="status"></p>-->

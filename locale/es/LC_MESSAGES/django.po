@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-21 15:19+0200\n"
+"POT-Creation-Date: 2015-09-21 19:19+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,56 +18,32 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/templates/app/index.html:48
+#: app/templates/app/index.html:56
 msgid "participate"
 msgstr "participar"
 
-#: app/templates/app/index.html:49
-msgid "Facebook group"
-msgstr "grupo de Facebook"
-
-#: app/templates/app/index.html:50
+#: app/templates/app/index.html:57
 msgid "without leaving Facebook"
 msgstr "sin salir de Facebook"
 
-#: app/templates/app/index.html:51
+#: app/templates/app/index.html:58
 msgid "only"
 msgstr "solo"
 
-#: app/templates/app/index.html:52
-msgid "You are logged into Social Ideation App"
-msgstr "Ya estas utilizando Social Ideation App"
-
-#: app/templates/app/index.html:67
-msgid "Congrats!"
-msgstr "¡Felicitaciones!"
-
-#: app/templates/app/index.html:67
-msgid "Join the"
-msgstr "Ingresá al"
-
-#: app/templates/app/index.html:68
-msgid "of the initiative"
-msgstr "de la iniciativa"
-
-#: app/templates/app/index.html:69
-msgid "to start participate from Facebook"
-msgstr "para empezar a participar desde Facebook"
-
-#: app/templates/app/index.html:74
+#: app/templates/app/index.html:76
 msgid "Social Ideation is an open-source application that connects"
 msgstr "Social Ideation es una aplicación de código abierto que conecta"
 
-#: app/templates/app/index.html:76
+#: app/templates/app/index.html:78
 msgid "one of today's leading online idea management platforms"
 msgstr ""
 "actualmente una de las plataformas más importantes de administración de ideas"
 
-#: app/templates/app/index.html:77
+#: app/templates/app/index.html:79
 msgid "with the largest virtual space of participation and socialization"
 msgstr "con la comunidad de socilización y participación más grande del mundo"
 
-#: app/templates/app/index.html:78
+#: app/templates/app/index.html:80
 msgid ""
 "allowing people to participate on IdeaScale-based civic participation "
 "initiatives from Facebook"
@@ -75,19 +51,19 @@ msgstr ""
 "permitiendo a la gente tomar parte desde Facebook en iniciativas de "
 "participación ciudadana desarrolladas en IdeaScale"
 
-#: app/templates/app/index.html:80
+#: app/templates/app/index.html:82
 msgid "More specifically, with the app you will be able to"
 msgstr "En otras palabras, con la aplicación podrás"
 
-#: app/templates/app/index.html:81
+#: app/templates/app/index.html:83
 msgid "(submit ideas, place comments) on IdeaScale initiatives"
 msgstr "en iniciativas de IdeaScale (enviar ideas, hacer comentarios)"
 
-#: app/templates/app/index.html:82
+#: app/templates/app/index.html:84
 msgid "and using"
 msgstr "y usando"
 
-#: app/templates/app/index.html:83
+#: app/templates/app/index.html:85
 msgid ""
 "Facebook's native features: posts, hashtags, comments, and groups. At the "
 "same time, the ideas and"
@@ -95,7 +71,7 @@ msgstr ""
 "elementos de Facebook, como: posts, hashtags, comentarios, y grupos. Al "
 "mismo tiempo, todas las ideas y"
 
-#: app/templates/app/index.html:84
+#: app/templates/app/index.html:86
 msgid ""
 "comments you publish on the IdeaScale site of the initiative will be "
 "automatically replicated on"
@@ -103,19 +79,35 @@ msgstr ""
 "comentarios que envíes en el sitio de la iniciativa en IdeaScale serán "
 "automáticamente publicados "
 
-#: app/templates/app/index.html:85
+#: app/templates/app/index.html:87
 msgid "your behalf on the Facebook group linked to the initiative"
 msgstr "en tu nombre en el grupo de Facebook asociado a la iniciativa"
 
-#: app/templates/app/index.html:88
+#: app/templates/app/index.html:90
 msgid ""
 "If you want to make use of this advantage, please log into the app by "
 "clicking on the next button"
-msgstr "Si quieres utilizar la aplicación, favor has clic en el botón de abajo"
+msgstr "Si quieres utilizar la App, favor haz clic en el botón de abajo"
 
-#: app/templates/app/index.html:94
-msgid "I agree to use the app"
-msgstr "Quiero usar la aplicación"
+#: app/templates/app/index.html:96
+msgid "I agree to use the App"
+msgstr "Quiero usar la App"
+
+#: app/views.py:250
+msgid "Congrats!, You are already logged into"
+msgstr "¡Bien!, Ya estas utilizando"
+
+#: app/views.py:251
+msgid "{}group{}"
+msgstr "{}grupo{}"
+
+#: app/views.py:252
+msgid "Join the "
+msgstr "Ingresá al "
+
+#: app/views.py:253
+msgid "of the initiative to start participate from Facebook"
+msgstr "de la iniciativa para empezar a participar desde Facebook"
 
 #: social_ideation/settings.py:142
 msgid "English"

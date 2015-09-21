@@ -15,7 +15,7 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-from django.utils.translation import activate
+from django.utils.translation import activate, ugettext as _
 
 
 logger = logging.getLogger(__name__)
@@ -214,14 +214,7 @@ def index(request):
     else:
         activate(language_to_render)
 
-    # Hardcoded taking the first initiative active run on Facebook
-    context = {'url_fb_group': None}
-    fb_app = _get_facebook_app()
-    for initiative in fb_app.initiative_set.all():
-        if initiative.active:
-            context = {'url_fb_group': initiative.social_network.all()[0].community.url}
-
-    return render(request, 'app/index.html', context)
+    return render(request, 'app/index.html')
 
 
 def login_fb(request):
@@ -241,11 +234,30 @@ def login_fb(request):
         new_app_user = {'email': user_fb['email'], 'snapp': fb_app, 'access_token': ret_token['access_token'],
                         'access_token_exp': calculate_token_expiration_time(ret_token['expiration']),
                         'external_id': user_id}
-        if 'name' in user_fb.keys:
+        if 'name' in user_fb.keys():
             new_app_user.update({'name': user_fb['name']})
-        if 'link' in user_fb.keys:
-            new_app_user.update({'url': user_fb['link']})
+        if 'url' in user_fb.keys():
+            new_app_user.update({'url': user_fb['url']})
         user = SocialNetworkAppUser(**new_app_user)
         user.save()
 
-    return redirect('/app')
+    return redirect('/')
+
+
+def check_user(request):
+    user_id = request.GET.get('user_id')
+    try:
+        msg_logged = _('Congrats!, You are already logged into')
+        msg_group = _('{}group{}').format('<a href="{}" target="_blank"><u>','</u></a>')
+        msg_join = _('Join the ')
+        msg_ini = _('of the initiative to start participate from Facebook')
+        user = SocialNetworkAppUser.objects.get(external_id=user_id)
+        # Taking (hardcoded) the first active initiative where the user participate in
+        fb_app = user.snapp
+        for initiative in fb_app.initiative_set.all():
+            if initiative.active:
+                msg_group = msg_group.format(initiative.social_network.all()[0].community.url)
+                return HttpResponse(msg_logged + ' <b>Social Ideation App</b>. ' + msg_join + msg_group + ' ' + msg_ini)
+        return HttpResponse(msg_logged)
+    except SocialNetworkAppUser.DoesNotExist:
+        return HttpResponse()

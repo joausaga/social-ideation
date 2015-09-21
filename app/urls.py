@@ -9,4 +9,6 @@ urlpatterns = [
     url(r'^login_fb$', views.login_fb, name='login_fb'),
     # ex: /app/fb_real_time_updates/
     url(r'^fb_real_time_updates/$', views.fb_real_time_updates, name='fb_real_time_updates'),
+    # ex: /app/check_user
+    url(r'^check_user$', views.check_user, name='check_user'),
 ]
