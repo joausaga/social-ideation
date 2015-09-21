@@ -267,7 +267,7 @@ class VoteAdmin(admin.ModelAdmin):
 
 
 class SocialNetworkAdminCommunity(admin.ModelAdmin):
-    list_display = ('name', 'type')
+    list_display = ('name', 'type', 'url')
     ordering = ('name', 'type')
 
 
