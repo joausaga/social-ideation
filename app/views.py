@@ -209,8 +209,6 @@ def index(request):
                 language_to_render = language_code
                 break
 
-    logger.info('The request has arrived!')
-
     if not language_to_render:
         activate('en')
     else:
