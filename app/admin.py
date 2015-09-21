@@ -3,7 +3,7 @@ import os
 
 from django.contrib import admin, messages
 from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetworkApp, Idea, Comment, Vote, \
-                       SocialNetworkAppCommunity
+                       SocialNetworkAppCommunity, SocialNetworkAppUser
 from app.tasks import test_function
 from app.error import AppError
 from app.utils import call_social_network_api
@@ -271,6 +271,13 @@ class SocialNetworkAdminCommunity(admin.ModelAdmin):
     ordering = ('name', 'type')
 
 
+class SocialNetworkAppUserAdmin(admin.ModelAdmin):
+    list_display = ('sn_id', 'name', 'email', 'url')
+    ordering = ('name', )
+
+    def sn_id(self, obj):
+        return obj.external_id
+    sn_id.short_description = 'Social Network Id'
 
 admin.site.register(ConsultationPlatform, ConsultationPlatformAdmin)
 admin.site.register(Initiative, InitiativeAdmin)
@@ -280,3 +287,4 @@ admin.site.register(Idea, IdeaAdmin)
 admin.site.register(Comment, CommentAdmin)
 admin.site.register(Vote, VoteAdmin)
 admin.site.register(SocialNetworkAppCommunity, SocialNetworkAdminCommunity)
+admin.site.register(SocialNetworkAppUser, SocialNetworkAppUserAdmin)
