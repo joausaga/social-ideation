@@ -193,6 +193,8 @@ def is_supported_language(language_code):
 
 
 def index(request):
+    logger.info('The request has arrived!')
+
     # Detect the default language to show the page
     # If the preferred language is supported, the page will be presented in that language
     # Otherwise english will be chosen
