@@ -22,6 +22,7 @@ class SocialNetworkAppCommunity(models.Model):
     token = models.CharField(max_length=300, null=True, editable=False)
     type = models.CharField(max_length=5, default='en', choices=(('page', 'Page'), ('group', 'Group'),
                                                                  ('user_account', 'User Account'),))
+    url = models.URLField(default=None)
     members = models.ManyToManyField(SocialNetworkAppUser, editable=False)
 
     def __unicode__(self):
