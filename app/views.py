@@ -200,6 +200,8 @@ def index(request):
 
     browser_language_code = request.META.get('HTTP_ACCEPT_LANGUAGE', None)
 
+    logger.info(browser_language_code)
+
     if browser_language_code:
         languages = [language for language in browser_language_code.split(',') if
                      '=' not in language]
@@ -213,6 +215,8 @@ def index(request):
         activate('en')
     else:
         activate(language_to_render)
+
+    logger.info(language_to_render)
 
     return render(request, 'app/index.html')
 
