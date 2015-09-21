@@ -33,6 +33,10 @@
                             document.getElementById('status').className = 'alert alert-info';
                             document.getElementById('status').style.display = 'block';
                             document.getElementById('status').innerHTML = result;
+                        } else {
+                            document.getElementById('button').style.display = 'block';
+                            document.getElementById('pushing-msg').style.display= 'block';
+                            document.getElementById('status').style.display = 'none';
                         }
                     }
                 });
