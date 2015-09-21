@@ -12,7 +12,7 @@
         function startConnect(){
             FB.login(function(response) {
                 if (response.authResponse) {
-                    window.location = window.location + 'login_fb' +
+                    window.location = window.location + 'app/login_fb' +
                             '?access_token=' + response.authResponse.accessToken +
                             '&expires=' + response.authResponse.expiresIn +
                             '&signed_request=' + response.authResponse.signedRequest +
