@@ -93,16 +93,20 @@ def update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edita
         obj_attrs.update({'location': _get_or_create_location(raw_obj['location_info'])})
     # Handle content creation or updating
     content_obj, content_created = model.objects.get_or_create(defaults=obj_attrs, **filters)
+    if source == 'consultation_platform':
+        content_obj.exist_cp = True
+    else:
+        content_obj.exist_sn = True
     if not content_created and content_obj.source == source:
-        content_obj.exist = True
         for editable_field in editable_fields:
             obj_field = getattr(content_obj, editable_field)
             if obj_field != raw_obj[editable_field]:
-                logger.info('The object with the id {} has changed its {}\n.'.format(content_obj.id, editable_field))
+                logger.info('The object with the id {} has changed its {}\n.'.format(content_obj.id,
+                                                                                     editable_field))
                 logger.info('Before {}, now {}'.format(convert_to_utf8_str(obj_field),
                                                        convert_to_utf8_str(raw_obj[editable_field])))
                 content_obj.has_changed = True
-                setattr(content_obj, editable_field, raw_obj[editable_field])
+            setattr(content_obj, editable_field, raw_obj[editable_field])
     content_obj.save()
 
     return content_obj
@@ -172,7 +176,10 @@ def do_create_update_vote(platform, initiative, vote, source):
             vote_attrs.update({'datetime': vote['datetime']})
         vote_obj, vote_created = Vote.objects.get_or_create(**filters)
         if not vote_created:
-            vote_obj.exist = True
+            if source == 'consultation_platform':
+                vote_obj.exist_cp = True
+            else:
+                vote_obj.exist_sn = True
             if vote_obj.value != vote['value']:
                 vote_obj.value = vote['value']
                 vote_obj.has_changed = True
@@ -235,6 +242,7 @@ def _do_publish_idea_sn(sn_app, idea, text_to_sn, mode, app_user=None):
         new_post = call_social_network_api(sn_app.connector, 'publish_post', params)
         idea.sn_id = new_post['id']
         idea.is_new = False
+        idea.exist_sn = True
         idea.sync = True
         idea.save()
     except Exception as e:
@@ -249,6 +257,7 @@ def _do_edit_idea_sn(sn_app, idea, text_to_sn, app_user=None):
         params = {'app': sn_app, 'id_post': idea.sn_id, 'new_message': text_to_sn, 'app_user': app_user}
         call_social_network_api(sn_app.connector, 'edit_post', params)
         idea.has_changed = False
+        idea.exist_sn = True
         idea.sync = True
         idea.save()
     except Exception as e:
@@ -356,6 +365,7 @@ def _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, type='post
             new_comment = call_social_network_api(sn_app.connector, 'comment_comment', params)
         comment.sn_id = new_comment['id']
         comment.is_new = False
+        comment.exist_sn = True
         comment.sync = True
         comment.save()
     except Exception as e:
@@ -370,6 +380,7 @@ def _do_edit_comment_sn(sn_app, comment, text_to_sn, app_user=None):
         params = {'app': sn_app, 'id_comment': comment.sn_id, 'message': text_to_sn,'app_user': app_user}
         call_social_network_api(sn_app.connector, 'edit_comment', params)
         comment.has_changed = False
+        comment.exist_sn = True
         comment.sync = True
         comment.save()
     except Exception as e:
@@ -393,10 +404,10 @@ def publish_comment_sn(comment, sn_app, mode=None):
         if sn_app.community.type == 'page':
             try:
                 if comment.parent == 'idea':
-                    parent = Idea.objects.get(id=comment.parent_idea.id, exist=True)
+                    parent = Idea.objects.get(id=comment.parent_idea.id, exist_sn=True)
                     return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'post')
                 elif comment.parent == 'comment':
-                    parent = Comment.objects.get(id=comment.parent_comment.id, exist=True)
+                    parent = Comment.objects.get(id=comment.parent_comment.id, exist_sn=True)
                     return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'comment')
                 else:
                     raise AppError('Unknown the type of the object\'s parent')
@@ -420,11 +431,11 @@ def publish_comment_sn(comment, sn_app, mode=None):
                     if _is_user_community_member(sn_app, app_user):
                         try:
                             if comment.parent == 'idea':
-                                parent = Idea.objects.get(id=comment.parent_idea.id, exist=True)
+                                parent = Idea.objects.get(id=comment.parent_idea.id, exist_sn=True)
                                 return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
                                                               'post', app_user)
                             elif comment.parent == 'comment':
-                                parent = Comment.objects.get(id=comment.parent_comment.id, exist=True)
+                                parent = Comment.objects.get(id=comment.parent_comment.id, exist_sn=True)
                                 return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
                                                               'comment', app_user)
                             else:
@@ -497,6 +508,7 @@ def publish_idea_cp(idea):
         except:
             logger.info('Cannon\'t find the url of the callback to update ideas '
                         'through the API of {}'.format(cplatform.name))
+    idea.exist_cp = True
     idea.sync = True
     idea.save()
 
@@ -540,6 +552,7 @@ def publish_comment_cp(comment):
         except:
             logger.info('Cannon\'t find the url of the callback to update comments '
                         'through the API of {}'.format(cplatform.name))
+    comment.exist_cp = True
     comment.sync = True
     comment.save()
 
@@ -701,25 +714,30 @@ def delete_vote(vote_id):
 def _delete_obj(obj):
     obj.cp_id = None
     obj.sn_id = None
-    obj.exist = False
+    obj.exist_cp = False
+    obj.exist_sn = False
     obj.save()
+
 
 ##
 # General synchronization method
 #
-def invalidate_initiative_content(**kwargs):
-    # The invalidation process consist in assuming that all ideas, comments, and votes don't exist anymore
-    # Then as they are obtained from the external platform they will be marked as still existing
-    Idea.objects.filter(**kwargs).update(exist=False)
-    Comment.objects.filter(**kwargs).update(exist=False)
-    Vote.objects.filter(**kwargs).update(exist=False)
+def invalidate_initiative_content(filters, update_attrs):
+    # The invalidation process consist in assuming that all ideas, comments,
+    # and votes don't exist anymore. Then as they are obtained from the external
+    # platforms they will be marked as still existing
+    Idea.objects.filter(**filters).update(**update_attrs)
+    Comment.objects.filter(**filters).update(**update_attrs)
+    Vote.objects.filter(**filters).update(**update_attrs)
 
 
-def revalidate_initiative_content(**kwargs):
-    # The re-validation process consist in re-validating the ideas, comments, and votes that were invalided before
-    Idea.objects.filter(**kwargs).update(exist=True)
-    Comment.objects.filter(**kwargs).update(exist=True)
-    Vote.objects.filter(**kwargs).update(exist=True)
+def revalidate_initiative_content(filters, update_attrs):
+    # The re-validation process consist in re-validating the ideas, comments,
+    # and votes that were invalided before
+    Idea.objects.filter(**filters).update(**update_attrs)
+    Comment.objects.filter(**filters).update(**update_attrs)
+    Vote.objects.filter(**filters).update(**update_attrs)
+
 
 def _do_data_consolidation(type_obj, filters):
     objs_consolidated = 0
@@ -774,9 +792,9 @@ def _consolidate_data(platform, source):
     """
     objs_consolidated = 0
     if source == 'consultation_platform':
-        filters = {'source_consultation': platform, 'exist': True}
+        filters = {'source_consultation': platform, 'exist_cp': True}
     else:
-        filters = {'source_social': platform, 'exist': True}
+        filters = {'source_social': platform, 'exist_sn': True}
     objs_consolidated += _do_data_consolidation('idea', filters)
     objs_consolidated += _do_data_consolidation('comment', filters)
 
@@ -830,6 +848,7 @@ def _process_batch_request(resp_batch_req, objs):
             obj.sn_id = id
             obj.is_new = False
             obj.has_change = False
+            obj.exist_sn = True
             obj.sync = True
             obj.save()
 
@@ -896,7 +915,7 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
 
 def do_delete_content(obj, type):
     initiative = obj.initiative
-    if obj.source == 'consultation_platform' and obj.sn_id:
+    if not obj.exist_cp:
         # Delete object from the initiative's social networks
         for social_network in initiative.social_network.all():
             connector = social_network.connector
@@ -905,16 +924,16 @@ def do_delete_content(obj, type):
                 if type == 'idea':
                     params = {'app': social_network, 'id_post': obj.sn_id, 'app_user': app_user}
                     call_social_network_api(connector, 'delete_post', params)
-                    logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
-                                format(obj.id, obj.source_consultation, social_network))
+                    logger.info('The idea {} does not exists anymoreand thus it was deleted from {}'.
+                                format(obj.id, social_network))
                 else:
                     params = {'app': social_network, 'id_comment': obj.sn_id, 'app_user': app_user}
                     call_social_network_api(connector, 'delete_comment', params)
-                    logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
-                                format(obj.id, obj.source_consultation, social_network))
+                    logger.info('The comment {} does not exists anymore and thus it was deleted from {}'.
+                                format(obj.id, social_network))
         #obj.delete()
         _delete_obj(obj)
-    elif obj.cp_id:
+    elif not obj.exist_sn:
         # Delete object from the initiative's consultation platform
         if type == 'idea':
             delete_post(obj.sn_id)

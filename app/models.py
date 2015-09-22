@@ -149,7 +149,8 @@ class BaseContent(models.Model):
     # Flags
     is_new = models.BooleanField(default=True)
     has_changed = models.BooleanField(default=False)
-    exist = models.BooleanField(default=True)
+    exist_cp = models.BooleanField(default=False)
+    exist_sn = models.BooleanField(default=False)
     sync = models.BooleanField(default=False)
 
     class Meta:

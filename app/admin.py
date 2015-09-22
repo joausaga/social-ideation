@@ -186,7 +186,7 @@ class IdeaAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super(IdeaAdmin, self).get_queryset(request)
-        return qs.filter(exist=True)
+        return qs.filter(exist_cp=True,exist_sn=True)
 
     def idea_id(self, obj):
         if obj.source == 'consultation_platform':
@@ -222,7 +222,7 @@ class CommentAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super(CommentAdmin, self).get_queryset(request)
-        return qs.filter(exist=True)
+        return qs.filter(exist_cp=True,exist_sn=True)
 
     def comment_id(self, obj):
         if obj.source == 'consultation_platform':
@@ -249,7 +249,7 @@ class VoteAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super(VoteAdmin, self).get_queryset(request)
-        return qs.filter(exist=True)
+        return qs.filter(exist_cp=True,exist_sn=True)
 
     def vote_id(self, obj):
         if obj.source == 'consultation_platform':

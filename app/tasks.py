@@ -50,40 +50,33 @@ def _pull_content_consultation_platform(platform, initiative):
     cud_initiative_votes(platform, initiative)
 
 
+def _handle_pull_exceptions(initiative, platform, invalidate_filters, update_attrs):
+    revalidate_initiative_content(invalidate_filters, update_attrs)
+    logger.warning('Problem when trying to pull content of the initiative {} from {}. '
+                   'The content was re-validated.'.format(initiative, platform))
+
+
 def pull_data():
-    # Pull data from consultation platforms
-    for cplatform in ConsultationPlatform.objects.all():
-        initiatives = Initiative.objects.filter(platform=cplatform)
-        for initiative in initiatives:
-            if initiative.active:
-                logger.info('Pulling content of the initiative {} from the platform {}'.format(initiative,
-                                                                                               cplatform))
-                invalidate_initiative_content(source_consultation=cplatform, initiative=initiative)
-                try:
-                    _pull_content_consultation_platform(cplatform, initiative)
-                except Exception as e:
-                    revalidate_initiative_content(source_consultation=cplatform, initiative=initiative)
-                    logger.warning('Problem when trying to pull content of the initiative {} from platform {}. '
-                                   'The content was re-validated.'.format(initiative, cplatform))
-                    raise AppError(e)
-    # Pull data from social networks that are not subscribe to receive real time notifications
-    for socialnetwork in SocialNetworkApp.objects.all():
-        if not socialnetwork.subscribed_read_time_updates:
-            initiatives = Initiative.objects.filter(social_network=socialnetwork)
-            for initiative in initiatives:
-                if initiative.active:
-                    invalidate_initiative_content(source_social=socialnetwork, initiative=initiative)
-            logger.info('Pulling content posted on {}'.format(socialnetwork))
-            try:
-                _pull_content_social_network(socialnetwork)
-            except Exception as e:
-                initiatives = Initiative.objects.filter(social_network=socialnetwork)
-                for initiative in initiatives:
-                    if initiative.active:
-                        revalidate_initiative_content(source_social=socialnetwork, initiative=initiative)
-                logger.warning('Problem when trying to pull content posted on {}. The content was re-validated.'
-                               .format(socialnetwork))
-                raise AppError(e)
+    # Pull data of the active initiatives from the consultation platforms
+    # and social networks where they are running on
+    initiatives = Initiative.objects.filter(active=True)
+    for initiative in initiatives:
+        logger.info('Pulling content of the initiative {} from the external platforms'.format(initiative))
+        invalidate_filters = {'initiative': initiative, 'is_new': False}
+        try:
+            invalidate_initiative_content(invalidate_filters, {'exist_cp': False})
+            _pull_content_consultation_platform(initiative.platform, initiative)
+            for socialnetwork in initiative.social_network.all():
+                if not socialnetwork.subscribed_read_time_updates:
+                    try:
+                        invalidate_initiative_content(invalidate_filters, {'exist_sn': False})
+                        _pull_content_social_network(socialnetwork)
+                    except Exception as e:
+                        _handle_pull_exceptions(initiative, socialnetwork, invalidate_filters, {'exist_sn': True})
+                        raise AppError(e)
+        except Exception as e:
+            _handle_pull_exceptions(initiative, initiative.platform, invalidate_filters, {'exist_cp': True})
+            raise AppError(e)
 
 
 def push_data():
@@ -91,10 +84,14 @@ def push_data():
     batch_req_comments = {}
     # Push ideas to consultation platforms and social networks
     logger.info('Pushing ideas to social networks and consultation platforms')
-    existing_ideas = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
-                     order_by('datetime')
-    tot_ideas_to_sn = Idea.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
-                      filter(source='consultation_platform').filter(is_new=True).count()
+    existing_ideas = Idea.objects.filter(Q(exist_sn=True, sn_id__isnull=False) |
+                                         Q(exist_cp=True, cp_id__isnull=False)).\
+                                  filter(Q(has_changed=True) | Q(is_new=True)).\
+                                  order_by('datetime')
+    tot_ideas_to_sn = Idea.objects.filter(Q(exist_sn=True, sn_id__isnull=False) |
+                                          Q(exist_cp=True, cp_id__isnull=False)).\
+                                   filter(Q(has_changed=True) | Q(is_new=True)).\
+                                   filter(source='consultation_platform').filter(is_new=True).count()
     count_ideas_to_sn = 0
     for idea in existing_ideas:
         try:
@@ -119,10 +116,14 @@ def push_data():
             raise AppError(e)
     # Push comments to consultation platforms and social networks
     logger.info('Pushing comments to social networks and consultation platforms')
-    existing_comments = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
-                        order_by('datetime')
-    tot_comments_to_sn = Comment.objects.exclude(exist=False).filter(Q(has_changed=True) | Q(is_new=True)).\
-                         filter(source='consultation_platform').filter(is_new=True).count()
+    existing_comments = Comment.objects.filter(Q(exist_sn=True, sn_id__isnull=False) |
+                                              Q(exist_cp=True, cp_id__isnull=False)).\
+                                        filter(Q(has_changed=True) | Q(is_new=True)).\
+                                        order_by('datetime')
+    tot_comments_to_sn = Comment.objects.filter(Q(exist_sn=True, sn_id__isnull=False) |
+                                                Q(exist_cp=True, cp_id__isnull=False)).\
+                                         filter(Q(has_changed=True) | Q(is_new=True)).\
+                                         filter(source='consultation_platform').filter(is_new=True).count()
     count_comments_to_sn = 0
     for comment in existing_comments:
         try:
@@ -149,7 +150,8 @@ def push_data():
 def delete_data():
     # Delete ideas that don't exist anymore in their original social networks or consultation platforms
     logger.info('Checking whether exists ideas that do not exist anymore')
-    unexisting_ideas = Idea.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
+    unexisting_ideas = Idea.objects.filter(Q(exist_sn=False, sn_id__isnull=False) |
+                                           Q(exist_cp=False, cp_id__isnull=False))
     for idea in unexisting_ideas:
         try:
             if idea.initiative.active:
@@ -168,7 +170,8 @@ def delete_data():
             raise AppError(e)
     # Delete comments that don't exist anymore in their original social networks or consultation platforms
     logger.info('Checking whether exists comments that do not exist anymore')
-    unexisting_comments = Comment.objects.exclude(exist=True).exclude(Q(cp_id=None) | Q(sn_id=None))
+    unexisting_comments = Comment.objects.filter(Q(exist_sn=False, sn_id__isnull=False) |
+                                                 Q(exist_cp=False, cp_id__isnull=False))
     for comment in unexisting_comments:
         try:
             if comment.initiative.active:
