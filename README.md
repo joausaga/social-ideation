@@ -9,9 +9,9 @@ More specifically, it enables users to **participate** (submit ideas, place comm
 leaving facebook** and using *only* Facebook's native features: posts, hashtags, comments, and groups. At the same time, 
 the ideas and comments published on IdeaScale are automatically replicated on the Facebook group linked to the initiative.
 
-Social Ideation is a concrete effort toward bringing internet-mediated civic participation platforms, such as IdeaScale, 
-closer to the large and diverse community of Facebook users. Apart from reaching wider and larger sources of information, 
-it aims at reducing as much as possible the participation barrier.
+Social Ideation is a concrete effort toward bringing civic participation platforms, such as IdeaScale, closer to the 
+large and diverse community of Facebook users. Apart from reaching wider and larger sources of information, it aims at 
+reducing as much as possible the participation barrier.
 
 Examples
 -------------
