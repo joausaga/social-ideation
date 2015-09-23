@@ -678,8 +678,8 @@ def delete_post(post_id):
         url_cb = get_url_cb(connector, 'delete_idea_cb')
         url = build_request_url(url_cb.url, url_cb.callback, {'idea_id': idea_obj.cp_id})
         do_request(connector, url, url_cb.callback.method)
-        logger.info('The idea {} does not exists anymore in {} and thus it was deleted from {}'.
-                     format(idea_obj.id, idea_obj.source_social, platform))
+        logger.info('The idea {} does not exists anymore and thus it was deleted from {}'.
+                     format(idea_obj.id, platform))
         _delete_obj(idea_obj)
         #idea_obj.delete()
     except Idea.DoesNotExist:
@@ -694,8 +694,8 @@ def delete_comment(comment_id):
         url_cb = get_url_cb(connector, 'delete_comment_cb')
         url = build_request_url(url_cb.url, url_cb.callback, {'comment_id': comment_obj.cp_id})
         do_request(connector, url, url_cb.callback.method)
-        logger.info('The comment {} does not exists anymore in {} and thus it was deleted from {}'.
-                     format(comment_obj.id, comment_obj.source_social, platform))
+        logger.info('The comment {} does not exists anymore and thus it was deleted from {}'.
+                     format(comment_obj.id, platform))
         _delete_obj(comment_obj)
         #comment_obj.delete()
     except Comment.DoesNotExist:
@@ -924,7 +924,7 @@ def do_delete_content(obj, type):
                 if type == 'idea':
                     params = {'app': social_network, 'id_post': obj.sn_id, 'app_user': app_user}
                     call_social_network_api(connector, 'delete_post', params)
-                    logger.info('The idea {} does not exists anymoreand thus it was deleted from {}'.
+                    logger.info('The idea {} does not exists anymore and thus it was deleted from {}'.
                                 format(obj.id, social_network))
                 else:
                     params = {'app': social_network, 'id_comment': obj.sn_id, 'app_user': app_user}
