@@ -53,8 +53,9 @@ asking for the ideas and comments of the registered initiatives (1). The ideas a
 are posted on IdeaScale by calling the corresponding API function (2). 
 
 The ideas and comments published on the Facebook groups linked to the registered IdeaScale initiatives are gathered by 
-hitting the API of Facebook (3). The ideas and comments gathered from the registered IdeaScale initiatives are 
-posted to the Facebook groups associated to the initiatives by calling the corresponding Facebook API function.
+hitting the API of Facebook (3). The ideas and comments gathered from the IdeaScale initiatives are 
+posted *on behalf of the Facebook users* to the Facebook groups associated with the initiatives by calling the 
+corresponding Facebook API function.
 
 Installation
 ------------
