@@ -7,8 +7,8 @@ from Facebook.
 
 More specifically, it enables users to **participate** (submit ideas, place comments) on IdeaScale initiatives **without 
 leaving facebook** and using *only* Facebook's native features: posts, hashtags, comments, and groups. At the same time, 
-the ideas and comments you publish on the IdeaScale site of the initiative are automatically replicated on behalf of the
-user on the Facebook group linked to the initiative.
+the ideas and comments published on IdeaScale are automatically replicated on behalf of the user on the Facebook group 
+linked to the initiative.
 
 Social Ideation is a concrete effort toward bringing internet-mediated civic participation platforms, such as IdeaScale, 
 closer to the large and diverse community of Facebook users. Apart from reaching wider and larger sources of information, 
