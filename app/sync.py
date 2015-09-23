@@ -404,11 +404,19 @@ def publish_comment_sn(comment, sn_app, mode=None):
         if sn_app.community.type == 'page':
             try:
                 if comment.parent == 'idea':
-                    parent = Idea.objects.get(id=comment.parent_idea.id, exist_sn=True)
-                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'post')
+                    parent = Idea.objects.get(id=comment.parent_idea.id)
+                    if parent.exist_sn:
+                        return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'post')
+                    else:
+                        # If the parent does not exist on the social network, ignore the content
+                        return None
                 elif comment.parent == 'comment':
-                    parent = Comment.objects.get(id=comment.parent_comment.id, exist_sn=True)
-                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'comment')
+                    parent = Comment.objects.get(id=comment.parent_comment.id)
+                    if parent.exist_sn:
+                        return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, 'comment')
+                    else:
+                        # If the parent does not exist on the social network, ignore the content
+                        return None
                 else:
                     raise AppError('Unknown the type of the object\'s parent')
             except Exception as e:
@@ -431,13 +439,19 @@ def publish_comment_sn(comment, sn_app, mode=None):
                     if _is_user_community_member(sn_app, app_user):
                         try:
                             if comment.parent == 'idea':
-                                parent = Idea.objects.get(id=comment.parent_idea.id, exist_sn=True)
-                                return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
-                                                              'post', app_user)
+                                parent = Idea.objects.get(id=comment.parent_idea.id)
+                                if parent.exist_sn:
+                                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
+                                                                  'post', app_user)
+                                else:
+                                    return None
                             elif comment.parent == 'comment':
-                                parent = Comment.objects.get(id=comment.parent_comment.id, exist_sn=True)
-                                return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
-                                                              'comment', app_user)
+                                parent = Comment.objects.get(id=comment.parent_comment.id)
+                                if parent.exist_sn:
+                                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
+                                                                  'comment', app_user)
+                                else:
+                                    return None
                             else:
                                 raise AppError('Unknown the type of the object\'s parent')
                         except Exception as e:
