@@ -30,10 +30,10 @@ As seen on the figure the proposed mapping model is based entirely on native ele
 groups, and hashtags). Posts published on a Facebook group that is linked to an IdeaScale initiative and contain the 
 hashtag of the initiative and the hashtag of one of initiative's campaigns are mapped to an idea. Similarly, ideas 
 submitted on an IdeaScale initiatives that is linked to a Facebook groups are mapped to posts published on the timeline
-ofr the group.
+of the group.
 
-As the figure also shows that the comments placed to Facebook posts mapped to ideas are taken and transformed into 
-IdeaScale comments. In a similar way, comments published to IdeaScale ideas are mapped to Facebook comments.
+As the figure also shows, the comments placed to Facebook posts mapped to ideas are taken and transformed into 
+IdeaScale comments and comments published on IdeaScale ideas are mapped to Facebook comments.
 
 Integration Model
 -----------------
