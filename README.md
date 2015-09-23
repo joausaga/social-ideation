@@ -5,7 +5,7 @@ idea management platforms -- with the world's largest virtual space of participa
 [Facebook](http://www.Facebook.com), allowing people to participate on IdeaScale-based civic participation initiatives 
 from Facebook. 
 
-More specifically, it enables users to **participate** (submit ideas, place comments) on IdeaScale initiatives **without 
+More specifically, it enables users to **participate** (submit ideas, place comments) **on IdeaScale** initiatives **without 
 leaving facebook** and using *only* Facebook's native features: posts, hashtags, comments, and groups. At the same time, 
 the ideas and comments published on IdeaScale are automatically replicated on the Facebook group linked to the initiative.
 
