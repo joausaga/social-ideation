@@ -35,7 +35,8 @@ of the group.
 As the figure also shows, the comments placed to Facebook posts mapped to ideas are taken and transformed into 
 IdeaScale comments and comments published on IdeaScale ideas are mapped to Facebook comments.
 
-On Facebook IdeaScale initiatives are identified by a hashtag as well as the initiatives' campaigns.
+On Facebook IdeaScale initiatives are identified by a hashtag. In a similar way, hashtags are used to identify 
+initiatives' campaigns.
 
 Integration Model
 -----------------
