@@ -98,7 +98,7 @@ Getting started
 
 2. Create an IdeaScale Community
 
-3. [Request a API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api)
+3. [Request an API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api)
 
 <!-- 4. [Enable attachments for ideas]
 (http://support.ideascale.com/customer/portal/articles/1001385-how-to-upload-an-attachment-to-an-idea-or-comment) -->
