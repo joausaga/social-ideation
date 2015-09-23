@@ -1,14 +1,18 @@
 Social Ideation
 ===============
-Social Ideation is an application that connects one of today's leading online idea management platforms, [IdeaScale]
-(http://www.ideascale.com), with the largest virtual space of participation and socialization, [Facebook]
-(http://www.Facebook.com), allowing people to contribute to IdeaScale crowdsourcing ideation initiatives 
-directly from Facebook. 
+Social Ideation is an application that connects [IdeaScale](http://www.ideascale.com) -- one of today's leading online 
+idea management platforms -- with the world's largest virtual space of participation and socialization, 
+[Facebook](http://www.Facebook.com), allowing people to participate on IdeaScale-based civic participation initiatives 
+from Facebook. 
 
-It is a concrete effort toward bringing internet-mediated civic participation tools, such as IdeaScale, closer to the 
-large and diverse community of Facebook users. Apart from reaching wider and larger sources of information, it aims at 
-reducing as much as possible the participation barrier, enabling people to take part on crowdsourcing ideation processes 
-by using only Facebook elements, namely facebook pages, hashtags, posts, comments, and likes.
+More specifically, it enables users to participate (submit ideas, place comments) on IdeaScale initiatives without 
+leaving facebook and using only Facebook's native features: posts, hashtags, comments, and groups. At the same time, 
+the ideas and comments you publish on the IdeaScale site of the initiative are automatically replicated on behalf of the
+user on the Facebook group linked to the initiative.
+
+Social Ideation is a concrete effort toward bringing internet-mediated civic participation platforms, such as IdeaScale, 
+closer to the large and diverse community of Facebook users. Apart from reaching wider and larger sources of information, 
+it aims at reducing as much as possible the participation barrier.
 
 Examples
 -------------
@@ -18,35 +22,35 @@ Examples
 Mapping Model
 -------------
 
-Social Ideation proposes the model outlined in the next figure to map Facebook posts with IdeaScale.
+Social Ideation proposes the model outlined in the next figure to map Facebook posts and comments with IdeaScale ideas
+and comments.
 
 ![mapping_model](https://dl.dropboxusercontent.com/u/55956367/mapping_model.png "Mapping Model")
 
-As it is possible to appreciated in the figure the proposed model is based entirely on native elements of Facebook, 
-namely posts, comments, pages, and hashtags. Posts published on the Facebook page that corresponds to an IdeaScale 
-initiative and contain the hashtag of the initiative and the hashtag of one of initiative's campaigns are mapped to an 
-idea. 
+As seen on the figure the proposed model is based entirely on native elements of Facebook, namely posts, comments, 
+groups, and hashtags. Posts published on a Facebook group that is linked to an IdeaScale initiative and contain the 
+hashtag of the initiative and the hashtag of one of initiative's campaigns are mapped to an idea. 
 
-As the figure also shows, all the comments placed to the Facebook posts that are mapped ideas are taken and 
-transformed into IdeaScale comments.
+As the figure also shows, all the comments placed to Facebook posts mapped to ideas are taken and transformed into 
+IdeaScale comments.
 
 Integration Model
 -----------------
 
-The integration between the two platforms are performed mainly through API functions. Either Facebook and IdeaScale offer
+The integration between the two platforms are performed mainly through API functions. Both Facebook and IdeaScale offer
 primitives through which is possible to read and create new content. The following figure presents the details of how 
 the integration works.
 
 ![integration_model](https://dl.dropboxusercontent.com/u/55956367/app_model.png "Social Ideation Model")
 
-The app maintains records about the mapping between IdeaScale initiatives and Facebook pages. Each record saves also the 
+The app maintains records about the mapping between IdeaScale initiatives and Facebook groups. Each record saves also the 
 hashtags that identify IdeaScale initiatives and their campaigns. To get content from IdeaScale, the app hits the API 
 asking for the ideas and comments of the registered initiatives (1). The ideas and comment collected from Facebook
 are posted on IdeaScale by calling the corresponding API function (2). 
 
-Every time a new idea or comment are placed on the Facebook pages that correspond to the IdeaScale initiatives, Facebook 
-API pushes a notification to the app (3). The ideas and comments gathered from the IdeaScale initiatives are posted to 
-the Facebook pages by calling the corresponding Facebook API function.
+The ideas and comments published on the Facebook groups linked to the registered IdeaScale initiatives are gathered by 
+hitting the API of Facebook (3). The ideas and comments gathered from the registered IdeaScale initiatives are 
+posted to the Facebook groups associated to the initiatives by calling the corresponding Facebook API function.
 
 Installation
 ------------
@@ -92,34 +96,36 @@ Getting started
 
 3. [Request a API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api)
 
-4. [Enable attachments for ideas](http://support.ideascale.com/customer/portal/articles/1001385-how-to-upload-an-attachment-to-an-idea-or-comment)
+<!-- 4. [Enable attachments for ideas]
+(http://support.ideascale.com/customer/portal/articles/1001385-how-to-upload-an-attachment-to-an-idea-or-comment) -->
 
-5. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html)
+4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html)
 
-6. Create a Facebook Page
+5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel
 
-7. Obtain a Facebook OAuth token
+6. Create a Facebook Group
 
-8. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
+7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
 
-9. Hit the social ideation URL, i.e., http://socialideation.com, and log in with the admin credentials
+8. Hit the social ideation URL, i.e., http://www.social-ideation.com, and log in with the admin credentials
 
-10. Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*)
+9. Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*)
 
-11. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
+10. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
 (*Home->Connectors->URL Callbacks*)
 
-12. Update IdeaScale connector token (*Home->Connectors->IdeaScale*) The correct token should be located in the table 
+11. Update IdeaScale connector token (*Home->Connectors->IdeaScale*) The correct token should be located in the table 
 authtoken_token (user_id = 1)
 
-13. Create a consultation platform choosing IdeaScale as the connector (*Home->App->Consultation platforms->Add*) 
+14. Create a consultation platform choosing IdeaScale as the connector (*Home->App->Consultation platforms->Add*) 
 
-14. Import the consultation platform initiatives. Select the new consultation platform in *Home->App->Consultation Platforms* 
+15. Import the consultation platform initiatives. Select the new consultation platform in *Home->App->Consultation Platforms* 
 and choose the option **'Get Initiatives'** from the **Action menu** located on the top of the list.
 
-15. Create a social network app choosing Facebook as the connector, configuring the **app id** and **app secret** of the created 
-Facebook App, and setting the **page id** and **access token** of the recently created Facebook Page. Set also the 
-**callback** field if you want to receive notification from Facebook every time a new post or comment is placed in the page
+16. Create a social network app community (*Home->App->Social network app communities->Add*)
+
+17. Create a social network app choosing Facebook as the connector, setting the **app id**, **app access token** and 
+**app secret** of the created Facebook App, and configuring the **community** as the community created before.
 (*Home->App->Social network apps->Add*)
 
 License
