@@ -353,11 +353,12 @@ class Facebook(SocialNetworkBase):
         else:
             cls.authenticate(app)
         raw_user = cls.graph.get_object(id_user)
+        user = {'id': raw_user['id'], 'name': raw_user['name']}
         if 'link' in raw_user.keys():
-            return {'id': raw_user['id'], 'name': raw_user['name'], 'url': raw_user['link'],
-                    'email': raw_user['email']}
-        else:
-            return {'id': raw_user['id'], 'name': raw_user['name'], 'email': raw_user['email']}
+            user.update({'url': raw_user['link']})
+        if 'email' in raw_user.keys():
+            user.update({'email': raw_user['email']})
+        return user
 
     @classmethod
     def error_handler(cls, method, error_obj, params=None):
