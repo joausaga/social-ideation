@@ -2,7 +2,7 @@ Social Ideation
 ===============
 Social Ideation is an application that connects [IdeaScale](http://www.ideascale.com) -- one of today's leading online 
 idea management platforms -- with the world's largest virtual space of participation and socialization, 
-[Facebook](http://www.Facebook.com), allowing people to participate on IdeaScale-based civic participation initiatives 
+[Facebook](http://www.Facebook.com), allowing people to participate on IdeaScale-based public consultations initiatives 
 from Facebook. 
 
 More specifically, it enables users to **participate** (submit ideas, place comments) **on IdeaScale** initiatives **without 
