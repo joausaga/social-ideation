@@ -85,7 +85,8 @@ def _get_or_create_location(location):
     return location_obj
 
 
-def update_or_create_content(platform, raw_obj, model, filters, obj_attrs, editable_fields, source):
+def update_or_create_content(platform, raw_obj, model, filters, obj_attrs, editable_fields, source,
+                             changeable_fields):
     # Handle content author
     obj_attrs.update({'author': _update_or_create_author(platform, raw_obj['user_info'], source)})
     # Handle content location
@@ -105,7 +106,8 @@ def update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edita
                                                                                      editable_field))
                 logger.info('Before {}, now {}'.format(convert_to_utf8_str(obj_field),
                                                        convert_to_utf8_str(raw_obj[editable_field])))
-                content_obj.has_changed = True
+                if editable_field in changeable_fields:
+                    content_obj.has_changed = True
             setattr(content_obj, editable_field, raw_obj[editable_field])
     content_obj.save()
 
@@ -150,7 +152,9 @@ def do_create_update_comment(platform, initiative, comment, source):
         else:
             comment_attrs.update({'source_social': platform, 'sn_id': comment['id'], })
         editable_fields = ('text','comments', 'positive_votes', 'negative_votes')
-        return update_or_create_content(platform, comment, Comment, filters, comment_attrs, editable_fields, source)
+        changeable_fields = ('text',)
+        return update_or_create_content(platform, comment, Comment, filters, comment_attrs, editable_fields, source,
+                                        changeable_fields)
     else:
         return None
 
@@ -616,8 +620,9 @@ def save_sn_post(sn_app, post):
                                   'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
                                   'source_social': sn_app}
                     editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
+                    changeable_fields = ('title', 'text')
                     idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
-                                                    'social_network')
+                                                    'social_network', changeable_fields)
                     return {'idea': idea, 'initiative': initiative, 'campaign': campaign}
                 except Exception as e:
                     logger.warning('An error occurred when trying to insert/update the post {} in the db. '
@@ -1019,4 +1024,6 @@ def cud_initiative_ideas(platform, initiative):
                       'initiative': initiative, 'campaign': campaign, 'positive_votes': idea['positive_votes'],
                       'negative_votes': idea['negative_votes'], 'source_consultation': platform}
         editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
-        update_or_create_content(platform, idea, Idea, filters, idea_attrs, editable_fields, 'consultation_platform')
+        changeable_fields = ('title', 'text')
+        update_or_create_content(platform, idea, Idea, filters, idea_attrs, editable_fields, 'consultation_platform',
+                                 changeable_fields)
