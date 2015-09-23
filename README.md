@@ -21,8 +21,8 @@ Examples
 Mapping Model
 -------------
 
-Social Ideation proposes the model outlined in the next figure to map Facebook posts and comments with IdeaScale ideas
-and comments.
+Social Ideation proposes the model outlined in the next figure to map IdeaScale elements (initiatives, campaigns, ideas,
+comments) with Facebook elements (groups, hashtags, posts and comments).
 
 ![mapping_model](https://dl.dropboxusercontent.com/u/55956367/mapping_model.png "Mapping Model")
 
