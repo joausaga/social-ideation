@@ -672,7 +672,7 @@ def save_sn_vote(sn_app, vote):
 
 def delete_post(post_id):
     try:
-        idea_obj = Idea.objects.get(sn_id=post_id)
+        idea_obj = Idea.objects.get(cp_id=post_id)
         platform = idea_obj.initiative.platform
         connector = platform.connector
         url_cb = get_url_cb(connector, 'delete_idea_cb')
@@ -688,7 +688,7 @@ def delete_post(post_id):
 
 def delete_comment(comment_id):
     try:
-        comment_obj = Comment.objects.get(sn_id=comment_id)
+        comment_obj = Comment.objects.get(cp_id=comment_id)
         platform = comment_obj.initiative.platform
         connector = platform.connector
         url_cb = get_url_cb(connector, 'delete_comment_cb')
@@ -915,7 +915,7 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
 
 def do_delete_content(obj, type):
     initiative = obj.initiative
-    if not obj.exist_cp:
+    if not obj.exist_cp and obj.exist_sn:
         # Delete object from the initiative's social networks
         for social_network in initiative.social_network.all():
             connector = social_network.connector
@@ -933,12 +933,14 @@ def do_delete_content(obj, type):
                                 format(obj.id, social_network))
         #obj.delete()
         _delete_obj(obj)
-    elif not obj.exist_sn:
+    elif not obj.exist_sn and obj.exist_cp:
         # Delete object from the initiative's consultation platform
         if type == 'idea':
-            delete_post(obj.sn_id)
+            delete_post(obj.cp_id)
         else:
-            delete_comment(obj.sn_id)
+            delete_comment(obj.cp_id)
+    else:
+        _delete_obj(obj)
 
 
 ##
