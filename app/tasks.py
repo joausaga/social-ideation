@@ -148,26 +148,6 @@ def push_data():
 
 
 def delete_data():
-    # Delete ideas that don't exist anymore in their original social networks or consultation platforms
-    logger.info('Checking whether exists ideas that do not exist anymore')
-    unexisting_ideas = Idea.objects.filter(Q(exist_sn=False, sn_id__isnull=False) |
-                                           Q(exist_cp=False, cp_id__isnull=False))
-    for idea in unexisting_ideas:
-        try:
-            if idea.initiative.active:
-                if idea.source == 'social_network':
-                    if not idea.source_social.subscribed_read_time_updates:
-                        do_delete_content(idea, 'idea')
-                else:
-                    do_delete_content(idea, 'idea')
-        except Exception as e:
-            if idea.source == 'consultation_platform':
-                logger.warning('Error when trying to delete the idea with the id={} from {}. '
-                               .format(idea.id, idea.source_consultation))
-            else:
-                logger.warning('Error when trying to delete the idea with the id={} from {}. '.
-                               format(idea.id, idea.source_social))
-            raise AppError(e)
     # Delete comments that don't exist anymore in their original social networks or consultation platforms
     logger.info('Checking whether exists comments that do not exist anymore')
     unexisting_comments = Comment.objects.filter(Q(exist_sn=False, sn_id__isnull=False) |
@@ -188,6 +168,26 @@ def delete_data():
                 logger.warning('Error when trying to delete the comment with the id={} from {}. '
                                .format(comment.id, comment.source_social))
             logger.warning(traceback.format_exc())
+    # Delete ideas that don't exist anymore in their original social networks or consultation platforms
+    logger.info('Checking whether exists ideas that do not exist anymore')
+    unexisting_ideas = Idea.objects.filter(Q(exist_sn=False, sn_id__isnull=False) |
+                                           Q(exist_cp=False, cp_id__isnull=False))
+    for idea in unexisting_ideas:
+        try:
+            if idea.initiative.active:
+                if idea.source == 'social_network':
+                    if not idea.source_social.subscribed_read_time_updates:
+                        do_delete_content(idea, 'idea')
+                else:
+                    do_delete_content(idea, 'idea')
+        except Exception as e:
+            if idea.source == 'consultation_platform':
+                logger.warning('Error when trying to delete the idea with the id={} from {}. '
+                               .format(idea.id, idea.source_consultation))
+            else:
+                logger.warning('Error when trying to delete the idea with the id={} from {}. '.
+                               format(idea.id, idea.source_social))
+            raise AppError(e)
 
 @shared_task
 def synchronize_content():
