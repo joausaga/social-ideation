@@ -293,7 +293,7 @@ def publish_idea_sn(idea, sn_app, mode=None):
     template_idea_header_sn += _get_str_language(initiative.language, 'votes') + '\n'
     template_idea_header_sn += '----------------\n\n'
     template_idea_body_sn = '{}\n\n' \
-                            '#{} #{}\n\n' \
+                            '#{}\n\n' \
                             '----------------\n'
     template_idea_sn = template_idea_header_sn + template_idea_body_sn
     template_idea_sn += _get_str_language(initiative.language, 'source') + '\n'
@@ -310,8 +310,7 @@ def publish_idea_sn(idea, sn_app, mode=None):
     if idea.is_new:
         title_utf8 = convert_to_utf8_str(idea.title)
         text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
-                                             text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                             platform_name_utf8, idea.url)
+                                             text_uf8, cam_hashtag.lower(), platform_name_utf8, idea.url)
         if sn_app.community.type == 'page':
             return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode)
         else:
