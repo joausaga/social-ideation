@@ -17,12 +17,12 @@ import traceback
 logger = get_task_logger(__name__)
 
 
-def _pull_content_social_network(social_network):
+def _pull_content_social_network(social_network, initiative):
     if social_network.community:
         params = {'app': social_network}
         posts = call_social_network_api(social_network.connector, 'get_posts', params)
         for post in posts:
-            ret_data = save_sn_post(social_network, post)
+            ret_data = save_sn_post(social_network, post, initiative)
             if ret_data:
                 if 'comments_array' in post.keys():
                     for comment in post['comments_array']:
@@ -61,16 +61,19 @@ def pull_data():
     # and social networks where they are running on
     initiatives = Initiative.objects.filter(active=True)
     for initiative in initiatives:
-        logger.info('Pulling content of the initiative {} from the external platforms'.format(initiative))
         invalidate_filters = {'initiative': initiative, 'is_new': False}
         try:
             invalidate_initiative_content(invalidate_filters, {'exist_cp': False})
+            logger.info('Pulling content of the initiative {} from the platform {}'.format(initiative,
+                                                                                           initiative.platform))
             _pull_content_consultation_platform(initiative.platform, initiative)
             for socialnetwork in initiative.social_network.all():
                 if not socialnetwork.subscribed_read_time_updates:
                     try:
                         invalidate_initiative_content(invalidate_filters, {'exist_sn': False})
-                        _pull_content_social_network(socialnetwork)
+                        logger.info('Pulling content of the initiative {} from the platform {}'.format(initiative,
+                                                                                                       socialnetwork))
+                        _pull_content_social_network(socialnetwork, initiative)
                     except Exception as e:
                         _handle_pull_exceptions(initiative, socialnetwork, invalidate_filters, {'exist_sn': True})
                         raise AppError(e)

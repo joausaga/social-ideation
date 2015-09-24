@@ -605,38 +605,30 @@ def _get_campaign(hashtags, initiative):
     return None
 
 
-def save_sn_post(sn_app, post):
+def save_sn_post(sn_app, post, initiative):
     hashtags = _extract_hashtags(post)
-    if len(hashtags) > 0:
-        initiative = _get_initiative(hashtags, sn_app)
-        if initiative:
-            campaign = _get_campaign(hashtags, initiative)
-            if campaign:
-                try:
-                    filters = {'sn_id': post['id']}
-                    idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
-                                  'title': post['title'], 'text': post['text'], 'url': post['url'],
-                                  'comments': post['comments'], 'initiative': initiative, 'campaign': campaign,
-                                  'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
-                                  'source_social': sn_app}
-                    editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
-                    changeable_fields = ('title', 'text')
-                    idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
-                                                    'social_network', changeable_fields)
-                    return {'idea': idea, 'initiative': initiative, 'campaign': campaign}
-                except Exception as e:
-                    logger.warning('An error occurred when trying to insert/update the post {} in the db. '
-                                   'Reason: {}'.format(post, e))
-                    logger.warning(traceback.format_exc())
-            else:
-                if 'text' in post.keys():
-                    logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
-                                'identified from the hashtags'.format(post['text']))
-                else:
-                    logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
+    if len(hashtags) > 0 and initiative:
+        campaign = _get_campaign(hashtags, initiative)
+        if campaign:
+            try:
+                filters = {'sn_id': post['id']}
+                idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
+                              'title': post['title'], 'text': post['text'], 'url': post['url'],
+                              'comments': post['comments'], 'initiative': initiative, 'campaign': campaign,
+                              'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
+                              'source_social': sn_app}
+                editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
+                changeable_fields = ('title', 'text')
+                idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
+                                                'social_network', changeable_fields)
+                return {'idea': idea, 'initiative': initiative, 'campaign': campaign}
+            except Exception as e:
+                logger.warning('An error occurred when trying to insert/update the post {} in the db. '
+                               'Reason: {}'.format(post, e))
+                logger.warning(traceback.format_exc())
         else:
             if 'text' in post.keys():
-                logger.info('The post \'{}\' could not be created/updated. Reason: The initiative could not be '
+                logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
                             'identified from the hashtags'.format(post['text']))
             else:
                 logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
