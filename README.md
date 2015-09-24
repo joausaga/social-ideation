@@ -28,15 +28,13 @@ comments) with Facebook elements (groups, hashtags, posts and comments).
 
 As seen on the figure the proposed mapping model is based entirely on native elements of Facebook (posts, comments, 
 groups, and hashtags). Posts published on a Facebook group that is linked to an IdeaScale initiative and contain the 
-hashtag of the initiative and the hashtag of one of initiative's campaigns are mapped to an idea. Similarly, ideas 
-submitted on an IdeaScale initiatives that is linked to a Facebook groups are mapped to posts published on the timeline
-of the group.
+hashtag of one of the initiative's campaigns are mapped to ideas. Similarly, ideas submitted on an IdeaScale initiatives 
+that is linked to a Facebook groups are mapped to posts published on the timeline of the group.
 
 As the figure also shows, the comments placed to Facebook posts mapped to ideas are taken and transformed into 
 IdeaScale comments and comments published on IdeaScale ideas are mapped to Facebook comments.
 
-On Facebook IdeaScale initiatives are identified by a hashtag. In a similar way, hashtags are used to identify 
-initiatives' campaigns.
+On Facebook, hashtags are used to identify initiatives' campaigns.
 
 Integration Model
 -----------------
