@@ -108,7 +108,7 @@ Getting started
 
 5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel
 
-6. Create a Facebook Group
+6. Create a Facebook Group and set the privacy setting to Public
 
 7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
 
