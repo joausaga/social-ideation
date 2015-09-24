@@ -24,6 +24,7 @@ class SocialNetworkAppCommunity(models.Model):
                                                                  ('user_account', 'User Account'),))
     url = models.URLField(default=None)
     members = models.ManyToManyField(SocialNetworkAppUser, editable=False)
+    admin = models.ForeignKey(SocialNetworkAppUser)
 
     def __unicode__(self):
         return self.name
