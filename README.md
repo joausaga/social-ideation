@@ -99,17 +99,13 @@ Getting started
 
 3. [Request an API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api)
 
-<!-- 4. [Enable attachments for ideas]
-(http://support.ideascale.com/customer/portal/articles/1001385-how-to-upload-an-attachment-to-an-idea-or-comment) -->
-
 4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html)
 
 5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel
 
 6. Create a Facebook Group and set the privacy setting to Public
 
-7. Go inside social ideation directory and load initial IdeaScale data 
-`python manage.py loaddata ideascale_connector_data.json`
+7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
 
 8. Hit the social ideation URL, i.e., http://www.social-ideation.com, and log in with the admin credentials
 
