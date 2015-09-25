@@ -4,11 +4,12 @@ import traceback
 
 from app.error import AppError
 from app.models import Idea, Author, Location, Initiative, Comment, Vote, Campaign, ConsultationPlatform, \
-                       SocialNetworkApp, SocialNetworkAppUser
+                       SocialNetworkApp, SocialNetworkAppUser, AutoComment
 from app.utils import do_request, get_json_or_error, get_url_cb, build_request_url, convert_to_utf8_str, \
                       build_request_body, call_social_network_api
 from datetime import datetime
 from django.utils import timezone
+from django.utils.translation import override, ugettext as _
 
 
 logger = logging.getLogger(__name__)
@@ -604,6 +605,65 @@ def _get_campaign(hashtags, initiative):
     return None
 
 
+def _post_authored_by_admin(snapp, post):
+    for admin in snapp.community.admins.all():
+        if admin.external_id == post['user_info']['id']:
+            return True
+    return False
+
+
+def _do_send_notification_comment(snapp, post, msg, admin_user):
+    params = {'app': snapp, 'id_post': post['id'], 'message': msg, 'app_user': admin_user}
+    try:
+        new_comment = call_social_network_api(snapp.connector, 'comment_post', params)
+        auto_comment = AutoComment(sn_id=new_comment['id'], author=admin_user, parent_idea=post['id'])
+        auto_comment.save()
+        return True
+    except Exception as e:
+        logger.info('The notification comment could not be posted. Reason: {}'.format(e))
+        return False
+
+
+def _post_auto_commented(post):
+    auto_comments = AutoComment.objects.all()
+    for auto_comment in auto_comments:
+        if post['id'] == auto_comment.parent_idea and auto_comment.exist:
+            return auto_comment
+    return None
+
+
+def _send_notification_comment(snapp, post, initiative, problem):
+    if 'story' in post.keys() and _post_authored_by_admin(snapp, post):
+        return
+    if _post_auto_commented(post):
+        return
+    campaigns = initiative.campaign_set.all()
+    campaign_hashtags = ''
+    campaign_counter = 0
+    for campaign in campaigns:
+        campaign_counter += 1
+        if campaign_counter == len(campaigns):
+            campaign_hashtags += '#{}'.format(campaign.hashtag)
+        else:
+            campaign_hashtags += '#{}, '.format(campaign.hashtag)
+    with override(initiative.language):
+        if problem == 'missing_hashtag':
+            msg = _('Hi {}!, it seems you\'ve tried to submit an idea without specifying the hashtag of the '
+                    'campaign. If you\'ve forgotten to include the hashtag, please edit your post '
+                    'and add one of the followings: {}. Thanks!')
+        else:
+            msg = _('Hi {}!, it seems you\'ve tried to submit an idea however the hashtag included in your post '
+                    'matches none of the hashtags defined to identify the initiative\'s idea campaigns. '
+                    'If you have misspelled the campaign hashtag, please edit the post and correct it using one '
+                    'of the followings: {}. Thanks!')
+        msg = msg.format(post['user_info']['name'], campaign_hashtags)
+        for admin in snapp.community.admins.all():
+            # If there are problems sending the notification with the first admin
+            # let's try with all of them until having success
+            if _do_send_notification_comment(snapp, post, msg, admin):
+                break
+
+
 def save_sn_post(sn_app, post, initiative):
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0 and initiative:
@@ -620,18 +680,31 @@ def save_sn_post(sn_app, post, initiative):
                 changeable_fields = ('title', 'text')
                 idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
                                                 'social_network', changeable_fields)
+                # Check if the post has an auto comment, if it has then delete the comment
+                auto_comment = _post_auto_commented(post)
+                if auto_comment:
+                    params = {'app': sn_app, 'id_comment': auto_comment.sn_id, 'app_user': auto_comment.author}
+                    try:
+                        call_social_network_api(sn_app.connector, 'delete_comment', params)
+                        auto_comment.exist = False
+                        auto_comment.save()
+                    except Exception as e:
+                        logger.warning('An error occurred when trying to delete the auto comment placed '
+                                       'on the post \'{}\'. Reason: {}'.format(post['text'], e))
                 return {'idea': idea, 'initiative': initiative, 'campaign': campaign}
             except Exception as e:
                 logger.warning('An error occurred when trying to insert/update the post {} in the db. '
                                'Reason: {}'.format(post, e))
                 logger.warning(traceback.format_exc())
         else:
+            _send_notification_comment(sn_app, post, initiative, 'wrong_hashtag')
             if 'text' in post.keys():
                 logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
-                            'identified from the hashtags'.format(post['text']))
+                            'identified from the hashtags.'.format(post['text']))
             else:
                 logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
     else:
+        _send_notification_comment(sn_app, post, initiative, 'missing_hashtag')
         if 'text' in post.keys():
             logger.info('The post \'{}\' could not be created/updated. Reason: It seems it does not have hashtags'.
                         format(post['text']))
@@ -654,16 +727,21 @@ def _find_initiative(parent_type, parent_id):
 
 
 def save_sn_comment(sn_app, comment):
-    if comment['parent_type'] == 'post':
-        comment.update({'parent_type': 'idea'})
-    initiative = _find_initiative(comment['parent_type'], comment['parent_id'])
-    if initiative:
-        comment = do_create_update_comment(sn_app, initiative, comment, 'social_network')
-        return {'comment': comment, 'initiative': initiative}
-    else:
-        logger.warning('An error occurred when trying to create/update the comment {}. '
-                       'Reason: The initiative could not be found'.format(comment))
-        return None
+    try:
+        #Ignore auto comments
+        AutoComment.objects.get(sn_id=comment['id'])
+        return
+    except AutoComment.DoesNotExist:
+        if comment['parent_type'] == 'post':
+            comment.update({'parent_type': 'idea'})
+        initiative = _find_initiative(comment['parent_type'], comment['parent_id'])
+        if initiative:
+            comment = do_create_update_comment(sn_app, initiative, comment, 'social_network')
+            return {'comment': comment, 'initiative': initiative}
+        else:
+            logger.warning('An error occurred when trying to create/update the comment {}. '
+                           'Reason: The initiative could not be found'.format(comment))
+            return None
 
 
 def save_sn_vote(sn_app, vote):

@@ -5,7 +5,7 @@ import hmac
 import json
 import traceback
 
-from app.models import SocialNetworkApp, SocialNetworkAppUser, Initiative
+from app.models import SocialNetworkApp, SocialNetworkAppUser
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
                      delete_post, delete_comment, delete_vote
 from app.utils import get_timezone_aware_datetime, calculate_token_expiration_time

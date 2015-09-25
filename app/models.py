@@ -4,16 +4,19 @@ from django.db import models
 
 
 class SocialNetworkAppUser(models.Model):
-    external_id = models.CharField(max_length=50, editable=False)
+    external_id = models.CharField(max_length=50)
     name = models.CharField(max_length=100, null=True)
     url = models.URLField(null=True, blank=True)
-    email = models.EmailField(editable=False)
-    snapp = models.ForeignKey('SocialNetworkApp', editable=False)
-    access_token = models.CharField(max_length=300, editable=False)
+    email = models.EmailField()
+    snapp = models.ForeignKey('SocialNetworkApp')
+    access_token = models.CharField(max_length=300)
     access_token_exp = models.DateTimeField(editable=False)
 
     def __unicode__(self):
-        return self.external_id
+        if self.name:
+            return self.name
+        else:
+            return self.external_id
 
 
 class SocialNetworkAppCommunity(models.Model):
@@ -24,7 +27,7 @@ class SocialNetworkAppCommunity(models.Model):
                                                                  ('user_account', 'User Account'),))
     url = models.URLField(default=None)
     members = models.ManyToManyField(SocialNetworkAppUser, editable=False)
-    admin = models.ForeignKey(SocialNetworkAppUser)
+    admins = models.ManyToManyField(SocialNetworkAppUser, related_name='SocialNetworkAppAdmin')
 
     def __unicode__(self):
         return self.name
@@ -190,3 +193,10 @@ class Vote(BaseContent):
     parent = models.CharField(max_length=10, choices=(('idea','Idea'),('comment','Comment'),))
     parent_idea = models.ForeignKey(Idea, null=True)
     parent_comment = models.ForeignKey(Comment, null=True)
+
+
+class AutoComment(models.Model):
+    sn_id = models.CharField(max_length=100)
+    author = models.ForeignKey(SocialNetworkAppUser)
+    parent_idea = models.CharField(max_length=100)
+    exist = models.BooleanField(default=True)
