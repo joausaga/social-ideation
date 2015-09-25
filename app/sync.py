@@ -926,8 +926,8 @@ def _process_batch_request(resp_batch_req, objs):
     for i in range(0,len(resp_batch_req)):
         req = resp_batch_req[i]
         obj = objs[i]
+        body_json = json.loads(req['body'])
         if req['code'] == 200:
-            body_json = json.loads(req['body'])
             sn_obj_id = body_json['id']
             if type(sn_obj_id) == type(' '.decode()):
                 id = sn_obj_id.encode()
@@ -939,6 +939,14 @@ def _process_batch_request(resp_batch_req, objs):
             obj.exist_sn = True
             obj.sync = True
             obj.save()
+        else:
+            msg = 'There was an error in doing a request of the batch.'
+            if 'error' in body_json.keys():
+                if 'type' in body_json['error'].keys():
+                    msg += ' Error type: {}.'.format(body_json['error']['type'])
+                if 'message' in body_json['error'].keys():
+                    msg += ' Reason: {}'.format(body_json['error']['message'])
+            logger.warning(msg)
 
 
 def do_push_content(obj, type, last_obj=None, batch_reqs=None):
