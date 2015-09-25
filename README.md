@@ -108,7 +108,8 @@ Getting started
 
 6. Create a Facebook Group and set the privacy setting to Public
 
-7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
+7. Go inside social ideation directory and load initial IdeaScale data 
+`python manage.py loaddata ideascale_connector_data.json`
 
 8. Hit the social ideation URL, i.e., http://www.social-ideation.com, and log in with the admin credentials
 
@@ -125,9 +126,17 @@ authtoken_token (user_id = 1)
 15. Import the consultation platform initiatives. Select the new consultation platform in *Home->App->Consultation Platforms* 
 and choose the option **'Get Initiatives'** from the **Action menu** located on the top of the list.
 
-16. Create a social network app community (*Home->App->Social network app communities->Add*)
+16. Obtain Facebook OAuth token. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/) and 
+in the application drop down select the app created in Step 4. Click Get Access Token; in permissions popup go to 
+extended Permissions tab and select manage_groups and publish_actions. 
 
-17. Create a social network app choosing Facebook as the connector, setting the **app id**, **app access token** and 
+17. Create a social network app user, setting in the field access token the previously obtained access token
+(*Home->App->Social network app users->Add*)
+
+18. Create a social network app community (*Home->App->Social network app communities->Add*) and put the user created in
+Step 17 as the admin
+
+19. Create a social network app choosing Facebook as the connector, setting the **app id**, **app access token** and 
 **app secret** of the created Facebook App, and configuring the **community** as the community created before.
 (*Home->App->Social network apps->Add*)
 

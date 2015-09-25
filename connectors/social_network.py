@@ -193,6 +193,8 @@ class Facebook(SocialNetworkBase):
                      'user_info': {'name': post_raw['from']['name'], 'id': post_raw['from']['id']},
                      'url': post_raw['actions'][0]['link'], 'datetime': post_raw['created_time'],
                      'positive_votes': 0, 'negative_votes': 0, 'comments': 0}
+        if 'story' in post_raw.keys():
+            post_dict.update({'story': True})
         return post_dict
 
     @classmethod

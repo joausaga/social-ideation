@@ -6,7 +6,7 @@ from app.models import ConsultationPlatform, Initiative, Campaign, SocialNetwork
                        SocialNetworkAppCommunity, SocialNetworkAppUser
 from app.tasks import test_function
 from app.error import AppError
-from app.utils import call_social_network_api
+from app.utils import call_social_network_api, calculate_token_expiration_time
 from connectors.admin import do_request, get_json_or_error, get_url_cb, build_request_url
 from connectors.error import ConnectorError
 
@@ -179,14 +179,14 @@ class IdeaAdmin(admin.ModelAdmin):
     list_display = ('cpid', 'snid', 'idea_source', 'initiative', 'campaign', 'author', 'datetime', 'title', 'text',
                     're_posts', 'bookmarks', 'positive_votes', 'negative_votes', 'comments', 'sync', 'has_changed')
     ordering = ('initiative', 'campaign', 'author', 'datetime', 'positive_votes', 'negative_votes', 'comments')
-    list_filter = ['initiative']
+    list_filter = ['initiative', 'exist_cp', 'exist_sn']
 
     def has_add_permission(self, request):
         return False
 
-    def get_queryset(self, request):
-        qs = super(IdeaAdmin, self).get_queryset(request)
-        return qs.filter(exist_cp=True,exist_sn=True)
+    #def get_queryset(self, request):
+    #    qs = super(IdeaAdmin, self).get_queryset(request)
+    #    return qs.filter(exist_cp=True,exist_sn=True)
 
     def idea_id(self, obj):
         if obj.source == 'consultation_platform':
@@ -267,8 +267,21 @@ class VoteAdmin(admin.ModelAdmin):
 
 
 class SocialNetworkAdminCommunity(admin.ModelAdmin):
-    list_display = ('name', 'type', 'url')
+    list_display = ('name', 'type', 'url', 'community_admins')
     ordering = ('name', 'type')
+
+    def community_admins(self, obj):
+        str_admins = ''
+        admin_counter = 0
+        admins = obj.admins.all()
+        for admin in admins:
+            admin_counter += 1
+            if admin_counter == len(admins):
+                str_admins += admin.name
+            else:
+                str_admins += admin.name + ', '
+        return str_admins
+    community_admins.short_description = 'Admins'
 
 
 class SocialNetworkAppUserAdmin(admin.ModelAdmin):
@@ -278,6 +291,19 @@ class SocialNetworkAppUserAdmin(admin.ModelAdmin):
     def sn_id(self, obj):
         return obj.external_id
     sn_id.short_description = 'Social Network Id'
+
+    def save_model(self, request, obj, form, change):
+        # Get long-lived access token
+        params = {'app_id': obj.snapp.app_id, 'app_secret': obj.snapp.app_secret, 'access_token': obj.access_token}
+        try:
+            ret_token = call_social_network_api(obj.snapp.connector, 'get_long_lived_access_token', params)
+            obj.access_token = ret_token['access_token']
+            obj.access_token_exp = calculate_token_expiration_time(ret_token['expiration'])
+            obj.save()
+            messages.success(request, 'It was successfully obtained the user\'s long-lived access token')
+        except ConnectorError:
+            messages.error(request, 'It was not possible to get the user\'s long-lived access token')
+
 
 admin.site.register(ConsultationPlatform, ConsultationPlatformAdmin)
 admin.site.register(Initiative, InitiativeAdmin)
