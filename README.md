@@ -124,7 +124,7 @@ and choose the option **'Get Initiatives'** from the **Action menu** located on 
 
 14. Obtain Facebook OAuth token. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/) and 
 in the application drop down select the app created in Step 4. Click Get Access Token; in permissions popup go to 
-extended permissions tab and select **user_managed_groups** and **publish_actions**. 
+extended permissions tab and select **publish_actions**. 
 
 15. Create a social network app user, setting in the field access token the previously obtained access token
 (*Home->App->Social network app users->Add*)
