@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-24 20:51+0200\n"
+"POT-Creation-Date: 2015-10-01 16:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,9 +23,11 @@ msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
 "edit your post and add one of the followings: {}. Thanks!"
-msgstr "Hola {}!, al parecer intentaste postear una idea olvidando especificar "
-"el hashtag de la campaña. Si es así, por favor editá el post e indicá la "
-"campaña a la que corresponde la idea, agregando uno de los siguientes hashtags: {}. Gracias!"
+msgstr ""
+"Hola {}!, al parecer intentaste postear una idea olvidando especificar el "
+"hashtag de la campaña. Si es así, por favor editá el post e indicá la "
+"campaña a la que corresponde la idea, agregando uno de los siguientes "
+"hashtags: {}. Gracias!"
 
 #: app/sync.py:655
 msgid ""
@@ -33,102 +35,265 @@ msgid ""
 "in your post matches none of the hashtags defined to identify the "
 "initiative's idea campaigns. If you have misspelled the campaign hashtag, "
 "please edit the post and correct it using one of the followings: {}. Thanks!"
-msgstr "Hola {}!, al parecer intentaste postear una idea sin embargo el hashtag "
+msgstr ""
+"Hola {}!, al parecer intentaste postear una idea sin embargo el hashtag "
 "incluído en el post no corresponde con ninguno de los hashtags definidos "
-"para identificar las campañas de ideas de la iniciativa. "
-"Si te equivocaste al escribir el hashtag, por favor editá el post y corregílo "
-"usando alguno de los siguientes: {}. Gracias!"
+"para identificar las campañas de ideas de la iniciativa. Si te equivocaste "
+"al escribir el hashtag, por favor editá el post y corregílo usando alguno de "
+"los siguientes: {}. Gracias!"
 
-#: app/templates/app/index.html:60
+#: app/templates/app/index.html:76
 msgid "participate"
 msgstr "participar"
 
-#: app/templates/app/index.html:61
+#: app/templates/app/index.html:77
 msgid "without leaving Facebook"
 msgstr "sin salir de Facebook"
 
-#: app/templates/app/index.html:62
+#: app/templates/app/index.html:78
 msgid "only"
 msgstr "solo"
 
-#: app/templates/app/index.html:80
-msgid "Social Ideation is an open-source application that connects"
-msgstr "Social Ideation es una aplicación de código abierto que conecta"
-
-#: app/templates/app/index.html:82
-msgid "one of today's leading online idea management platforms"
-msgstr ""
-"actualmente una de las plataformas más importantes de administración de ideas"
-
-#: app/templates/app/index.html:83
-msgid "with the largest virtual space of participation and socialization"
-msgstr "con la comunidad de socilización y participación más grande del mundo"
-
-#: app/templates/app/index.html:84
-msgid ""
-"allowing people to participate on IdeaScale-based public consultations from "
-"Facebook"
-msgstr ""
-"permitiendo a la gente tomar parte desde Facebook en consultas públicas "
-"desarrolladas en IdeaScale"
-
-#: app/templates/app/index.html:86
-msgid "More specifically, with the app you will be able to"
-msgstr "En otras palabras, con la aplicación podrás"
-
-#: app/templates/app/index.html:87
-msgid "(submit ideas, place comments) on IdeaScale initiatives"
-msgstr "en iniciativas de IdeaScale (enviar ideas, hacer comentarios)"
-
-#: app/templates/app/index.html:88
-msgid "and using"
-msgstr "y usando"
-
-#: app/templates/app/index.html:89
-msgid ""
-"Facebook's native features: posts, hashtags, comments, and groups. At the "
-"same time, the ideas and"
-msgstr ""
-"elementos de Facebook, como: posts, hashtags, comentarios, y grupos. Al "
-"mismo tiempo, todas las ideas y"
-
-#: app/templates/app/index.html:90
-msgid ""
-"comments you publish on the IdeaScale site of the initiative will be "
-"automatically replicated on"
-msgstr ""
-"comentarios que envíes en el sitio de la iniciativa en IdeaScale serán "
-"automáticamente publicados "
-
-#: app/templates/app/index.html:91
-msgid "your behalf on the Facebook group linked to the initiative"
-msgstr "en tu nombre en el grupo de Facebook asociado a la iniciativa"
+#: app/templates/app/index.html:93
+msgid "Home"
+msgstr "Inicio"
 
 #: app/templates/app/index.html:94
+msgid "How to use it"
+msgstr "Cómo utilizar"
+
+#: app/templates/app/index.html:95 app/templates/app/index.html.py:186
+msgid "How it works"
+msgstr "Cómo funciona"
+
+#: app/templates/app/index.html:106
+msgid ""
+"Social Ideation is an application that will allow you to participate on the "
+"initiative"
+msgstr ""
+"Social Ideation es una aplicación que te permitirá participar en la "
+"iniciativa"
+
+#: app/templates/app/index.html:108
+msgid "directly from Facebook"
+msgstr "directamente desde Facebook"
+
+#: app/templates/app/index.html:109
+msgid "Just follow the next steps"
+msgstr "Solo tienes que seguir los siguientes pasos"
+
+#: app/templates/app/index.html:112
 msgid ""
 "If you want to make use of this advantage, please log into the app by "
 "clicking on the next button"
 msgstr "Si quieres utilizar la App, favor haz clic en el botón de abajo"
 
-#: app/templates/app/index.html:100
+#: app/templates/app/index.html:118
 msgid "I agree to use the App"
 msgstr "Quiero usar la App"
 
-#: app/views.py:250
+#: app/templates/app/index.html:129
+msgid "Step 1"
+msgstr "Paso 1"
+
+#: app/templates/app/index.html:131
+msgid "Join the Facebook linked to the initiative"
+msgstr "Únete al grupo de Facebook vínculado a la iniciativa"
+
+#: app/templates/app/index.html:133
+msgid "which will offer you a an alternative participation channel"
+msgstr "el cual te ofrecerá un canal alternativo de participación"
+
+#: app/templates/app/index.html:141
+msgid "Step 2"
+msgstr "Paso 2"
+
+#: app/templates/app/index.html:142
+msgid ""
+"Log into <b>Social Ideation App</b> so the ideas and comments you post on the"
+msgstr ""
+"Ingresa a <b>Social Ideation App</b> para que las ideas y comentarios que "
+"publiques en el"
+
+#: app/templates/app/index.html:143
+msgid "group's"
+msgstr "grupo"
+
+#: app/templates/app/index.html:144
+msgid "timeline will be automatically replicated on the page of the initiative"
+msgstr "sean automáticamente replicados en la página de la iniciativa"
+
+#: app/templates/app/index.html:145 app/templates/app/index.html.py:156
+msgid "on IdeaScale"
+msgstr "en IdeaScale"
+
+#: app/templates/app/index.html:146 app/templates/app/index.html.py:157
+msgid "(see the"
+msgstr "(fijate en el"
+
+#: app/templates/app/index.html:146 app/templates/app/index.html.py:157
+msgid "scenario"
+msgstr "escenario"
+
+#: app/templates/app/index.html:146 app/templates/app/index.html.py:157
+msgid "to better understand how it works)"
+msgstr "para entender mejor como funciona)"
+
+#: app/templates/app/index.html:153
+msgid "Step 3"
+msgstr "Paso 3"
+
+#: app/templates/app/index.html:154
+msgid ""
+"Give <b>Social Ideation App</b> the permission to post on your behalf inside "
+"the"
+msgstr "Permite a <b>Social Ideation App</b> postear en tu nombre dentro del "
+
+#: app/templates/app/index.html:155
+msgid "group"
+msgstr "grupo"
+
+#: app/templates/app/index.html:155
+msgid "the ideas and comments you publish on the page of the initiative"
+msgstr "las ideas y comentarios que publiques en la página de la iniciativa"
+
+#: app/templates/app/index.html:165
+msgid "Join Group"
+msgstr "Unirme"
+
+#: app/templates/app/index.html:171
+msgid "Log in"
+msgstr "Ingresar"
+
+#: app/templates/app/index.html:177 app/templates/app/index.html.py:181
+msgid "Allow it"
+msgstr "Permitir"
+
+#: app/templates/app/index.html:187
+msgid ""
+"The following images illustrates how Social Ideation App works under "
+"different situations"
+msgstr ""
+"Las siguientes imagenes muestran como funciona la aplicación Social Ideation "
+"App en diferentes situaciones"
+
+#: app/templates/app/index.html:188
+msgid "Scenario 1"
+msgstr "Escenario 1"
+
+#: app/templates/app/index.html:189
+msgid "The ideas posted on"
+msgstr "Las ideas posteadas en el"
+
+#: app/templates/app/index.html:189
+msgid "the Facebook group"
+msgstr "grupo de Facebook"
+
+#: app/templates/app/index.html:190
+msgid "are later automatically replicated on the page of"
+msgstr "son automáticamente replicadas en la página de la iniciativa"
+
+#: app/templates/app/index.html:192
+msgid "the initiative on IdeaScale"
+msgstr "en IdeaScale"
+
+#: app/templates/app/index.html:196
+msgid "Scenario 2"
+msgstr "Escenario 2"
+
+#: app/templates/app/index.html:197
+msgid "The ideas posted on the page of"
+msgstr "Las ideas posteadas en la página de"
+
+#: app/templates/app/index.html:199
+msgid "on IdeaScale are later automatically replicated on the"
+msgstr "en IdeaScale son luego automáticamente replicadas en el"
+
+#: app/templates/app/index.html:200
+msgid "Facebook group"
+msgstr "grupo de Facebook"
+
+#: app/templates/app/index.html:204
+msgid "Scenario 3"
+msgstr "Escenario 3"
+
+#: app/templates/app/index.html:205
+msgid ""
+"Comment posted on Facebook and then automatically replicated on the "
+"initiative page on IdeaScale"
+msgstr ""
+"Comentario posteado en Facebook que posteriormente es replicado "
+"automáticamente en el página de la iniciativa en IdeaScale"
+
+#: app/templates/app/index.html:208
+msgid "Scenario 4"
+msgstr "Escenario 4"
+
+#: app/templates/app/index.html:209
+msgid ""
+"Comment posted on IdeaScale and then automatically replicated on the "
+"Facebook group"
+msgstr ""
+"Comentario posteado en IdeaScale que posteriormente es replicado "
+"automáticamente en el grupo de Facebook"
+
+#: app/templates/app/index.html:216
+msgid "Contact"
+msgstr "Contacto"
+
+#: app/templates/app/index.html:232
+msgid "We promise to publish on your behalf"
+msgstr "Te aseguramos que publicaremos en tu nombre"
+
+#: app/templates/app/index.html:232
+msgid "ONLY"
+msgstr "SOLO"
+
+#: app/templates/app/index.html:232
+msgid "inside the Facebook group associated to the initiative"
+msgstr "dentro del grupo de Facebook vínculado a la iniciativa"
+
+#: app/templates/app/index.html:233
+msgid "never on your wall nor on your friends' walls"
+msgstr "nunca en tu muro o en el muro de tus amigos"
+
+#: app/templates/app/index.html:236
+msgid "Ok"
+msgstr "Ok"
+
+#: app/templates/app/index.html:237
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: app/views.py:271
 msgid "Congrats!, You are already logged into"
 msgstr "¡Bien!, Ya estas utilizando"
 
-#: app/views.py:251
+#: app/views.py:272
 msgid "{}group{}"
 msgstr "{}grupo{}"
 
-#: app/views.py:252
+#: app/views.py:273
 msgid "Join the "
 msgstr "Ingresá al "
 
-#: app/views.py:253
+#: app/views.py:274
 msgid "of the initiative to start participate from Facebook"
 msgstr "de la iniciativa para empezar a participar desde Facebook"
+
+#: app/views.py:284
+msgid ""
+"Please consider allowing the app the permission to post on your behalf "
+"inside the Facebook"
+msgstr "Permite a <b>Social Ideation App</b> postear en tu nombre dentro del "
+
+#: app/views.py:286
+msgid "of the initiative"
+msgstr "de la iniciativa"
+
+#: app/views.py:292
+msgid "Get into the"
+msgstr "Ingresá al"
 
 #: social_ideation/settings.py:142
 msgid "English"
@@ -137,3 +302,52 @@ msgstr ""
 #: social_ideation/settings.py:143
 msgid "Spanish"
 msgstr ""
+
+#~ msgid "' page"
+#~ msgstr " "
+
+#~ msgid ""
+#~ "Idea posted on Facebook and then automatically replicated on the "
+#~ "initiative page on IdeaScale"
+#~ msgstr ""
+#~ "Idea posteada en Facebook que posteriormente es replicada automáticamente "
+#~ "en la página de la iniciativa en IdeaScale"
+
+#~ msgid ""
+#~ "is linked to a Facebook group that offers you an alternative channel to "
+#~ "take part on it."
+#~ msgstr ""
+#~ "está asociada a un grupo de Facebook el cual te ofrece un canal "
+#~ "alternativo para participar de la misma."
+
+#~ msgid "one of today's leading online idea management platforms"
+#~ msgstr ""
+#~ "actualmente una de las plataformas más importantes de administración de "
+#~ "ideas"
+
+#~ msgid "with the largest virtual space of participation and socialization"
+#~ msgstr ""
+#~ "con la comunidad de socilización y participación más grande del mundo"
+
+#~ msgid ""
+#~ "allowing people to participate on IdeaScale-based public consultations "
+#~ "from Facebook"
+#~ msgstr ""
+#~ "permitiendo a la gente tomar parte desde Facebook en consultas públicas "
+#~ "desarrolladas en IdeaScale"
+
+#~ msgid "More specifically, with the app you will be able to"
+#~ msgstr "En otras palabras, con la aplicación podrás"
+
+#~ msgid "(submit ideas, place comments) on IdeaScale initiatives"
+#~ msgstr "en iniciativas de IdeaScale (enviar ideas, hacer comentarios)"
+
+#~ msgid "and using"
+#~ msgstr "y usando"
+
+#~ msgid ""
+#~ "Facebook's native features: posts, hashtags, comments, and groups. At the "
+#~ "same time, the ideas and"
+#~ msgstr ""
+#~ "elementos de Facebook, como: posts, hashtags, comentarios, y grupos. Al "
+#~ "mismo tiempo, todas las ideas y"
