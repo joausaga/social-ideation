@@ -7,6 +7,14 @@
         div.my-hidden {
             display: none;
         }
+        body {
+            position: relative;
+            padding-top: 80px;
+        }
+        nav {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
     </style>
     <script type="text/javascript">
         function startConnect(){
@@ -20,36 +28,44 @@
                 } else {
                     checkStatusCallback(response);
                 }
-            }, {scope: 'public_profile,email,publish_actions,user_friends'})
+            }, {scope: 'public_profile,email,user_friends'})
+        };
+        function askWritingPermissions() {
+            $('#writingPermissionModal').modal('hide');
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    window.location = window.location + 'app/write_permissions_fb' +
+                            '?access_token=' + response.authResponse.accessToken +
+                            '&expires=' + response.authResponse.expiresIn +
+                            '&signed_request=' + response.authResponse.signedRequest +
+                            '&user_id=' + response.authResponse.userID;
+                } else {
+                    checkStatusCallback(response);
+                }
+            }, {scope: 'publish_actions'})
         };
         function checkStatusCallback(response) {
             if (response.status === 'connected') {
-                $.ajax({
-                    url: window.location + 'app/check_user' + '?user_id=' + response.authResponse.userID,
-                    success: function(result) {
-                        if (result) {
-                            document.getElementById('button').style.display = 'block';
-                            document.getElementById('pushing-msg').style.display= 'block';
-                            document.getElementById('status').className = 'alert alert-info';
-                            document.getElementById('status').style.display = 'block';
-                            document.getElementById('status').innerHTML = result;
-                        } else {
-                            document.getElementById('button').style.display = 'block';
-                            document.getElementById('pushing-msg').style.display= 'block';
-                            document.getElementById('status').style.display = 'none';
+                if (!window.location.hash) {
+                    $.ajax({
+                        url: window.location + 'app/check_user' + '?user_id=' + response.authResponse.userID,
+                        success: function(result) {
+                            if (result) {
+                                document.getElementById('status').className = 'alert alert-info';
+                                document.getElementById('status').style.display = 'block';
+                                document.getElementById('status').innerHTML = result;
+                            } else {
+                                document.getElementById('status').style.display = 'none';
+                            }
                         }
-                    }
-                });
+                    });
+                }
             } else if (response.status === 'not_authorized') {
                 // The person is logged into Facebook, but not your app.
-                document.getElementById('button').style.display = 'block';
-                document.getElementById('pushing-msg').style.display = 'block';
                 document.getElementById('status').style.display = 'none';
             } else {
                 // The person is not logged into Facebook, so we're not sure if
                 // they are logged into this app or not.
-                document.getElementById('button').style.display = 'block';
-                document.getElementById('pushing-msg').style.display = 'block';
                 document.getElementById('status').style.display = 'none';
             }
         }
@@ -60,55 +76,169 @@
 {% trans "participate" as participate %}
 {% trans "without leaving Facebook" as without_leave_facebook %}
 {% trans "only" as only %}
-<div>
-    <div class="container">
-      <div class="header clearfix">
-        <nav>
-          <ul class="nav nav-pills pull-right">
-            <li role="presentation" class="active"><a href="#">Home</a></li>
-            <li role="presentation"><a href="https://github.com/joausaga/social-ideation" target="_blank">Github Repo</a></li>
-            <li role="presentation"><a href="mailto:jorge.saldivargalli@disi.unitn.com" target="_blank">Contact</a></li>
-          </ul>
-        </nav>
-        <img src="/static/img/app_icon.png" alt="App Icon" height="80" width="80">
-        <!--<h3 class="text-muted">Social Ideation App</h3>-->
+<div class="container">
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+          </button>
+          <img src="/static/img/app_icon.png" alt="Brand" height="55" width="55">
+        </div>
+        <div>
+          <div class="collapse navbar-collapse" id="myNavbar">
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="#myNavbar">{% trans "Home" %}</a></li>
+              <li><a href="#how-to-use">{% trans "How to use it" %}</a></li>
+              <li><a href="#how-it-works">{% trans "How it works" %}</a></li>
+            </ul>
+          </div>
+        </div>
       </div>
-      <div id="status" role="alert" class="my-hidden"></div>
+    </nav>
+    <div id="status" role="alert" class="my-hidden"></div>
+    <div id="section1">
       <div class="jumbotron">
         <h1>Social Ideation App</h1>
         <p align="left">
-            {% trans "Social Ideation is an open-source application that connects" %}
-            <a href=\"http://www.ideascale.com\" target=\"_blank\">IdeaScale</a> &#8212;
-            {% trans "one of today's leading online idea management platforms" %} &#8212;
-            {% trans "with the largest virtual space of participation and socialization" %}, Facebook,
-            {% trans "allowing people to participate on IdeaScale-based public consultations from Facebook" %}.
-            <br><br>
-            {% trans "More specifically, with the app you will be able to" %} <b>{{participate}}</b>
-            {% trans "(submit ideas, place comments) on IdeaScale initiatives" %} <b>{{without_leave_facebook}}</b>
-            {% trans "and using" %} <i>{{only}}</i>
-            {% trans "Facebook's native features: posts, hashtags, comments, and groups. At the same time, the ideas and" %}
-            {% trans "comments you publish on the IdeaScale site of the initiative will be automatically replicated on" %}
-            {% trans "your behalf on the Facebook group linked to the initiative" %}.
-            <div id="pushing-msg" align="left" class="my-hidden">
+            {% trans "Social Ideation is an application that will allow you to participate on the initiative" %}
+            <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>
+            <i>{% trans "directly from Facebook" %}</i>.
+            <b>{% trans "Just follow the next steps" %}</b>.
+           <!--  <div id="pushing-msg" align="left" class="my-hidden">
                 <br>
                     <b>{% trans "If you want to make use of this advantage, please log into the app by clicking on the next button" %}</b>
                 <br>
-            </div>
+            </div> -->
         </p>
-        <div id="button" class="my-hidden">
+        <!-- <div id="button" class="my-hidden">
             <button class="btn btn-lg btn-primary" type="button" onclick="startConnect(); return false;">
                 {% trans "I agree to use the App" %}
             </button>
         </div>
-        <!--<p id="status"></p>-->
+        <p id="status"></p> -->
       </div>
-      <footer class="footer">
-        <p><a href="http://lifeparticipation.org/">Life Participation Research Group - University of Trento, Italy</a></p>
-      </footer>
-    </div> <!-- /container -->
+      <div id="how-to-use" class="container">
+        <div class="row">
+            <div class="col-md-4">
+              <p align="center">
+                <img src="/static/img/group.png" alt="Facebook Group" height="100" width="100">
+              </p>
+              <h2>{% trans "Step 1" %}</h2>
+              <p>
+                  {% trans "Join the Facebook linked to the initiative" %}
+                  <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>,
+                  {% trans "which will offer you a an alternative participation channel" %}.
+                  <br><br><br>
+              </p>
+            </div>
+            <div class="col-md-4">
+              <p align="center">
+                <img src="/static/img/login.png" alt="App Icon" height="100" width="90">
+              </p>
+              <h2>{% trans "Step 2" %}</h2>
+              <p>{% trans "Log into <b>Social Ideation App</b> so the ideas and comments you post on the" %}
+                 <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group's" %}</a></b>
+                 {% trans "timeline will be automatically replicated on the page of the initiative" %}
+                 <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
+                 {% trans "(see the" %} <b><a href="#scenario-1">{% trans "scenario" %} 1</a></b> {%trans "to better understand how it works)" %}.
+              </p>
+           </div>
+            <div class="col-md-4">
+              <p align="center">
+                <img src="/static/img/write_permission.png" alt="App Icon" height="100" width="100">
+              </p>
+              <h2>{% trans "Step 3" %}</h2>
+              <p>{% trans "Give <b>Social Ideation App</b> the permission to post on your behalf inside the" %}
+                 <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group" %}</a></b> {% trans "the ideas and comments you publish on the page of the initiative" %}
+                 <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
+                 {% trans "(see the" %} <b><a href="#scenario-2">{% trans "scenario" %} 2</a></b> {% trans "to better understand how it works)" %}.
+              </p>
+            </div>
+          </div>
+          <div class="row">
+              <div class="col-md-4">
+                <a class="btn btn-primary" href="{{ fb_group_url }}" role="button">
+                    <span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+                    &nbsp;&nbsp;{% trans "Join Group" %}
+                </a>
+              </div>
+              <div class="col-md-4">
+                <a class="btn btn-success" href="javascript:;" role="button" onclick="startConnect(); return false;">
+                  <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
+                  &nbsp;&nbsp;{% trans "Log in" %}
+                </a>
+              </div>
+              <div class="col-md-4">
+                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#writingPermissionModal">
+                    <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+                    &nbsp;&nbsp;{% trans "Allow it" %}
+                </button>
+                <!-- <a class="btn btn-warning" href="javascript:;" role="button" onclick="askWritingPermissions(); return false;">
+                  <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+                  &nbsp;&nbsp;{% trans "Allow it" %}
+                </a> -->
+              </div>
+          </div>
+          <br><br>
+          <h1 id="how-it-works" class="page-header">{% trans "How it works" %}</h1>
+          {% trans "The following images illustrates how Social Ideation App works under different situations" %}<br><br>
+          <h4 id="scenario-1"><span class="label label-primary">{% trans "Scenario 1" %}</span></h4><br>
+          {% trans "The ideas posted on" %} <b><a href="{{ fb_group_url }}" target="_blank">{% trans "the Facebook group" %}</a></b>
+          {% trans "are later automatically replicated on the page of" %}
+          <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>
+          {% trans "the initiative on IdeaScale" %}
+          <br><br>
+          <img src="/static/img/scenario_1.png" alt="Scenario 1" height="146" width="716">
+          <br><br>
+          <h4 id="scenario-2"><span class="label label-primary">{% trans "Scenario 2" %}</span></h4><br>
+          {% trans "The ideas posted on the page of" %}
+          <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>
+          {% trans "on IdeaScale are later automatically replicated on the" %}
+          <b><a href="{{ fb_group_url }}" target="_blank">{% trans "Facebook group" %}</a></b>
+          <br><br>
+          <img src="/static/img/scenario_2.png" alt="Scenario 2" height="222" width="716">
+          <br><br>
+          <!-- <h4 id="scenario-3"><span class="label label-primary">{% trans "Scenario 3" %}</span></h4><br>
+          {% trans "Comment posted on Facebook and then automatically replicated on the initiative page on IdeaScale" %}<br><br>
+          <img src="/static/img/scenario_3.png" alt="Scenario 3" height="100" width="716">
+          <br><br>
+          <h4 id="scenario-4"><span class="label label-primary">{% trans "Scenario 4" %}</span></h4><br>
+          {% trans "Comment posted on IdeaScale and then automatically replicated on the Facebook group" %}<br><br>
+          <img src="/static/img/scenario_4.png" alt="Scenario 4" height="142" width="716">
+          <br><br> -->
+          <br><br>
+          <footer id="contact" class="footer">
+            <p>
+                <a href="http://lifeparticipation.org/" target="_blank">Life Participation Research Group (University of Trento, Italy)</a> -
+                <a href="mailto:jorge.saldivargalli@disi.unitn.com" target="_blank">{% trans "Contact" %}</a>
+            </p>
+          </footer>
+        </div> <!-- /container -->
+    </div>
 </div>
-
 <div id="fb-root"></div>
+<!-- Modal -->
+<div class="modal fade" id="writingPermissionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Social Ideation App</h4>
+      </div>
+      <div class="modal-body">
+      {% trans "We promise to publish on your behalf" %} <b>{% trans "ONLY" %}</b> {% trans "inside the Facebook group associated to the initiative" %};
+      <b><i>{% trans "never on your wall nor on your friends' walls" %}.</i></b>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" onclick="askWritingPermissions(); return false;">{% trans "Ok" %}</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script type="text/javascript">
     window.fbAsyncInit = function() {
         FB.init({
@@ -132,4 +262,3 @@
     }());
 </script>
 {% endblock %}
-
