@@ -5,9 +5,9 @@ import hmac
 import json
 import traceback
 
-from app.models import SocialNetworkApp, SocialNetworkAppUser
+from app.models import SocialNetworkApp, SocialNetworkAppUser, Initiative
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
-                     delete_post, delete_comment, delete_vote
+                     delete_post, delete_comment, delete_vote, is_user_community_member
 from app.utils import get_timezone_aware_datetime, calculate_token_expiration_time
 from connectors.social_network import Facebook
 from django.conf import settings
@@ -192,6 +192,15 @@ def is_supported_language(language_code):
     return language_code in supported_languages
 
 
+def get_initiative_info():
+    # Hardcoded get the first active initiative and the
+    # url of the community associated to the first social network
+    # where it is executed
+    initiative = Initiative.objects.get(active=True)
+    return {'initiative_name': initiative.name, 'initiative_url': initiative.url,
+            'fb_group_url': initiative.social_network.all()[0].community.url}
+
+
 def index(request):
     # Detect the default language to show the page
     # If the preferred language is supported, the page will be presented in that language
@@ -214,26 +223,33 @@ def index(request):
     else:
         activate(language_to_render)
 
-    return render(request, 'app/index.html')
+    context = get_initiative_info()
+
+    return render(request, 'app/index.html', context)
 
 
-def login_fb(request):
+def _save_user(user_id, access_token, type_permission):
     fb_app = _get_facebook_app()
-
-    access_token = request.GET.get('access_token')
-    user_id = request.GET.get('user_id')
     ret_token = Facebook.get_long_lived_access_token(fb_app.app_id, fb_app.app_secret,
                                                      access_token)
     try:
         user = SocialNetworkAppUser.objects.get(external_id=user_id)
         user.access_token = ret_token['access_token']
         user.access_token_exp = calculate_token_expiration_time(ret_token['expiration'])
+        if type_permission == 'write':
+            user.write_permissions = True
+        else:
+            user.read_permissions = True
         user.save()
     except SocialNetworkAppUser.DoesNotExist:
         user_fb = Facebook.get_info_user(fb_app, user_id, access_token)
         new_app_user = {'email': user_fb['email'], 'snapp': fb_app, 'access_token': ret_token['access_token'],
                         'access_token_exp': calculate_token_expiration_time(ret_token['expiration']),
                         'external_id': user_id}
+        if type_permission == 'write':
+            new_app_user.update({'write_permissions': True})
+        else:
+            new_app_user.update({'read_permissions': True})
         if 'name' in user_fb.keys():
             new_app_user.update({'name': user_fb['name']})
         if 'url' in user_fb.keys():
@@ -241,6 +257,11 @@ def login_fb(request):
         user = SocialNetworkAppUser(**new_app_user)
         user.save()
 
+
+def login_fb(request):
+    access_token = request.GET.get('access_token')
+    user_id = request.GET.get('user_id')
+    _save_user(user_id, access_token, 'read')
     return redirect('/')
 
 
@@ -257,7 +278,28 @@ def check_user(request):
         for initiative in fb_app.initiative_set.all():
             if initiative.active:
                 msg_group = msg_group.format(initiative.social_network.all()[0].community.url)
-                return HttpResponse(msg_logged + ' <b>Social Ideation App</b>. ' + msg_join + msg_group + ' ' + msg_ini)
+                if not user.read_permissions:
+                    return HttpResponse()
+                if not user.write_permissions:
+                    msg_give_write_perm = _('Please consider allowing the app the permission to post '
+                                            'on your behalf inside the Facebook')
+                    msg_ini_short = _('of the initiative')
+                    msg = msg_logged + ' <b>Social Ideation App</b>. ' + msg_give_write_perm + ' ' + msg_group + \
+                          ' ' + msg_ini_short
+                elif not is_user_community_member(fb_app, user):
+                    msg = msg_logged + ' <b>Social Ideation App</b>. ' + msg_join + msg_group + ' ' + msg_ini
+                else:
+                    msg_get_in_group = _('Get into the')
+                    msg = msg_logged + ' <b>Social Ideation App</b>. ' + msg_get_in_group + ' ' + msg_group + \
+                          ' ' + msg_ini
+                return HttpResponse(msg)
         return HttpResponse(msg_logged)
     except SocialNetworkAppUser.DoesNotExist:
         return HttpResponse()
+
+
+def write_permissions_fb(request):
+    access_token = request.GET.get('access_token')
+    user_id = request.GET.get('user_id')
+    _save_user(user_id, access_token, 'write')
+    return redirect('/')

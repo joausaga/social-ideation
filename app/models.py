@@ -11,6 +11,8 @@ class SocialNetworkAppUser(models.Model):
     snapp = models.ForeignKey('SocialNetworkApp')
     access_token = models.CharField(max_length=300)
     access_token_exp = models.DateTimeField(editable=False)
+    read_permissions = models.BooleanField(default=False, editable=False)
+    write_permissions = models.BooleanField(default=False, editable=False)
 
     def __unicode__(self):
         if self.name:

@@ -272,7 +272,7 @@ def _do_edit_idea_sn(sn_app, idea, text_to_sn, app_user=None):
         raise AppError(e)
 
 
-def _is_user_community_member(sn_app, app_user):
+def is_user_community_member(sn_app, app_user):
     app_community = sn_app.community
     for reg_member in app_community.members.all():
         if reg_member == app_user:
@@ -315,34 +315,19 @@ def publish_idea_sn(idea, sn_app, mode=None):
         if sn_app.community.type == 'page':
             return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode)
         else:
-            if not idea.author.email:
-                logger.info('The author of the idea (user: {}) has not provided an email address, therefore '
-                            'his/her credentials to publish the idea on behalf of him/her on the social network '
-                            'cannot be found'.format(idea.author.email if idea.author.email else author_name_utf8))
+            if not _user_can_publish(idea, author_name_utf8, sn_app, 'idea'):
                 return None
             else:
-                if not SocialNetworkAppUser.objects.filter(email=idea.author.email).exists():
-                    logger.info('It seems the user {} has not logged into the app, his/her idea '
-                                'cannot be published in the initiative\'s group'.
-                                format(idea.author.email if idea.author.email else author_name_utf8))
-                    return None
-                else:
-                    app_user = SocialNetworkAppUser.objects.get(email=idea.author.email)
-                    if _is_user_community_member(sn_app, app_user):
-                        #attachment = {
-                        #    'name': title_utf8,
-                        #    'link':  idea.url,
-                        #    'caption': initiative.name.upper(),
-                        #    'description': desc_attachment.format(author_name_utf8, initiative.name),
-                        #    'picture': LOGO_IDEASCALE_VIA
-                        #}
-                        # From now, let's don't include the attachment
-                        return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode, app_user)
-                    else:
-                        logger.info('The author {} is not member of the initiative\'s group, '
-                                    'his/her ideas cannot be published'.
-                                    format(idea.author.email if idea.author.email else author_name_utf8))
-                        return None
+                #attachment = {
+                #    'name': title_utf8,
+                #    'link':  idea.url,
+                #    'caption': initiative.name.upper(),
+                #    'description': desc_attachment.format(author_name_utf8, initiative.name),
+                #    'picture': LOGO_IDEASCALE_VIA
+                #}
+                # From now, let's don't include the attachment
+                app_user = SocialNetworkAppUser.objects.get(email=idea.author.email)
+                return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode, app_user)
     elif idea.has_changed:
         title_utf8 = convert_to_utf8_str(idea.title)
         text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
@@ -352,7 +337,10 @@ def publish_idea_sn(idea, sn_app, mode=None):
             _do_edit_idea_sn(sn_app, idea, text_to_sn)
         else:
             app_user = SocialNetworkAppUser.objects.get(email=idea.author.email)
-            _do_edit_idea_sn(sn_app, idea, text_to_sn, app_user)
+            if not _user_can_publish(idea, author_name_utf8, sn_app, 'idea'):
+                return None
+            else:
+                _do_edit_idea_sn(sn_app, idea, text_to_sn, app_user)
 
 
 def _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode, type='post', app_user=None):
@@ -426,46 +414,30 @@ def publish_comment_sn(comment, sn_app, mode=None):
             except Exception as e:
                 raise AppError('Something went wrong when trying to publish a comment. Reason: {}'.format(e))
         else:
-            if not comment.author.email:
-                logger.info('The author of the comment (user: {}) has not provided an email address, therefore '
-                            'his/her credentials to publish the idea on behalf of him/her on the social network '
-                            'cannot be found'.
-                            format(comment.author.email if comment.author.email else author_name_utf8))
+            if not _user_can_publish(comment, author_name_utf8, sn_app, 'comment'):
                 return None
             else:
-                if not SocialNetworkAppUser.objects.filter(email=comment.author.email).exists():
-                    logger.info('It seems the user {} has not logged into the app, his/her comment '
-                                'cannot be published in the initiative\'s group'.
-                                format(comment.author.email if comment.author.email else author_name_utf8))
-                    return None
-                else:
-                    app_user = SocialNetworkAppUser.objects.get(email=comment.author.email)
-                    if _is_user_community_member(sn_app, app_user):
-                        try:
-                            if comment.parent == 'idea':
-                                parent = Idea.objects.get(id=comment.parent_idea.id)
-                                if parent.exist_sn:
-                                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
-                                                                  'post', app_user)
-                                else:
-                                    return None
-                            elif comment.parent == 'comment':
-                                parent = Comment.objects.get(id=comment.parent_comment.id)
-                                if parent.exist_sn:
-                                    return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
-                                                                  'comment', app_user)
-                                else:
-                                    return None
-                            else:
-                                raise AppError('Unknown the type of the object\'s parent')
-                        except Exception as e:
-                            raise AppError('Something went wrong when trying to publish a comment. '
-                                           'Reason: {}'.format(e))
+                app_user = SocialNetworkAppUser.objects.get(email=comment.author.email)
+                try:
+                    if comment.parent == 'idea':
+                        parent = Idea.objects.get(id=comment.parent_idea.id)
+                        if parent.exist_sn:
+                            return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
+                                                          'post', app_user)
+                        else:
+                            return None
+                    elif comment.parent == 'comment':
+                        parent = Comment.objects.get(id=comment.parent_comment.id)
+                        if parent.exist_sn:
+                            return _do_publish_comment_sn(sn_app, comment, parent, text_to_sn, mode,
+                                                          'comment', app_user)
+                        else:
+                            return None
                     else:
-                        logger.info('The author {} is not member of the initiative\'s group, '
-                                    'his/her comment cannot be published'.
-                                    format(comment.author.email if comment.author.email else author_name_utf8))
-                        return None
+                        raise AppError('Unknown the type of the object\'s parent')
+                except Exception as e:
+                    raise AppError('Something went wrong when trying to publish a comment. '
+                                   'Reason: {}'.format(e))
     elif comment.has_changed:
         text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
                                                 comment.source_consultation.name)
@@ -473,7 +445,44 @@ def publish_comment_sn(comment, sn_app, mode=None):
             _do_edit_comment_sn(sn_app, comment, text_to_sn)
         else:
             app_user = SocialNetworkAppUser.objects.get(email=comment.author.email)
-            _do_edit_comment_sn(sn_app, comment, text_to_sn, app_user)
+            if not _user_can_publish(comment, author_name_utf8, sn_app, 'comment'):
+                return None
+            else:
+                _do_edit_comment_sn(sn_app, comment, text_to_sn, app_user)
+
+
+def _user_can_publish(content, author_name_utf8, sn_app, type_content):
+    if not content.author.email:
+        logger.info('The author of the {} (user: {}) has not provided an email address, therefore '
+                    'his/her credentials to publish the {} on behalf of him/her on the social network '
+                    'cannot be found'.
+                    format(type_content,
+                           content.author.email if content.author.email else author_name_utf8),
+                           type_content)
+        return False
+    else:
+        if not SocialNetworkAppUser.objects.filter(email=content.author.email).exists():
+            logger.info('It seems the user {} has not logged into the app, his/her {} '
+                        'cannot be published in the initiative\'s group'.
+                        format(content.author.email if content.author.email else author_name_utf8,
+                               type_content))
+            return False
+        else:
+            app_user = SocialNetworkAppUser.objects.get(email=content.author.email)
+            if not app_user.write_permissions:
+                logger.info('The author {} did\'nt give write permissions, so '
+                            'his/her {} cannot be published'.
+                            format(content.author.email if content.author.email else author_name_utf8,
+                                   type_content))
+                return False
+            elif not is_user_community_member(sn_app, app_user):
+                logger.info('The author {} is not member of the initiative\'s group, '
+                            'his/her {} cannot be published'.
+                            format(content.author.email if content.author.email else author_name_utf8,
+                                   type_content))
+                return False
+            else:
+                return True
 
 
 def publish_idea_cp(idea):

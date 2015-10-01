@@ -456,6 +456,10 @@ class Facebook(SocialNetworkBase):
             members_email.append(member['id'])
         return members_email
 
+    @classmethod
+    def get_user_permissions(cls, app, user_id):
+        cls.authenticate(app)
+        return cls.graph.get_connections(user_id, 'permissions')
 
 #if __name__ == "__main__":
 #Facebook.authenticate()
