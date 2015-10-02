@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-01 16:23+0200\n"
+"POT-Creation-Date: 2015-10-02 14:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:651
+#: app/sync.py:660
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -29,7 +29,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:655
+#: app/sync.py:664
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -288,8 +288,8 @@ msgid ""
 msgstr "Permite a <b>Social Ideation App</b> postear en tu nombre dentro del "
 
 #: app/views.py:286
-msgid "of the initiative"
-msgstr "de la iniciativa"
+msgid "of the initiative (step 3 below)"
+msgstr "de la iniciativa (paso 3 más abajo)"
 
 #: app/views.py:292
 msgid "Get into the"

@@ -283,7 +283,7 @@ def check_user(request):
                 if not user.write_permissions:
                     msg_give_write_perm = _('Please consider allowing the app the permission to post '
                                             'on your behalf inside the Facebook')
-                    msg_ini_short = _('of the initiative')
+                    msg_ini_short = _('of the initiative (step 3 below)')
                     msg = msg_logged + ' <b>Social Ideation App</b>. ' + msg_give_write_perm + ' ' + msg_group + \
                           ' ' + msg_ini_short
                 elif not is_user_community_member(fb_app, user):
