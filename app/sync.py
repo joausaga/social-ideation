@@ -491,9 +491,12 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
 
 
 def _noti_email_already_sent(author):
-    author_payload = json.loads(author.payload)
-    if 'notification_email' in author_payload.keys():
-        return author_payload['notification_email']
+    if author.payload:
+        author_payload = json.loads(author.payload)
+        if 'notification_email' in author_payload.keys():
+            return author_payload['notification_email']
+        else:
+            return False
     else:
         return False
 
