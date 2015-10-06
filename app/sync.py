@@ -485,7 +485,7 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
             logger.warning('Unknown type of email notification. Message could not be sent')
             return None
         msg = header_msg + '\n\n' + main_msg + '\n\n' + salutation_msg + signature_msg
-        send_mail(_('Socialize your contribution!'), msg, 'hola@social-ideation.com', content.author.email,
+        send_mail(_('Socialize your contribution!'), msg, 'hola@social-ideation.com', [content.author.email],
                   fail_silently=False, html_message=True)
         return True
 
