@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-02 14:55+0200\n"
+"POT-Creation-Date: 2015-10-06 19:06+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,80 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:660
+#: app/sync.py:457
+msgid ""
+"Hi {},\n"
+"Thanks for contributing to {}! Involve also the people on the {} of the "
+"initiative in the discussion of your {}."
+msgstr ""
+"Hola {},\n"
+"Gracias por contribuir a {}! Involucrá también a la gente del {} de la "
+"iniciativa en la discusión de tu {}."
+
+#: app/sync.py:461
+msgid "Thanks!,"
+msgstr "¡Gracias!,"
+
+#: app/sync.py:462
+msgid "Social Ideation App Team"
+msgstr "Equipo Social Ideation App"
+
+#: app/sync.py:467 app/sync.py:475 app/sync.py:483
+#: app/templates/app/index.html:200
+msgid "Facebook group"
+msgstr "grupo de Facebook"
+
+#: app/sync.py:465
+msgid ""
+"Log into {}, so from now all your ideas and comments (including this one) "
+"can be automatically posted on your behalf on the {} of the initiative"
+msgstr ""
+"Logueate en {}, para que, de ahora en adelante todas tus ideas y comentarios "
+"(incluyendo esta) puedan ser automáticamente publicados en tu nombre en el "
+"{} de la iniciativa."
+
+#: app/sync.py:470 app/sync.py:477
+msgid "HERE"
+msgstr "AQUI"
+
+#: app/sync.py:469
+msgid "Click {} to log into the app"
+msgstr "Clic {} para comenzar a utilizar la app"
+
+#: app/sync.py:471
+msgid "don't forget to go through each of the 3 logging steps"
+msgstr "no olvides realizar los 3 pasos de login"
+
+#: app/sync.py:473
+msgid ""
+"Allow {} to post on your behalf, so from now all your ideas and comments "
+"(including this one) can be automatically posted on the {} of the initiative."
+msgstr ""
+"Permite a {} postear en tu nombre, para que, de ahora en adelante todas tus "
+"ideas y comentarios (incluyendo esta) puedan ser automáticamente publicados "
+"en el {} de la iniciativa."
+
+#: app/sync.py:476
+msgid "Click {} to give the app writing permissions."
+msgstr "Clic {} para dar a la app permisos de escritura."
+
+#: app/sync.py:479
+msgid ""
+"Join the group, so from now all your ideas and comments (including this one) "
+"can be automatically posted there on your behalf."
+msgstr ""
+"Únete al grupo, para que, de ahora en adelante todas tus ideas y comentarios "
+"(incluyendo esta) puedan ser automáticamente publicados ahí en tu nombre."
+
+#: app/sync.py:481
+msgid "Click {} to join the {} of the initiative."
+msgstr "Clic {} para unirte al {} de la iniciativa."
+
+#: app/sync.py:488
+msgid "Socialize your contribution!"
+msgstr "Socializá tu contribución!"
+
+#: app/sync.py:728
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -29,7 +102,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:664
+#: app/sync.py:732
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -209,10 +282,6 @@ msgstr "Las ideas posteadas en la página de"
 msgid "on IdeaScale are later automatically replicated on the"
 msgstr "en IdeaScale son luego automáticamente replicadas en el"
 
-#: app/templates/app/index.html:200
-msgid "Facebook group"
-msgstr "grupo de Facebook"
-
 #: app/templates/app/index.html:204
 msgid "Scenario 3"
 msgstr "Escenario 3"
@@ -302,6 +371,16 @@ msgstr ""
 #: social_ideation/settings.py:143
 msgid "Spanish"
 msgstr ""
+
+#~ msgid ""
+#~ "Login into {}, so from now all your ideas and comments (including this "
+#~ "one) can be automatically posted on your behalf on the {} of the "
+#~ "initiative (don't forget to go through each of the 3 logging steps!)."
+#~ msgstr ""
+#~ "Logueate en {}, para que, de ahora en adelante todas tus ideas y "
+#~ "comentarios (incluyendo esta) puedan ser automáticamente publicados en tu "
+#~ "nombre en el {} de la iniciativa (no olvides pasar por cada uno de los 3 "
+#~ "pasos de logueo)."
 
 #~ msgid "' page"
 #~ msgstr " "
