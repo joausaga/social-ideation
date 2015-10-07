@@ -468,7 +468,7 @@ def _prepare_email_msg(content, author_name_utf8, type_content, snapp, type_emai
                  ' {}'.format('<a href="http://lifeparticipation.org/">Life Participation Group</a>') + \
                  _('of the University of Trento (Italy) with the aim to exploit the advantages of social network '
                    'services to improving the technologies for civic participation. For more information, drop us an') + \
-                 ' {}'.format('<a href="mailto:jorge.saldivargalli@disi.unitn.com">email</a>')
+                 ' {}'.format('<a href="mailto:hola@social-ideation.com">email</a>')
     if type_email == 'login_app':
         main_msg = _('If you log into <b>Social Ideation App</b>, all your ideas and comments (including this one) '
                      'are going to be automatically posted on your behalf on the Facebook group of the initiative.')
