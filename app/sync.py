@@ -10,7 +10,7 @@ from app.utils import do_request, get_json_or_error, get_url_cb, build_request_u
 from datetime import datetime
 from django.utils import timezone
 from django.utils.translation import override, ugettext as _
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 
 
 logger = logging.getLogger(__name__)
@@ -454,18 +454,29 @@ def publish_comment_sn(comment, sn_app, mode=None):
 
 def _send_notification_email(content, author_name_utf8, snapp, type_content, type_email, language):
     with override(language):
-        header_msg = _('Hi {},\nThanks for contributing to {}! Involve also the people on '
+        to_email = [content.author.email]
+        from_email = 'Social Ideation App <hola@social-ideation.com>'
+        subject = _('Socialize your contribution!')
+        header_msg = _('Hi {}'.format(author_name_utf8)) + ',<br>' + \
+                     _('Thanks for contributing to {}! It would be good if you can involve also the people on '
                        'the {} of the initiative in the discussion of your {}.'.
-                       format(author_name_utf8, content.initiative.name, ('Facebook group'), type_content))
+                       format(content.initiative.name, ('Facebook group'), type_content))
 
         salutation_msg = _('Thanks!,')
         signature_msg = '<a href="http://www.social-ideation.com">' + _('Social Ideation App Team') + '</a>'
+        footer_msg = '-----<br>' + \
+                     _('Social Ideation App is a part of a research project conducted by the {} of '
+                       'the University of Trento (Italy) with the aim to exploit the advantages of social network '
+                       'services to improving the technologies for civic participation. '
+                       'For more information, drop us an {}'
+                       .format('<a href="http://lifeparticipation.org/">Life Participation Group</a>',
+                               '<a href="mailto:jorge.saldivargalli@disi.unitn.com" target="_blank">email</a>'))
 
         if type_email == 'login_app':
             main_msg = _('Log into {}, so from now all your ideas and comments (including this one) '
                          'can be automatically posted on your behalf on the {} of the initiative'
                          .format('Social Ideation App', _('Facebook group')))
-            main_msg = main_msg + '\n\n' + \
+            main_msg = main_msg + '<br><br>' + \
                        _('Click {} to log into the app'.
                          format('<a href="http://www.social-ideation.com/#how-to-use">'+_('HERE')+'</a>')) + ' <b>(' + \
                        _('don\'t forget to go through each of the 3 logging steps') + ')</b>.'
@@ -473,20 +484,23 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
             main_msg = _('Allow {} to post on your behalf, so from now all your ideas and comments (including this one) '
                          'can be automatically posted on the {} of the initiative.'
                          .format('Social Ideation App', _('Facebook group')))
-            main_msg = main_msg + '\n\n'  + _('Click {} to give the app writing permissions.'
-                                              .format('<a href="http://www.social-ideation.com/#how-to-use">'+_('HERE')+'</a>'))
+            main_msg = main_msg + '<br><br>' + \
+                       _('Click {} to give the app writing permissions.'
+                         .format('<a href="http://www.social-ideation.com/#how-to-use">'+_('HERE')+'</a>'))
         elif type_email == 'join_group':
             main_msg = _('Join the group, so from now all your ideas and comments (including this one) can be '
                          'automatically posted there on your behalf.')
-            main_msg = main_msg + '\n\n'  + _('Click {} to join the {} of the initiative.'
-                                              .format('<a href="'+snapp.community.url+'">group</a>',
-                                                      _('Facebook group')))
+            main_msg = main_msg + '<br><br>' + _('Click {} to join the {} of the initiative.'
+                                                 .format('<a href="'+snapp.community.url+'">group</a>',
+                                                         _('Facebook group')))
         else:
             logger.warning('Unknown type of email notification. Message could not be sent')
             return None
-        msg = header_msg + '\n\n' + main_msg + '\n\n' + salutation_msg + signature_msg
-        send_mail(_('Socialize your contribution!'), msg, 'hola@social-ideation.com', [content.author.email],
-                  fail_silently=False, html_message=True)
+        msg = header_msg + '<br><br>' + main_msg + '<br><br>' + salutation_msg + \
+              signature_msg + '<br><br>' + footer_msg
+        email = EmailMessage(subject, msg, to=to_email, from_email=from_email)
+        email.content_subtype = 'html'
+        email.send(fail_silently=False)
         return True
 
 
@@ -506,6 +520,15 @@ def _update_author_payload(author, value):
     author.save()
 
 
+def _is_new_content(content, type_content):
+    if type_content == 'ideas' or type_content == 'comment':
+        now = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
+        diff = now - content.datetime
+        return (diff.total_seconds()/60) <= 2
+    else:
+        return False
+
+
 def _user_can_publish(content, author_name_utf8, sn_app, type_content):
     if not content.author.email:
         logger.info('The author of the {} (user: {}) has not provided an email address, therefore '
@@ -522,7 +545,7 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                         'cannot be published in the initiative\'s group'.
                         format(content.author.email if content.author.email else author_name_utf8,
                                type_content))
-            if not _noti_email_already_sent(content.author):
+            if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
                 ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'login_app',
                                                ini_language)
                 if ret:
@@ -535,7 +558,7 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                             'his/her {} cannot be published'.
                             format(content.author.email if content.author.email else author_name_utf8,
                                    type_content))
-                if not _noti_email_already_sent(content.author):
+                if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
                     ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'authorize_writing',
                                                    ini_language)
                     if ret:
@@ -546,7 +569,7 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                             'his/her {} cannot be published'.
                             format(content.author.email if content.author.email else author_name_utf8,
                                    type_content))
-                if not _noti_email_already_sent(content.author):
+                if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
                     ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'join_group',
                                                    ini_language)
                     if ret:
