@@ -20,7 +20,8 @@
         function startConnect(){
             FB.login(function(response) {
                 if (response.authResponse) {
-                    window.location = window.location + 'app/login_fb' +
+                    var next_url = window.location.origin +  window.location.pathname;
+                    window.location = next_url + 'app/login_fb' +
                             '?access_token=' + response.authResponse.accessToken +
                             '&expires=' + response.authResponse.expiresIn +
                             '&signed_request=' + response.authResponse.signedRequest +
@@ -34,7 +35,8 @@
             $('#writingPermissionModal').modal('hide');
             FB.login(function(response) {
                 if (response.authResponse) {
-                    window.location = window.location + 'app/write_permissions_fb' +
+                    var next_url = window.location.origin +  window.location.pathname;
+                    window.location = next_url + 'app/write_permissions_fb' +
                             '?access_token=' + response.authResponse.accessToken +
                             '&expires=' + response.authResponse.expiresIn +
                             '&signed_request=' + response.authResponse.signedRequest +
@@ -46,20 +48,19 @@
         };
         function checkStatusCallback(response) {
             if (response.status === 'connected') {
-                if (!window.location.hash) {
-                    $.ajax({
-                        url: window.location + 'app/check_user' + '?user_id=' + response.authResponse.userID,
-                        success: function(result) {
-                            if (result) {
-                                document.getElementById('status').className = 'alert alert-info';
-                                document.getElementById('status').style.display = 'block';
-                                document.getElementById('status').innerHTML = result;
-                            } else {
-                                document.getElementById('status').style.display = 'none';
-                            }
+                var next_url = window.location.origin +  window.location.pathname;
+                $.ajax({
+                    url: next_url + 'app/check_user' + '?user_id=' + response.authResponse.userID,
+                    success: function(result) {
+                        if (result) {
+                            document.getElementById('status').className = 'alert alert-info';
+                            document.getElementById('status').style.display = 'block';
+                            document.getElementById('status').innerHTML = result;
+                        } else {
+                            document.getElementById('status').style.display = 'none';
                         }
-                    });
-                }
+                    }
+                });
             } else if (response.status === 'not_authorized') {
                 // The person is logged into Facebook, but not your app.
                 document.getElementById('status').style.display = 'none';
