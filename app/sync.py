@@ -457,9 +457,10 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
         to_email = [content.author.email]
         from_email = 'Social Ideation App <hola@social-ideation.com>'
         subject = _('Socialize your contribution!')
-        header_msg = _('Hi {}'.format(author_name_utf8)) + ',<br>' + \
-                     _('Thanks for contributing to {}! It would be good if you can involve also the people on '
-                       'the {} of the initiative in the discussion of your {}.'.
+        header_msg = _('Hi {}'.format(author_name_utf8)) + ',<br><br>' + \
+                     _('Thanks for contributing to {}!') + '<br><br>' + \
+                     _('It would be really good if you can involve also the people on the {} '
+                       'of the initiative in the discussion of your {}.'.
                        format(content.initiative.name, ('Facebook group'), type_content))
 
         salutation_msg = _('Thanks!,')
@@ -470,7 +471,7 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
                        'services to improving the technologies for civic participation. '
                        'For more information, drop us an {}'
                        .format('<a href="http://lifeparticipation.org/">Life Participation Group</a>',
-                               '<a href="mailto:jorge.saldivargalli@disi.unitn.com" target="_blank">email</a>'))
+                               '<a href="mailto:jorge.saldivargalli@disi.unitn.com">email</a>'))
 
         if type_email == 'login_app':
             main_msg = _('Log into {}, so from now all your ideas and comments (including this one) '
@@ -496,7 +497,7 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
         else:
             logger.warning('Unknown type of email notification. Message could not be sent')
             return None
-        msg = header_msg + '<br><br>' + main_msg + '<br><br>' + salutation_msg + \
+        msg = header_msg + '<br><br>' + main_msg + '<br><br>' + salutation_msg + '<br>' + \
               signature_msg + '<br><br>' + footer_msg
         email = EmailMessage(subject, msg, to=to_email, from_email=from_email)
         email.content_subtype = 'html'
