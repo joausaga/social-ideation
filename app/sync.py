@@ -521,7 +521,7 @@ def _update_author_payload(author, value):
 
 
 def _is_new_content(content, type_content):
-    if type_content == 'ideas' or type_content == 'comment':
+    if type_content == 'idea' or type_content == 'comment':
         now = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
         diff = now - content.datetime
         return (diff.total_seconds()/60) <= 2
