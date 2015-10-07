@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-07 17:04+0200\n"
+"POT-Creation-Date: 2015-10-07 18:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,25 +18,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: app/sync.py:457
+msgid "idea"
+msgstr ""
+
 #: app/sync.py:459
-msgid "Socialize your contribution!"
-msgstr "Socializá tu contribución!"
+msgid "comment"
+msgstr ""
 
 #: app/sync.py:460
-msgid "Hi {}"
-msgstr "Hola {}"
+msgid "Hi"
+msgstr ""
 
 #: app/sync.py:461
-msgid "Thanks for contributing to {}!"
-msgstr "Gracias por contribuir a {}!"
+msgid "Thanks for contributing to"
+msgstr "Gracias por contribuir en"
 
 #: app/sync.py:462
-msgid ""
-"It would be really good if the people on the {} of the initiative are also "
-"involved in the discussion of your {}."
-msgstr ""
-"Sería realmente muy bueno si la gente en el {} de "
-"la iniciativa pueda estar también involucrada en la discusión de tu {}."
+msgid "It would be really good if the people on the"
+msgstr "Sería realmente muy bueno si la gente en el"
+
+#: app/sync.py:463 app/templates/app/index.html:201
+msgid "Facebook group"
+msgstr "grupo de Facebook"
+
+#: app/sync.py:464
+msgid "of the initiative are also involved in the discussion of your"
+msgstr "de la iniciativa pueda estar también involucrada en la discusión de tu"
 
 #: app/sync.py:465
 msgid "Thanks!,"
@@ -46,72 +54,68 @@ msgstr "¡Gracias!,"
 msgid "Social Ideation App Team"
 msgstr "Equipo Social Ideation App"
 
-#: app/sync.py:468
-msgid ""
-"Social Ideation App is a part of a research project conducted by the {} of "
-"the University of Trento (Italy) with the aim to exploit the advantages of "
-"social network services to improving the technologies for civic "
-"participation. For more information, drop us an {}"
+#: app/sync.py:467 app/templates/app/index.html:217
+msgid "Social Ideation App is a part of a research project conducted by the"
 msgstr ""
 "Social Ideation App es parte de un proyecto de investigación llevado "
-"adelante por el {} de la Universidad de Trento (Italia) con el objetivo de "
-"explotar las ventajas de los servicios de redes sociales para mejorar los "
-"instrumentos tecnológicos de participación cívica. Para más información, "
-"envianos un {}"
+"adelante por el"
 
-#: app/sync.py:478 app/sync.py:486 app/sync.py:495
-#: app/templates/app/index.html:201
-msgid "Facebook group"
-msgstr "grupo de Facebook"
-
-#: app/sync.py:476
+#: app/sync.py:473
 msgid ""
-"If you log into {}, all your ideas and comments (including this one) are "
-"going to be automatically posted on your behalf on the {} of the initiative"
+"If you log into Social Ideation App, all your ideas and comments (including "
+"this one) are going to be automatically posted on your behalf on the "
+"Facebook group of the initiative."
 msgstr ""
-"Si te logueas en {}, todas tus ideas y comentarios "
-"(incluyendo este) serán automáticamente publicados en tu nombre en el "
-"{} de la iniciativa."
+"Si utilizas Social Ideation App, todas tus ideas y comentarios "
+"(incluyendo esta) serán automáticamente publicadas en tu nombre en el grupo "
+"de Facebook de la iniciativa."
 
-#: app/sync.py:481 app/sync.py:489
+#: app/sync.py:476 app/sync.py:484 app/sync.py:490
+msgid "Click"
+msgstr "Clic"
+
+#: app/sync.py:476 app/sync.py:484
 msgid "HERE"
 msgstr "AQUI"
 
-#: app/sync.py:480
-msgid "Click {} if you want to log into the app"
-msgstr "Clic {} si querés comenzar a utilizar la app"
+#: app/sync.py:477
+msgid " if you want to log into the app"
+msgstr "si querés comenzar a utilizar la app"
 
-#: app/sync.py:482
+#: app/sync.py:478
 msgid "don't forget to go through each of the 3 logging steps"
-msgstr "no olvides realizar los 3 pasos de login"
+msgstr "no olvides realizar los 3 pasos de inicio"
 
-#: app/sync.py:484
+#: app/sync.py:480
 msgid ""
-"If you allow {} to post on your behalf, all your ideas and comments "
-"(including this one) are going to be automatically posted on the {} of the "
-"initiative."
+"If you allow Social Ideation App to post on your behalf, all your ideas and "
+"comments (including this one) are going to be automatically posted on the "
+"Facebook group of the initiative."
 msgstr ""
-"Si permitis a {} postear en tu nombre, todas tus "
-"ideas y comentarios (incluyendo este) serán automáticamente publicados "
-"en el {} de la iniciativa."
+"Si permitis a Social Ideation App postear en tu nombre, todas tus ideas y comentarios "
+"(incluyendo esta) serán automáticamente publicadas en el grupo de Facebook de la iniciativa."
 
-#: app/sync.py:488
-msgid "Click {} if you want to give the app writing permissions."
-msgstr "Clic {} si querés dar a la app permisos de escritura."
+#: app/sync.py:485
+msgid " if you want to give the app writing permissions."
+msgstr "si querés dar a la app permisos de posteo."
 
-#: app/sync.py:491
+#: app/sync.py:487
 msgid ""
 "If you join the group, all your ideas and comments (including this one) are "
-"goig to be automatically posted there on your behalf."
+"going to be automatically posted there on your behalf."
 msgstr ""
-"Si te unis al grupo, todas tus ideas y comentarios "
-"(incluyendo este) serán automáticamente publicados ahí en tu nombre."
+"Si te unis al grupo, todas tus ideas y comentarios (incluyendo esta) serán "
+"automáticamente publicadas ahí en tu nombre."
 
-#: app/sync.py:493
-msgid "Click {} to join the {} of the initiative."
-msgstr "Clic {} para unirte al {} de la iniciativa."
+#: app/sync.py:491
+msgid " to join the Facebook group of the initiative."
+msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
 
-#: app/sync.py:758
+#: app/sync.py:503
+msgid "Socialize your contribution!"
+msgstr "Socializá tu contribución!"
+
+#: app/sync.py:764
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -122,7 +126,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:762
+#: app/sync.py:768
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -326,12 +330,6 @@ msgstr ""
 "Comentario posteado en IdeaScale que posteriormente es replicado "
 "automáticamente en el grupo de Facebook"
 
-#: app/templates/app/index.html:217
-msgid "Social Ideation App is a part of a research project conducted by the"
-msgstr ""
-"Social Ideation App es parte de un proyecto de investigación llevado "
-"adelante por el"
-
 #: app/templates/app/index.html:219
 msgid ""
 "of the University of Trento (Italy) with the aim to exploit the advantages "
@@ -413,6 +411,24 @@ msgstr ""
 #: social_ideation/settings.py:153
 msgid "Spanish"
 msgstr ""
+
+#~ msgid "Hi {}"
+#~ msgstr "Hola {}"
+
+#~ msgid ""
+#~ "Social Ideation App is a part of a research project conducted by the {} "
+#~ "of the University of Trento (Italy) with the aim to exploit the "
+#~ "advantages of social network services to improving the technologies for "
+#~ "civic participation. For more information, drop us an {}"
+#~ msgstr ""
+#~ "Social Ideation App es parte de un proyecto de investigación llevado "
+#~ "adelante por el {} de la Universidad de Trento (Italia) con el objetivo "
+#~ "de explotar las ventajas de los servicios de redes sociales para mejorar "
+#~ "los instrumentos tecnológicos de participación cívica. Para más "
+#~ "información, envianos un {}"
+
+#~ msgid "Click {} to join the {} of the initiative."
+#~ msgstr "Clic {} para unirte al {} de la iniciativa."
 
 #~ msgid ""
 #~ "\n"
