@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-07 18:50+0200\n"
+"POT-Creation-Date: 2015-10-07 19:16+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,15 +20,15 @@ msgstr ""
 
 #: app/sync.py:457
 msgid "idea"
-msgstr ""
+msgstr "idea"
 
 #: app/sync.py:459
 msgid "comment"
-msgstr ""
+msgstr "comentario"
 
 #: app/sync.py:460
 msgid "Hi"
-msgstr ""
+msgstr "Hola"
 
 #: app/sync.py:461
 msgid "Thanks for contributing to"
@@ -60,13 +60,24 @@ msgstr ""
 "Social Ideation App es parte de un proyecto de investigación llevado "
 "adelante por el"
 
+#: app/sync.py:469
+msgid ""
+"of the University of Trento (Italy) with the aim to exploit the advantages "
+"of social network services to improving the technologies for civic "
+"participation. For more information, drop us an"
+msgstr ""
+"de la Universidad de Trento (Italia) con el objetivo de "
+"explotar las ventajas de los servicios de redes sociales para mejorar las "
+"tecnologías de participación cívica. Para más información por favor envianos "
+"un"
+
 #: app/sync.py:473
 msgid ""
-"If you log into Social Ideation App, all your ideas and comments (including "
-"this one) are going to be automatically posted on your behalf on the "
-"Facebook group of the initiative."
+"If you log into <b>Social Ideation App</b>, all your ideas and comments "
+"(including this one) are going to be automatically posted on your behalf on "
+"the Facebook group of the initiative."
 msgstr ""
-"Si utilizas Social Ideation App, todas tus ideas y comentarios "
+"Si utilizas <b>Social Ideation App</b>, todas tus ideas y comentarios "
 "(incluyendo esta) serán automáticamente publicadas en tu nombre en el grupo "
 "de Facebook de la iniciativa."
 
@@ -79,7 +90,7 @@ msgid "HERE"
 msgstr "AQUI"
 
 #: app/sync.py:477
-msgid " if you want to log into the app"
+msgid "if you want to log into the app"
 msgstr "si querés comenzar a utilizar la app"
 
 #: app/sync.py:478
@@ -88,15 +99,16 @@ msgstr "no olvides realizar los 3 pasos de inicio"
 
 #: app/sync.py:480
 msgid ""
-"If you allow Social Ideation App to post on your behalf, all your ideas and "
-"comments (including this one) are going to be automatically posted on the "
-"Facebook group of the initiative."
+"If you allow <b>Social Ideation App</b> to post on your behalf, all your "
+"ideas and comments (including this one) are going to be automatically posted "
+"on the Facebook group of the initiative."
 msgstr ""
-"Si permitis a Social Ideation App postear en tu nombre, todas tus ideas y comentarios "
-"(incluyendo esta) serán automáticamente publicadas en el grupo de Facebook de la iniciativa."
+"Si permitis a <b>Social Ideation App</b> postear en tu nombre, todas tus "
+"ideas y comentarios (incluyendo esta) serán automáticamente publicadas en el "
+"grupo de Facebook de la iniciativa."
 
 #: app/sync.py:485
-msgid " if you want to give the app writing permissions."
+msgid "if you want to give the app writing permissions."
 msgstr "si querés dar a la app permisos de posteo."
 
 #: app/sync.py:487
@@ -108,7 +120,7 @@ msgstr ""
 "automáticamente publicadas ahí en tu nombre."
 
 #: app/sync.py:491
-msgid " to join the Facebook group of the initiative."
+msgid "to join the Facebook group of the initiative."
 msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
 
 #: app/sync.py:503
@@ -429,20 +441,6 @@ msgstr ""
 
 #~ msgid "Click {} to join the {} of the initiative."
 #~ msgstr "Clic {} para unirte al {} de la iniciativa."
-
-#~ msgid ""
-#~ "\n"
-#~ "                    of the University of Trento (Italy) with the aim to "
-#~ "exploit the advantages of social network\n"
-#~ "                    services to improving the technologies for civic "
-#~ "participation. For more information please drop us an\n"
-#~ "                    "
-#~ msgstr ""
-#~ "Social Ideation App es parte de un proyecto de investigación llevado "
-#~ "adelante por el {} de la Universidad de Trento (Italia) con el objetivo "
-#~ "de explotar las ventajas de los servicios de redes sociales para mejorar "
-#~ "las tecnologías de participación cívica. Para más información por favor "
-#~ "envianos un {}"
 
 #~ msgid "Contact"
 #~ msgstr "Contacto"
