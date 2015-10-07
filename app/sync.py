@@ -541,39 +541,43 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
     else:
         ini_language = content.initiative.language
         if not SocialNetworkAppUser.objects.filter(email=content.author.email).exists():
-            logger.info('It seems the user {} has not logged into the app, his/her {} '
-                        'cannot be published in the initiative\'s group'.
-                        format(content.author.email if content.author.email else author_name_utf8,
-                               type_content))
+            log_msg = 'It seems the user {} has not logged into the app, his/her {} ' \
+                      'cannot be published in the initiative\'s group' \
+                      .format(content.author.email if content.author.email else author_name_utf8,
+                              type_content)
             if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
                 ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'login_app',
                                                ini_language)
                 if ret:
                     _update_author_payload(content.author, {'notification_email': True})
+                    log_msg += '. A notification email was sent to the author'
+            logger.info(log_msg)
             return False
         else:
             app_user = SocialNetworkAppUser.objects.get(email=content.author.email)
             if not app_user.write_permissions:
-                logger.info('The author {} did\'nt give write permissions, so '
-                            'his/her {} cannot be published'.
-                            format(content.author.email if content.author.email else author_name_utf8,
-                                   type_content))
+                log_msg = 'The author {} did\'nt give write permissions, so ' \
+                          'his/her {} cannot be published'  \
+                          .format(content.author.email if content.author.email else author_name_utf8,
+                                  type_content)
                 if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
                     ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'authorize_writing',
                                                    ini_language)
                     if ret:
                         _update_author_payload(content.author, {'notification_email': True})
+                        log_msg += '. A notification email was sent to the author'
+                logger.info(log_msg)
                 return False
             elif not is_user_community_member(sn_app, app_user):
-                logger.info('The author {} is not member of the initiative\'s group, '
-                            'his/her {} cannot be published'.
-                            format(content.author.email if content.author.email else author_name_utf8,
-                                   type_content))
+                log_msg = 'The author {} is not member of the initiative\'s group, his/her {} cannot be published'\
+                          .format(content.author.email if content.author.email else author_name_utf8, type_content)
                 if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
                     ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'join_group',
                                                    ini_language)
                     if ret:
                         _update_author_payload(content.author, {'notification_email': True})
+                        log_msg += '. A notification email was sent to the author'
+                logger.info(log_msg)
                 return False
             else:
                 return True
