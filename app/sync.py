@@ -463,7 +463,7 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
                        format(content.initiative.name, ('Facebook group'), type_content))
 
         salutation_msg = _('Thanks!,')
-        signature_msg = '<a href="http://www.social-ideation.com">' + _('Social Ideation App Team') + '</a>'
+        signature_msg = '<a href="http://www.social-ideation.com/?ref=autoemail">' + _('Social Ideation App Team') + '</a>'
         footer_msg = '-----<br>' + \
                      _('Social Ideation App is a part of a research project conducted by the {} of '
                        'the University of Trento (Italy) with the aim to exploit the advantages of social network '
@@ -478,7 +478,7 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
                          .format('Social Ideation App', _('Facebook group')))
             main_msg = main_msg + '<br><br>' + \
                        _('Click {} to log into the app'.
-                         format('<a href="http://www.social-ideation.com/#how-to-use">'+_('HERE')+'</a>')) + ' <b>(' + \
+                         format('<a href="http://www.social-ideation.com/?ref=autoemail#how-to-use">'+_('HERE')+'</a>')) + ' <b>(' + \
                        _('don\'t forget to go through each of the 3 logging steps') + ')</b>.'
         elif type_email == 'authorize_writing':
             main_msg = _('Allow {} to post on your behalf, so from now all your ideas and comments (including this one) '
@@ -486,7 +486,7 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
                          .format('Social Ideation App', _('Facebook group')))
             main_msg = main_msg + '<br><br>' + \
                        _('Click {} to give the app writing permissions.'
-                         .format('<a href="http://www.social-ideation.com/#how-to-use">'+_('HERE')+'</a>'))
+                         .format('<a href="http://www.social-ideation.com/?ref=autoemail#how-to-use">'+_('HERE')+'</a>'))
         elif type_email == 'join_group':
             main_msg = _('Join the group, so from now all your ideas and comments (including this one) can be '
                          'automatically posted there on your behalf.')
