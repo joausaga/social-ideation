@@ -458,11 +458,10 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
         from_email = 'Social Ideation App <hola@social-ideation.com>'
         subject = _('Socialize your contribution!')
         header_msg = _('Hi {}'.format(author_name_utf8)) + ',<br><br>' + \
-                     _('Thanks for contributing to {}!') + '<br><br>' + \
-                     _('It would be really good if you can involve also the people on the {} '
-                       'of the initiative in the discussion of your {}.'.
-                       format(content.initiative.name, ('Facebook group'), type_content))
-
+                     _('Thanks for contributing to {}!'.format(content.initiative.name)) + '<br><br>' + \
+                     _('It would be really good if the people on the {} of the initiative are also involved '
+                       'in the discussion of your {}.'.
+                       format(('Facebook group'), type_content))
         salutation_msg = _('Thanks!,')
         signature_msg = '<a href="http://www.social-ideation.com/?ref=autoemail">' + _('Social Ideation App Team') + '</a>'
         footer_msg = '-----<br>' + \
@@ -474,22 +473,22 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
                                '<a href="mailto:jorge.saldivargalli@disi.unitn.com">email</a>'))
 
         if type_email == 'login_app':
-            main_msg = _('Log into {}, so from now all your ideas and comments (including this one) '
-                         'can be automatically posted on your behalf on the {} of the initiative'
+            main_msg = _('If you log into {}, all your ideas and comments (including this one) '
+                         'are going to be automatically posted on your behalf on the {} of the initiative'
                          .format('Social Ideation App', _('Facebook group')))
             main_msg = main_msg + '<br><br>' + \
-                       _('Click {} to log into the app'.
+                       _('Click {} if you want to log into the app'.
                          format('<a href="http://www.social-ideation.com/?ref=autoemail#how-to-use">'+_('HERE')+'</a>')) + ' <b>(' + \
                        _('don\'t forget to go through each of the 3 logging steps') + ')</b>.'
         elif type_email == 'authorize_writing':
-            main_msg = _('Allow {} to post on your behalf, so from now all your ideas and comments (including this one) '
-                         'can be automatically posted on the {} of the initiative.'
+            main_msg = _('If you allow {} to post on your behalf, all your ideas and comments (including this one) '
+                         'are going to be automatically posted on the {} of the initiative.'
                          .format('Social Ideation App', _('Facebook group')))
             main_msg = main_msg + '<br><br>' + \
-                       _('Click {} to give the app writing permissions.'
+                       _('Click {} if you want to give the app writing permissions.'
                          .format('<a href="http://www.social-ideation.com/?ref=autoemail#how-to-use">'+_('HERE')+'</a>'))
         elif type_email == 'join_group':
-            main_msg = _('Join the group, so from now all your ideas and comments (including this one) can be '
+            main_msg = _('If you join the group, all your ideas and comments (including this one) are goig to be '
                          'automatically posted there on your behalf.')
             main_msg = main_msg + '<br><br>' + _('Click {} to join the {} of the initiative.'
                                                  .format('<a href="'+snapp.community.url+'">group</a>',
