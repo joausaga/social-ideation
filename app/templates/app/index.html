@@ -85,7 +85,7 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
           </button>
-          <img src="/static/img/app_icon.png" alt="Brand" height="55" width="55">
+          <img src="/static/img/app_icon.png" alt="Brand" height="55" width="55" class="img-responsive">
         </div>
         <div>
           <div class="collapse navbar-collapse" id="myNavbar">
@@ -209,12 +209,17 @@
           {% trans "Comment posted on IdeaScale and then automatically replicated on the Facebook group" %}<br><br>
           <img src="/static/img/scenario_4.png" alt="Scenario 4" height="142" width="716">
           <br><br> -->
-          <br><br>
+          <br>
           <footer id="contact" class="footer">
-            <p>
-                <a href="http://lifeparticipation.org/" target="_blank">Life Participation Research Group (University of Trento, Italy)</a> -
-                <a href="mailto:jorge.saldivargalli@disi.unitn.com" target="_blank">{% trans "Contact" %}</a>
-            </p>
+            <h5>
+                <small>
+                    {% trans "Social Ideation App is a part of a research project conducted by the" %}
+                    <a href="http://lifeparticipation.org/" target="_blank">Life Participation Research Group</a>
+                    {% trans "of the University of Trento (Italy) with the aim to exploit the advantages of social network" %}
+                    {% trans "services to improving the technologies for civic participation. For more information, drop us an" %}
+                    <a href="mailto:jorge.saldivargalli@disi.unitn.com" target="_blank">{% trans "email" %}</a>.
+                </small>
+            </h5>
           </footer>
         </div> <!-- /container -->
     </div>
