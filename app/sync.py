@@ -93,7 +93,7 @@ def update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edita
     # Handle content author
     obj_attrs.update({'author': _update_or_create_author(platform, raw_obj['user_info'], source)})
     # Handle content location
-    if 'location_info' in raw_obj.keys():
+    if 'location_info' in raw_obj.keys() and raw_obj['location_info']:
         obj_attrs.update({'location': _get_or_create_location(raw_obj['location_info'])})
     # Handle content creation or updating
     content_obj, content_created = model.objects.get_or_create(defaults=obj_attrs, **filters)
