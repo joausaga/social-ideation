@@ -77,7 +77,7 @@ class Comment(models.Model):
     parent_comment = models.ForeignKey('Comment', null=True)
     url = models.URLField()
     user = models.ForeignKey(Author)
-    location = models.ForeignKey(Location)
+    location = models.ForeignKey(Location, null=True)
     sync = models.BooleanField(default=False)
 
     def __unicode__(self):
