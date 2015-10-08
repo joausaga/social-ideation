@@ -38,7 +38,7 @@ class SocialNetworkAppCommunity(models.Model):
 class SocialNetworkApp(models.Model):
     name = models.CharField(max_length=50)
     url = models.URLField(null=True, blank=True)
-    connector = models.OneToOneField(connectors.models.SocialNetworkConnector)
+    connector = models.ForeignKey(connectors.models.SocialNetworkConnector)
     blocked = models.DateTimeField(null=True, editable=False, default=None)
     app_id = models.CharField(max_length=50)
     app_secret = models.CharField(max_length=50, null=True, blank=True)
