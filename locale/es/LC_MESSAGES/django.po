@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-08 16:37+0200\n"
+"POT-Creation-Date: 2015-10-08 16:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -117,9 +117,24 @@ msgstr ""
 msgid "Click"
 msgstr "Clic"
 
+#: app/templates/app/email/email_join_group.html:12
+#: app/templates/app/email/email_join_group.txt:9
+#: app/templates/app/email/email_login_app.html:12
+#: app/templates/app/email/email_login_app.txt:9
+#: app/templates/app/email/email_writing_perm.html:12
+#: app/templates/app/email/email_writing_perm.txt:9
+msgid "HERE"
+msgstr "AQUI"
+
 #: app/templates/app/email/email_join_group.html:13
 msgid "to join the Facebook group of the initiative."
 msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
+
+#: app/templates/app/email/email_join_group.html:15
+#: app/templates/app/email/email_login_app.html:15
+#: app/templates/app/email/email_writing_perm.html:15
+msgid "Thanks!,"
+msgstr "¡Gracias!,"
 
 #: app/templates/app/email/email_join_group.html:19
 #: app/templates/app/email/email_login_app.html:19
@@ -172,12 +187,6 @@ msgstr ""
 msgid "Get in"
 msgstr "Ingresá al"
 
-#: app/templates/app/email/email_join_group.txt:9
-#: app/templates/app/email/email_login_app.txt:9
-#: app/templates/app/email/email_writing_perm.txt:9
-msgid "HERE"
-msgstr "AQUI"
-
 #: app/templates/app/email/email_login_app.html:10
 msgid ""
 "If you log into <b>Social Ideation App</b>, all your ideas and comments "
@@ -227,9 +236,9 @@ msgid ""
 "and comments (including this one) are going to be automatically posted on "
 "your behalf on the Facebook group of the initiative."
 msgstr ""
-"Si permitis a Social Ideation App postear en tu nombre, todas tus "
-"ideas y comentarios (incluyendo esta) serán automáticamente publicadas en el "
-"grupo de Facebook de la iniciativa."
+"Si permitis a Social Ideation App postear en tu nombre, todas tus ideas y "
+"comentarios (incluyendo esta) serán automáticamente publicadas en el grupo "
+"de Facebook de la iniciativa."
 
 #: app/templates/app/index.html:77
 msgid "participate"
@@ -500,9 +509,6 @@ msgstr ""
 #~| msgid "don't forget to go through each of the 3 logging steps"
 #~ msgid "don\\'t forget to go through each of the 3 logging steps"
 #~ msgstr "no olvides realizar los 3 pasos de inicio"
-
-#~ msgid "Thanks!,"
-#~ msgstr "¡Gracias!,"
 
 #~ msgid ""
 #~ "of the University of Trento (Italy) with the aim to exploit the "
