@@ -133,7 +133,7 @@ def cru_idea(idea_id, initiative, idea_obj=None):
         if not idea_obj:
             idea_obj = get_ideascale_data(initiative, 'get_idea_details', {'ideaId': idea_id})
         author = cru_author(idea_obj.authorId, initiative, idea_obj.authorInfo)
-        location = cru_location(idea_obj.locationInfo)
+        location = cru_location(idea_obj.locationInfo) if hasattr(idea_obj, 'locationInfo') else None
         campaign_idea = cru_campaign(idea_obj.campaignId, initiative)
         positive_votes = idea_obj.upVoteCount if idea_obj.upVoteCount > 0 else 0
         negative_votes = idea_obj.downVoteCount if idea_obj.downVoteCount > 0 else 0
@@ -175,7 +175,7 @@ def cru_comment(comment_id, initiative, comment_obj=None):
         if not comment_obj:
             comment_obj = get_ideascale_data(initiative, 'get_comment', {'commentId': comment_id})
         author = cru_author(comment_obj.authorId, initiative, comment_obj.authorInfo)
-        location = cru_location(comment_obj.locationInfo)
+        location = cru_location(comment_obj.locationInfo) if hasattr(comment_obj, 'locationInfo') else None
         positive_votes = comment_obj.upVoteCount if comment_obj.upVoteCount > 0 else 0
         negative_votes = comment_obj.downVoteCount if comment_obj.downVoteCount > 0 else 0
         comments = comment_obj.commentCount if comment_obj.commentCount > 0 else 0
