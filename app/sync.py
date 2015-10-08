@@ -333,8 +333,7 @@ def publish_idea_sn(idea, sn_app, mode=None):
     elif idea.has_changed:
         title_utf8 = convert_to_utf8_str(idea.title)
         text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
-                                             text_uf8, ini_hashtag.lower(), cam_hashtag.lower(),
-                                             platform_name_utf8, idea.url)
+                                             text_uf8, cam_hashtag.lower(), platform_name_utf8, idea.url)
         if sn_app.community.type == 'page':
             _do_edit_idea_sn(sn_app, idea, text_to_sn)
         else:
