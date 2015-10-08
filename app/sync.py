@@ -488,7 +488,7 @@ def _send_notification_email(content, author_name_utf8, snapp, type_content, typ
         if msgs:
             email = EmailMessage(subject, msgs['html'], to=to_email, from_email=from_email)
             email.content_subtype = 'html'
-            email.send(fail_silently=False)
+            email.send(fail_silently=True)
         deactivate()
         return msgs
 
@@ -543,6 +543,8 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                 if ret:
                     _update_author_payload(content.author, {'notification_email': True})
                     log_msg += '. A notification email was sent to the author'
+                else:
+                    log_msg += '. A notification email was tried to send but without success'
             logger.info(log_msg)
             return False
         else:
@@ -560,6 +562,8 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                     if ret:
                         _update_author_payload(content.author, {'notification_email': True})
                         log_msg += '. A notification email was sent to the author'
+                    else:
+                        log_msg += '. A notification email was tried to send but without success'
                 logger.info(log_msg)
                 return False
             elif not is_user_community_member(sn_app, app_user):
@@ -573,6 +577,8 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                     if ret:
                         _update_author_payload(content.author, {'notification_email': True})
                         log_msg += '. A notification email was sent to the author'
+                    else:
+                        log_msg += '. A notification email was tried to send but without success'
                 logger.info(log_msg)
                 return False
             else:
