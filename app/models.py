@@ -82,6 +82,7 @@ class Initiative(models.Model):
     active = models.BooleanField(default=False)
     language = models.CharField(max_length=5, default='en', choices=(('en', 'English'), ('es', 'Spanish'),
                                                                      ('it', 'Italian'),))
+    notification_emails = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.name

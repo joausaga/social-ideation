@@ -530,7 +530,7 @@ def _is_new_content(content, type_content):
     if type_content == 'idea' or type_content == 'comment':
         now = timezone.make_aware(datetime.now(), timezone.get_default_timezone())
         diff = now - content.datetime
-        return (diff.total_seconds()/60) <= 60
+        return (diff.total_seconds()/60) <= 60  # A content is 'new' if it was created within the last hour
     else:
         return False
 
@@ -545,13 +545,16 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                            type_content)
         return False
     else:
-        ini_language = content.initiative.language
+        initiative = content.initiative
+        ini_language = initiative.language
         if not SocialNetworkAppUser.objects.filter(email=content.author.email).exists():
             log_msg = 'It seems the user {} has not logged into the app, his/her {} ' \
                       'cannot be published in the initiative\'s group' \
                       .format(content.author.email if content.author.email else author_name_utf8,
                               type_content)
-            if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
+            if initiative.notification_emails and \
+               not _noti_email_already_sent(content.author) and \
+               _is_new_content(content, type_content):
                 ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'login_app',
                                                ini_language)
                 if ret:
@@ -566,7 +569,9 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                           'his/her {} cannot be published'  \
                           .format(content.author.email if content.author.email else author_name_utf8,
                                   type_content)
-                if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
+                if initiative.notification_emails and \
+                   not _noti_email_already_sent(content.author) and \
+                   _is_new_content(content, type_content):
                     ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'authorize_writing',
                                                    ini_language)
                     if ret:
@@ -577,7 +582,9 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
             elif not is_user_community_member(sn_app, app_user):
                 log_msg = 'The author {} is not member of the initiative\'s group, his/her {} cannot be published'\
                           .format(content.author.email if content.author.email else author_name_utf8, type_content)
-                if not _noti_email_already_sent(content.author) and _is_new_content(content, type_content):
+                if initiative.notification_emails and \
+                   not _noti_email_already_sent(content.author) and \
+                   _is_new_content(content, type_content):
                     ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'join_group',
                                                    ini_language)
                     if ret:
