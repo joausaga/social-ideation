@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-07 19:16+0200\n"
+"POT-Creation-Date: 2015-10-08 16:37+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,116 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:457
+#: app/sync.py:458
 msgid "idea"
 msgstr "idea"
 
-#: app/sync.py:459
+#: app/sync.py:460
 msgid "comment"
 msgstr "comentario"
 
-#: app/sync.py:460
-msgid "Hi"
-msgstr "Hola"
-
-#: app/sync.py:461
-msgid "Thanks for contributing to"
-msgstr "Gracias por contribuir en"
-
-#: app/sync.py:462
-msgid "It would be really good if the people on the"
-msgstr "Sería realmente muy bueno si la gente en el"
-
-#: app/sync.py:463 app/templates/app/index.html:201
-msgid "Facebook group"
-msgstr "grupo de Facebook"
-
-#: app/sync.py:464
-msgid "of the initiative are also involved in the discussion of your"
-msgstr "de la iniciativa pueda estar también involucrada en la discusión de tu"
-
-#: app/sync.py:465
-msgid "Thanks!,"
-msgstr "¡Gracias!,"
-
-#: app/sync.py:466
-msgid "Social Ideation App Team"
-msgstr "Equipo Social Ideation App"
-
-#: app/sync.py:467 app/templates/app/index.html:217
-msgid "Social Ideation App is a part of a research project conducted by the"
-msgstr ""
-"Social Ideation App es parte de un proyecto de investigación llevado "
-"adelante por el"
-
-#: app/sync.py:469
-msgid ""
-"of the University of Trento (Italy) with the aim to exploit the advantages "
-"of social network services to improving the technologies for civic "
-"participation. For more information, drop us an"
-msgstr ""
-"de la Universidad de Trento (Italia) con el objetivo de "
-"explotar las ventajas de los servicios de redes sociales para mejorar las "
-"tecnologías de participación cívica. Para más información por favor envianos "
-"un"
-
-#: app/sync.py:473
-msgid ""
-"If you log into <b>Social Ideation App</b>, all your ideas and comments "
-"(including this one) are going to be automatically posted on your behalf on "
-"the Facebook group of the initiative."
-msgstr ""
-"Si utilizas <b>Social Ideation App</b>, todas tus ideas y comentarios "
-"(incluyendo esta) serán automáticamente publicadas en tu nombre en el grupo "
-"de Facebook de la iniciativa."
-
-#: app/sync.py:476 app/sync.py:484 app/sync.py:490
-msgid "Click"
-msgstr "Clic"
-
-#: app/sync.py:476 app/sync.py:484
-msgid "HERE"
-msgstr "AQUI"
-
-#: app/sync.py:477
-msgid "if you want to log into the app"
-msgstr "si querés comenzar a utilizar la app"
-
-#: app/sync.py:478
-msgid "don't forget to go through each of the 3 logging steps"
-msgstr "no olvides realizar los 3 pasos de inicio"
-
-#: app/sync.py:480
-msgid ""
-"If you allow <b>Social Ideation App</b> to post on your behalf, all your "
-"ideas and comments (including this one) are going to be automatically posted "
-"on the Facebook group of the initiative."
-msgstr ""
-"Si permitis a <b>Social Ideation App</b> postear en tu nombre, todas tus "
-"ideas y comentarios (incluyendo esta) serán automáticamente publicadas en el "
-"grupo de Facebook de la iniciativa."
-
-#: app/sync.py:485
-msgid "if you want to give the app writing permissions."
-msgstr "si querés dar a la app permisos de posteo."
-
-#: app/sync.py:487
-msgid ""
-"If you join the group, all your ideas and comments (including this one) are "
-"going to be automatically posted there on your behalf."
-msgstr ""
-"Si te unis al grupo, todas tus ideas y comentarios (incluyendo esta) serán "
-"automáticamente publicadas ahí en tu nombre."
-
-#: app/sync.py:491
-msgid "to join the Facebook group of the initiative."
-msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
-
-#: app/sync.py:503
+#: app/sync.py:486
 msgid "Socialize your contribution!"
 msgstr "Socializá tu contribución!"
 
-#: app/sync.py:764
+#: app/sync.py:754
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -138,7 +41,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:768
+#: app/sync.py:758
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -150,6 +53,183 @@ msgstr ""
 "para identificar las campañas de ideas de la iniciativa. Si te equivocaste "
 "al escribir el hashtag, por favor editá el post y corregílo usando alguno de "
 "los siguientes: {}. Gracias!"
+
+#: app/templates/app/email/email_join_group.html:3
+#: app/templates/app/email/email_join_group.txt:1
+#: app/templates/app/email/email_login_app.html:3
+#: app/templates/app/email/email_login_app.txt:1
+#: app/templates/app/email/email_writing_perm.html:3
+#: app/templates/app/email/email_writing_perm.txt:1
+msgid "Hi"
+msgstr "Hola"
+
+#: app/templates/app/email/email_join_group.html:5
+#: app/templates/app/email/email_join_group.txt:3
+#: app/templates/app/email/email_login_app.html:5
+#: app/templates/app/email/email_login_app.txt:3
+#: app/templates/app/email/email_writing_perm.html:5
+#: app/templates/app/email/email_writing_perm.txt:3
+msgid "Thanks for contributing to"
+msgstr "Gracias por contribuir en"
+
+#: app/templates/app/email/email_join_group.html:7
+#: app/templates/app/email/email_join_group.txt:5
+#: app/templates/app/email/email_login_app.html:7
+#: app/templates/app/email/email_login_app.txt:5
+#: app/templates/app/email/email_writing_perm.html:7
+#: app/templates/app/email/email_writing_perm.txt:5
+msgid "It would be really good if the people on the"
+msgstr "Sería realmente muy bueno si la gente en el"
+
+#: app/templates/app/email/email_join_group.html:7
+#: app/templates/app/email/email_join_group.txt:5
+#: app/templates/app/email/email_login_app.html:7
+#: app/templates/app/email/email_login_app.txt:5
+#: app/templates/app/email/email_writing_perm.html:7
+#: app/templates/app/email/email_writing_perm.txt:5
+#: app/templates/app/index.html:201
+msgid "Facebook group"
+msgstr "grupo de Facebook"
+
+#: app/templates/app/email/email_join_group.html:8
+#: app/templates/app/email/email_join_group.txt:5
+#: app/templates/app/email/email_login_app.html:8
+#: app/templates/app/email/email_login_app.txt:5
+#: app/templates/app/email/email_writing_perm.html:8
+#: app/templates/app/email/email_writing_perm.txt:5
+msgid "of the initiative are also involved in the discussion of your"
+msgstr "de la iniciativa pueda estar también involucrada en la discusión de tu"
+
+#: app/templates/app/email/email_join_group.html:10
+#: app/templates/app/email/email_join_group.txt:7
+msgid ""
+"If you join the group, all your ideas and comments (including this one) are "
+"going to be automatically posted on your behalf on the Facebook group of the "
+"initiative."
+msgstr ""
+"Si te unis al grupo, todas tus ideas y comentarios (incluyendo esta) serán "
+"automáticamente publicadas en tu nombre en el grupo de Facebook de la "
+"iniciativa."
+
+#: app/templates/app/email/email_join_group.html:12
+#: app/templates/app/email/email_login_app.html:12
+#: app/templates/app/email/email_writing_perm.html:12
+msgid "Click"
+msgstr "Clic"
+
+#: app/templates/app/email/email_join_group.html:13
+msgid "to join the Facebook group of the initiative."
+msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
+
+#: app/templates/app/email/email_join_group.html:19
+#: app/templates/app/email/email_login_app.html:19
+#: app/templates/app/email/email_writing_perm.html:19
+msgid "Social Ideation App"
+msgstr "Social Ideation App"
+
+#: app/templates/app/email/email_join_group.html:23
+#: app/templates/app/email/email_join_group.txt:17
+#: app/templates/app/email/email_login_app.html:23
+#: app/templates/app/email/email_login_app.txt:17
+#: app/templates/app/email/email_writing_perm.html:23
+#: app/templates/app/email/email_writing_perm.txt:17
+#: app/templates/app/index.html:217
+msgid "Social Ideation App is a part of a research project conducted by the"
+msgstr ""
+"Social Ideation App es parte de un proyecto de investigación llevado "
+"adelante por el"
+
+#: app/templates/app/email/email_join_group.html:25
+#: app/templates/app/email/email_join_group.txt:18
+#: app/templates/app/email/email_login_app.html:25
+#: app/templates/app/email/email_login_app.txt:18
+#: app/templates/app/email/email_writing_perm.html:25
+#: app/templates/app/email/email_writing_perm.txt:18
+msgid ""
+"of the University of Trento (Italy) with the aim to exploit the advantages "
+"of social network "
+msgstr ""
+"de la Universidad de Trento (Italia) con el objetivo de explotar las "
+"ventajas de los servicios "
+
+#: app/templates/app/email/email_join_group.html:26
+#: app/templates/app/email/email_join_group.txt:19
+#: app/templates/app/email/email_login_app.html:26
+#: app/templates/app/email/email_login_app.txt:19
+#: app/templates/app/email/email_writing_perm.html:26
+#: app/templates/app/email/email_writing_perm.txt:19
+#: app/templates/app/index.html:220
+msgid ""
+"services to improving the technologies for civic participation. For more "
+"information, drop us an"
+msgstr ""
+"de redes sociales para mejorar los instrumentos tecnológicos de "
+"participación cívica. Para más información, envianos un"
+
+#: app/templates/app/email/email_join_group.txt:9
+#: app/templates/app/email/email_login_app.txt:9
+#: app/templates/app/email/email_writing_perm.txt:9
+msgid "Get in"
+msgstr "Ingresá al"
+
+#: app/templates/app/email/email_join_group.txt:9
+#: app/templates/app/email/email_login_app.txt:9
+#: app/templates/app/email/email_writing_perm.txt:9
+msgid "HERE"
+msgstr "AQUI"
+
+#: app/templates/app/email/email_login_app.html:10
+msgid ""
+"If you log into <b>Social Ideation App</b>, all your ideas and comments "
+"(including this one) are going to be automatically posted on your behalf on "
+"the Facebook group of the initiative."
+msgstr ""
+"Si utilizas <b>Social Ideation App</b>, todas tus ideas y comentarios "
+"(incluyendo esta) serán automáticamente publicadas en tu nombre en el grupo "
+"de Facebook de la iniciativa."
+
+#: app/templates/app/email/email_login_app.html:13
+msgid "if you want to log into the app"
+msgstr "si querés comenzar a utilizar la app"
+
+#: app/templates/app/email/email_login_app.html:13
+#: app/templates/app/email/email_login_app.txt:9
+msgid "don't forget to go through each of the 3 logging steps"
+msgstr "no olvides realizar los 3 pasos de inicio"
+
+#: app/templates/app/email/email_login_app.txt:7
+msgid ""
+"If you log into Social Ideation App, all your ideas and comments (including "
+"this one) are going to be automatically posted on your behalf on the "
+"Facebook group of the initiative."
+msgstr ""
+"Si utilizas <b>Social Ideation App</b>, todas tus ideas y comentarios "
+"(incluyendo esta) serán automáticamente publicadas en tu nombre en el grupo "
+"de Facebook de la iniciativa."
+
+#: app/templates/app/email/email_writing_perm.html:10
+msgid ""
+"If you allow <b>Social Ideation App</b> to post on your behalf, all your "
+"ideas and comments (including this one) are going to be automatically posted "
+"on your behalf on the Facebook group of the initiative."
+msgstr ""
+"Si permitis a <b>Social Ideation App</b> postear en tu nombre, todas tus "
+"ideas y comentarios (incluyendo esta) serán automáticamente publicadas en el "
+"grupo de Facebook de la iniciativa."
+
+#: app/templates/app/email/email_writing_perm.html:13
+msgid "if you want to give the app writing permissions."
+msgstr "si querés dar a la app permisos de posteo."
+
+#: app/templates/app/email/email_writing_perm.txt:7
+msgid ""
+"If you allow into Social Ideation App to post on your behalf, all your ideas "
+"and comments (including this one) are going to be automatically posted on "
+"your behalf on the Facebook group of the initiative."
+msgstr ""
+"Si permitis a Social Ideation App postear en tu nombre, todas tus "
+"ideas y comentarios (incluyendo esta) serán automáticamente publicadas en el "
+"grupo de Facebook de la iniciativa."
 
 #: app/templates/app/index.html:77
 msgid "participate"
@@ -350,14 +430,6 @@ msgstr ""
 "de la Universidad de Trento (Italia) con el objetivo de explotar las "
 "ventajas de los servicios"
 
-#: app/templates/app/index.html:220
-msgid ""
-"services to improving the technologies for civic participation. For more "
-"information, drop us an"
-msgstr ""
-"de redes sociales para mejorar los instrumentos tecnológicos de "
-"participación cívica. Para más información, envianos un"
-
 #: app/templates/app/index.html:221
 msgid "email"
 msgstr "email"
@@ -423,6 +495,30 @@ msgstr ""
 #: social_ideation/settings.py:153
 msgid "Spanish"
 msgstr ""
+
+#, fuzzy
+#~| msgid "don't forget to go through each of the 3 logging steps"
+#~ msgid "don\\'t forget to go through each of the 3 logging steps"
+#~ msgstr "no olvides realizar los 3 pasos de inicio"
+
+#~ msgid "Thanks!,"
+#~ msgstr "¡Gracias!,"
+
+#~ msgid ""
+#~ "of the University of Trento (Italy) with the aim to exploit the "
+#~ "advantages of social network services to improving the technologies for "
+#~ "civic participation. For more information, drop us an"
+#~ msgstr ""
+#~ "de la Universidad de Trento (Italia) con el objetivo de explotar las "
+#~ "ventajas de los servicios de redes sociales para mejorar las tecnologías "
+#~ "de participación cívica. Para más información por favor envianos un"
+
+#~ msgid ""
+#~ "If you join the group, all your ideas and comments (including this one) "
+#~ "are going to be automatically posted there on your behalf."
+#~ msgstr ""
+#~ "Si te unis al grupo, todas tus ideas y comentarios (incluyendo esta) "
+#~ "serán automáticamente publicadas ahí en tu nombre."
 
 #~ msgid "Hi {}"
 #~ msgstr "Hola {}"

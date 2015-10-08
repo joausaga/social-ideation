@@ -6,7 +6,7 @@
 
 {% trans "If you log into Social Ideation App, all your ideas and comments (including this one) are going to be automatically posted on your behalf on the Facebook group of the initiative." %}
 
-{% trans "Get in" %} {% trans "HERE"} http://www.social-ideation.com/?ref=autoemail#how-to-use {% trans "if you want to log into the app" %} ({% trans "don\'t forget to go through each of the 3 logging steps" %}).
+{% trans "Get in" %} {% trans "HERE"} http://www.social-ideation.com/?ref=autoemail#how-to-use {% trans "if you want to log into the app" %} ({% trans "don't forget to go through each of the 3 logging steps" %}).
 
 {% "Thanks!," %}
 
