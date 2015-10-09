@@ -1119,7 +1119,7 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
                         elif last_obj:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
                             if ret:
-                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'], type)
                     else:
                         publish_idea_sn(obj, social_network)
                 elif type == 'comment':
@@ -1134,13 +1134,13 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
                         if len(batch_reqs[social_network.name.lower()]) == social_network.max_batch_requests:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
                             if ret:
-                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'], type)
                                 batch_reqs[social_network.name.lower()]['reqs'] = []
                                 batch_reqs[social_network.name.lower()]['objs'] = []
                         elif last_obj:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
                             if ret:
-                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'], type)
                     else:
                         publish_comment_sn(obj, social_network)
                 else:
