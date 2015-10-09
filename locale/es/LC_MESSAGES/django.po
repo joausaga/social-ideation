@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-09 09:00+0200\n"
+"POT-Creation-Date: 2015-10-09 12:23+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:457
+#: app/sync.py:457 app/sync.py:1046
 msgid "idea"
 msgstr "idea"
 
-#: app/sync.py:459
+#: app/sync.py:459 app/sync.py:1048
 msgid "comment"
 msgstr "comentario"
 
@@ -30,7 +30,7 @@ msgstr "comentario"
 msgid "Socialize your contribution!"
 msgstr "Socializá tu contribución!"
 
-#: app/sync.py:759
+#: app/sync.py:762
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -41,7 +41,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:763
+#: app/sync.py:766
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -58,6 +58,7 @@ msgstr ""
 #: app/templates/app/email/email_join_group.txt:1
 #: app/templates/app/email/email_login_app.html:3
 #: app/templates/app/email/email_login_app.txt:1
+#: app/templates/app/email/email_request_error.html:3
 #: app/templates/app/email/email_writing_perm.html:3
 #: app/templates/app/email/email_writing_perm.txt:1
 msgid "Hi"
@@ -85,6 +86,7 @@ msgstr "Sería realmente muy bueno si la gente en el"
 #: app/templates/app/email/email_join_group.txt:5
 #: app/templates/app/email/email_login_app.html:7
 #: app/templates/app/email/email_login_app.txt:5
+#: app/templates/app/email/email_request_error.html:6
 #: app/templates/app/email/email_writing_perm.html:7
 #: app/templates/app/email/email_writing_perm.txt:5
 #: app/templates/app/index.html:201
@@ -121,6 +123,7 @@ msgstr "Clic"
 #: app/templates/app/email/email_join_group.txt:9
 #: app/templates/app/email/email_login_app.html:12
 #: app/templates/app/email/email_login_app.txt:9
+#: app/templates/app/email/email_request_error.html:10
 #: app/templates/app/email/email_writing_perm.html:12
 #: app/templates/app/email/email_writing_perm.txt:9
 msgid "HERE"
@@ -132,12 +135,14 @@ msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
 
 #: app/templates/app/email/email_join_group.html:15
 #: app/templates/app/email/email_login_app.html:15
+#: app/templates/app/email/email_request_error.html:13
 #: app/templates/app/email/email_writing_perm.html:15
 msgid "Thanks!,"
 msgstr "¡Gracias!,"
 
 #: app/templates/app/email/email_join_group.html:19
 #: app/templates/app/email/email_login_app.html:19
+#: app/templates/app/email/email_request_error.html:17
 #: app/templates/app/email/email_writing_perm.html:19
 msgid "Social Ideation App"
 msgstr "Social Ideation App"
@@ -146,6 +151,7 @@ msgstr "Social Ideation App"
 #: app/templates/app/email/email_join_group.txt:17
 #: app/templates/app/email/email_login_app.html:23
 #: app/templates/app/email/email_login_app.txt:17
+#: app/templates/app/email/email_request_error.html:31
 #: app/templates/app/email/email_writing_perm.html:23
 #: app/templates/app/email/email_writing_perm.txt:17
 #: app/templates/app/index.html:217
@@ -158,6 +164,7 @@ msgstr ""
 #: app/templates/app/email/email_join_group.txt:18
 #: app/templates/app/email/email_login_app.html:25
 #: app/templates/app/email/email_login_app.txt:18
+#: app/templates/app/email/email_request_error.html:33
 #: app/templates/app/email/email_writing_perm.html:25
 #: app/templates/app/email/email_writing_perm.txt:18
 msgid ""
@@ -171,6 +178,7 @@ msgstr ""
 #: app/templates/app/email/email_join_group.txt:19
 #: app/templates/app/email/email_login_app.html:26
 #: app/templates/app/email/email_login_app.txt:19
+#: app/templates/app/email/email_request_error.html:34
 #: app/templates/app/email/email_writing_perm.html:26
 #: app/templates/app/email/email_writing_perm.txt:19
 #: app/templates/app/index.html:220
@@ -215,6 +223,47 @@ msgstr ""
 "Si utilizas <b>Social Ideation App</b>, todas tus ideas y comentarios "
 "(incluyendo esta) serán automáticamente publicadas en tu nombre en el grupo "
 "de Facebook de la iniciativa."
+
+#: app/templates/app/email/email_request_error.html:5
+msgid "It seems there is a problem in trying to publish your"
+msgstr "Al parecer hay un problema intentando publicar tu"
+
+#: app/templates/app/email/email_request_error.html:6
+msgid "on the"
+msgstr "en el"
+
+#: app/templates/app/email/email_request_error.html:8
+msgid "Please uninstall Social Ideation App from your Facebook account"
+msgstr "Por favor desinstala Social Ideation App de tu cuenta de Facebook"
+
+#: app/templates/app/email/email_request_error.html:8
+msgid " for instructions see below"
+msgstr "ve más abajo las instrucciones de como hacerlo"
+
+#: app/templates/app/email/email_request_error.html:9
+msgid "and then install again the app by going through the steps"
+msgstr "y luego instala de nuevo la app siguiendo los pasos"
+
+#: app/templates/app/email/email_request_error.html:19
+msgid "PS."
+msgstr "PD."
+
+#: app/templates/app/email/email_request_error.html:22
+msgid "To uninstall Social Ideation App you need to"
+msgstr "Para desinstalar Social Ideation App necesitas"
+
+#: app/templates/app/email/email_request_error.html:23
+msgid "Click in the top of Facebook and select Settings"
+msgstr ""
+"Hacer clic en la parte superior de Facebook y seleccionar Configuración"
+
+#: app/templates/app/email/email_request_error.html:24
+msgid "Click Apps in the left menu"
+msgstr "Hacer clic en Aplicaciones en el menú de la izquierda"
+
+#: app/templates/app/email/email_request_error.html:25
+msgid "Hover over Social Ideation and click on the x."
+msgstr "Buscar dentro Social Ideation dentro de la lista y hacer clic en la x."
 
 #: app/templates/app/email/email_writing_perm.html:10
 msgid ""
@@ -463,8 +512,10 @@ msgstr "nunca en tu muro o en el muro de tus amigos"
 msgid ""
 "Please make sure to select the option 'Public' from the dropdown menu of the "
 "following window, so all the members of the group can see your posts"
-msgstr "Por favor asegurate de elegir la opción 'Público' en el menú desplegable de la siguiente ventana; de esa manera "
-"todos los miembros del grupo podrán ver tus posts"
+msgstr ""
+"Por favor asegurate de elegir la opción 'Público' en el menú desplegable de "
+"la siguiente ventana; de esa manera todos los miembros del grupo podrán ver "
+"tus posts"
 
 #: app/templates/app/index.html:243
 msgid "Ok"

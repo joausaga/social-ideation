@@ -478,33 +478,36 @@ def _prepare_email_msg(content, author_name_utf8, type_content, snapp, type_emai
     return {'html': html_msg, 'txt': txt_msg}
 
 
-def _send_notification_email(content, author_name_utf8, snapp, type_content, type_email, language):
+def _send_notification_email(recipient_address, msg, language):
         activate(language)
-        to_email = [content.author.email]
+        to_email = [recipient_address]
         from_email = 'Social Ideation App <hola@social-ideation.com>'
         subject = _('Socialize your contribution!')
-        msgs = _prepare_email_msg(content, author_name_utf8, type_content, snapp, type_email)
-        if msgs:
-            email = EmailMessage(subject, msgs['html'], to=to_email, from_email=from_email)
-            email.content_subtype = 'html'
-            email.send(fail_silently=True)
+        email = EmailMessage(subject, msg, to=to_email, from_email=from_email)
+        email.content_subtype = 'html'
+        email.send(fail_silently=True)
         deactivate()
-        return msgs
+        return True
 
 
-def _noti_email_already_sent(author):
+def _noti_email_already_sent(author, email_class):
     if author.payload:
         author_payload = json.loads(author.payload)
-        if 'notification_email' in author_payload.keys():
-            return author_payload['notification_email']
+        if email_class in author_payload.keys():
+            return author_payload[email_class]
         else:
             return False
     else:
         return False
 
 
-def _update_author_payload(author, value):
-    author.payload = json.dumps(value)
+def _update_author_payload(author, key, value):
+    if author.payload:
+        author_payload = json.loads(author.payload)
+        author_payload[key] = value
+        author.payload = json.dumps(author_payload)
+    else:
+        author.payload = json.dumps({key: value})
     author.save()
 
 
@@ -535,12 +538,12 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                       .format(content.author.email if content.author.email else author_name_utf8,
                               type_content)
             if initiative.notification_emails and \
-               not _noti_email_already_sent(content.author) and \
+               not _noti_email_already_sent(content.author, 'notification_email') and \
                _is_new_content(content, type_content):
-                ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'login_app',
-                                               ini_language)
+                msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'login_app')
+                ret = _send_notification_email(content.author.email, msgs['html'], ini_language)
                 if ret:
-                    _update_author_payload(content.author, {'notification_email': True})
+                    _update_author_payload(content.author, 'notification_email', True)
                     log_msg += '. A notification email was sent to the author'
                 else:
                     log_msg += '. A notification email was tried to send but without success'
@@ -554,12 +557,12 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                           .format(content.author.email if content.author.email else author_name_utf8,
                                   type_content)
                 if initiative.notification_emails and \
-                   not _noti_email_already_sent(content.author) and \
+                   not _noti_email_already_sent(content.author, 'notification_email') and \
                    _is_new_content(content, type_content):
-                    ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'authorize_writing',
-                                                   ini_language)
+                    msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'authorize_writing')
+                    ret = _send_notification_email(content.author.email, msgs['html'], ini_language)
                     if ret:
-                        _update_author_payload(content.author, {'notification_email': True})
+                        _update_author_payload(content.author, 'notification_email', True)
                         log_msg += '. A notification email was sent to the author'
                     else:
                         log_msg += '. A notification email was tried to send but without success'
@@ -569,12 +572,12 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                 log_msg = 'The author {} is not member of the initiative\'s group, his/her {} cannot be published'\
                           .format(content.author.email if content.author.email else author_name_utf8, type_content)
                 if initiative.notification_emails and \
-                   not _noti_email_already_sent(content.author) and \
+                   not _noti_email_already_sent(content.author, 'notification_email') and \
                    _is_new_content(content, type_content):
-                    ret = _send_notification_email(content, author_name_utf8, sn_app, type_content, 'join_group',
-                                                   ini_language)
+                    msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'join_group')
+                    ret = _send_notification_email(content.author.email, msgs['html'], ini_language)
                     if ret:
-                        _update_author_payload(content.author, {'notification_email': True})
+                        _update_author_payload(content.author, 'notification_email', True)
                         log_msg += '. A notification email was sent to the author'
                     else:
                         log_msg += '. A notification email was tried to send but without success'
@@ -1030,7 +1033,40 @@ def _do_batch_request(sn_app, batch):
         return None
 
 
-def _process_batch_request(resp_batch_req, objs):
+def _send_request_error_notification_email(content, type_content):
+    author = content.author
+    initiative = content.initiative
+    language = initiative.language
+    ## Taking hard-coded the first SN of the initiative, this needs to be changed in future
+    community = initiative.social_network.all()[0].community
+
+    if author.email:
+        if not _noti_email_already_sent(author, 'request_error_notification_email'):
+            if type_content == 'idea':
+                t_content = _('idea')
+            else:
+                t_content = _('comment')
+            ctx = {
+                'author': convert_to_utf8_str(author.screen_name),
+                'initiative_name': initiative.name,
+                'content_url': content.url,
+                'community_url': community.url,
+                'type_content': t_content
+            }
+            msg = get_template('app/email/email_request_error.html').render(Context(ctx))
+            ret = _send_notification_email(author.email, msg, language)
+            if ret:
+                _update_author_payload(author, 'request_error_notification_email', True)
+                return True
+            else:
+                return False
+        else:
+            return False
+    else:
+        return False
+
+
+def _process_batch_request(resp_batch_req, objs, type_content):
     for i in range(0,len(resp_batch_req)):
         req = resp_batch_req[i]
         obj = objs[i]
@@ -1054,6 +1090,9 @@ def _process_batch_request(resp_batch_req, objs):
                     msg += ' Error type: {}.'.format(body_json['error']['type'])
                 if 'message' in body_json['error'].keys():
                     msg += ' Reason: {}'.format(body_json['error']['message'])
+            res = _send_request_error_notification_email(obj, type_content)
+            if res:
+                msg += '. An email was sent to the author'
             logger.warning(msg)
 
 
@@ -1074,7 +1113,7 @@ def do_push_content(obj, type, last_obj=None, batch_reqs=None):
                         if len(batch_reqs[social_network.name.lower()]) == social_network.max_batch_requests:
                             ret = _do_batch_request(social_network, batch_reqs[social_network.name.lower()]['reqs'])
                             if ret:
-                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'])
+                                _process_batch_request(ret, batch_reqs[social_network.name.lower()]['objs'], type)
                                 batch_reqs[social_network.name.lower()]['reqs'] = []
                                 batch_reqs[social_network.name.lower()]['objs'] = []
                         elif last_obj:
