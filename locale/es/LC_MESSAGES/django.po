@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-08 16:52+0200\n"
+"POT-Creation-Date: 2015-10-09 09:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:458
+#: app/sync.py:457
 msgid "idea"
 msgstr "idea"
 
-#: app/sync.py:460
+#: app/sync.py:459
 msgid "comment"
 msgstr "comentario"
 
-#: app/sync.py:486
+#: app/sync.py:485
 msgid "Socialize your contribution!"
 msgstr "Socializá tu contribución!"
 
-#: app/sync.py:754
+#: app/sync.py:759
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -41,7 +41,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:758
+#: app/sync.py:763
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -444,8 +444,8 @@ msgid "email"
 msgstr "email"
 
 #: app/templates/app/index.html:238
-msgid "We promise to publish on your behalf"
-msgstr "Te aseguramos que publicaremos en tu nombre"
+msgid "We are going to publish on your behalf"
+msgstr "Publicaremos en tu nombre"
 
 #: app/templates/app/index.html:238
 msgid "ONLY"
@@ -456,14 +456,21 @@ msgid "inside the Facebook group associated to the initiative"
 msgstr "dentro del grupo de Facebook vínculado a la iniciativa"
 
 #: app/templates/app/index.html:239
-msgid "never on your wall nor on your friends' walls"
+msgid "never on your wall nor on your friends' wall"
 msgstr "nunca en tu muro o en el muro de tus amigos"
 
-#: app/templates/app/index.html:242
+#: app/templates/app/index.html:240
+msgid ""
+"Please make sure to select the option 'Public' from the dropdown menu of the "
+"following window, so all the members of the group can see your posts"
+msgstr "Por favor asegurate de elegir la opción 'Público' en el menú desplegable de la siguiente ventana; de esa manera "
+"todos los miembros del grupo podrán ver tus posts"
+
+#: app/templates/app/index.html:243
 msgid "Ok"
 msgstr "Ok"
 
-#: app/templates/app/index.html:243
+#: app/templates/app/index.html:244
 msgid "Cancel"
 msgstr "Cancelar"
 
