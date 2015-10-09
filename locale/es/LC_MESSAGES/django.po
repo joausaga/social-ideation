@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-09 12:23+0200\n"
+"POT-Creation-Date: 2015-10-09 12:39+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -135,14 +135,14 @@ msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
 
 #: app/templates/app/email/email_join_group.html:15
 #: app/templates/app/email/email_login_app.html:15
-#: app/templates/app/email/email_request_error.html:13
+#: app/templates/app/email/email_request_error.html:14
 #: app/templates/app/email/email_writing_perm.html:15
 msgid "Thanks!,"
 msgstr "¡Gracias!,"
 
 #: app/templates/app/email/email_join_group.html:19
 #: app/templates/app/email/email_login_app.html:19
-#: app/templates/app/email/email_request_error.html:17
+#: app/templates/app/email/email_request_error.html:18
 #: app/templates/app/email/email_writing_perm.html:19
 msgid "Social Ideation App"
 msgstr "Social Ideation App"
@@ -151,7 +151,7 @@ msgstr "Social Ideation App"
 #: app/templates/app/email/email_join_group.txt:17
 #: app/templates/app/email/email_login_app.html:23
 #: app/templates/app/email/email_login_app.txt:17
-#: app/templates/app/email/email_request_error.html:31
+#: app/templates/app/email/email_request_error.html:32
 #: app/templates/app/email/email_writing_perm.html:23
 #: app/templates/app/email/email_writing_perm.txt:17
 #: app/templates/app/index.html:217
@@ -164,7 +164,7 @@ msgstr ""
 #: app/templates/app/email/email_join_group.txt:18
 #: app/templates/app/email/email_login_app.html:25
 #: app/templates/app/email/email_login_app.txt:18
-#: app/templates/app/email/email_request_error.html:33
+#: app/templates/app/email/email_request_error.html:34
 #: app/templates/app/email/email_writing_perm.html:25
 #: app/templates/app/email/email_writing_perm.txt:18
 msgid ""
@@ -178,7 +178,7 @@ msgstr ""
 #: app/templates/app/email/email_join_group.txt:19
 #: app/templates/app/email/email_login_app.html:26
 #: app/templates/app/email/email_login_app.txt:19
-#: app/templates/app/email/email_request_error.html:34
+#: app/templates/app/email/email_request_error.html:35
 #: app/templates/app/email/email_writing_perm.html:26
 #: app/templates/app/email/email_writing_perm.txt:19
 #: app/templates/app/index.html:220
@@ -244,24 +244,33 @@ msgstr "ve más abajo las instrucciones de como hacerlo"
 msgid "and then install again the app by going through the steps"
 msgstr "y luego instala de nuevo la app siguiendo los pasos"
 
-#: app/templates/app/email/email_request_error.html:19
+#: app/templates/app/email/email_request_error.html:11
+msgid ""
+"be sure to select the option 'Public' from the dropdown menu of the "
+"following window, so all the members of the group can see your posts"
+msgstr ""
+"asegurate de elegir la opción 'Público' en el menú desplegable de "
+"la siguiente ventana; de esa manera todos los miembros del grupo podrán ver "
+"tus posts"
+
+#: app/templates/app/email/email_request_error.html:20
 msgid "PS."
 msgstr "PD."
 
-#: app/templates/app/email/email_request_error.html:22
+#: app/templates/app/email/email_request_error.html:23
 msgid "To uninstall Social Ideation App you need to"
 msgstr "Para desinstalar Social Ideation App necesitas"
 
-#: app/templates/app/email/email_request_error.html:23
+#: app/templates/app/email/email_request_error.html:24
 msgid "Click in the top of Facebook and select Settings"
 msgstr ""
 "Hacer clic en la parte superior de Facebook y seleccionar Configuración"
 
-#: app/templates/app/email/email_request_error.html:24
+#: app/templates/app/email/email_request_error.html:25
 msgid "Click Apps in the left menu"
 msgstr "Hacer clic en Aplicaciones en el menú de la izquierda"
 
-#: app/templates/app/email/email_request_error.html:25
+#: app/templates/app/email/email_request_error.html:26
 msgid "Hover over Social Ideation and click on the x."
 msgstr "Buscar dentro Social Ideation dentro de la lista y hacer clic en la x."
 
