@@ -1,0 +1,35 @@
+{% load i18n %}
+
+{% trans "Hi" %} {{ author }},
+<br><br>
+{% trans "It seems there is a problem in trying to publish your" %} <a href="{{ content_utl }}">{{ type_content }}</a>
+{% trans "on the" %} <a href="{{ community_url }}">{% trans "Facebook group" %}</a> of the initiative {{ initiative_name }}.
+<br><br>
+{% trans "Please uninstall Social Ideation App from your Facebook account" %} (<a href="#instructions">{% trans " for instructions see below" %}</a>)
+{% trans "and then install again the app by going through the steps" %}
+<a href="http://www.social-ideation.com/?ref=autoemail#how-to-use">{% trans "HERE" %}</a>.
+
+<br><br>
+{% trans "Thanks!," %}
+<br><br>
+<i>Jorge Saldivar Galli</i>
+<br>
+<a href="http://www.social-ideation.com/?ref=autoemail">{% trans "Social Ideation App" %}</a>
+<br><br>
+{% trans "PS." %}
+<br>
+<p id="instructions">
+{% trans "To uninstall Social Ideation App you need to" %}: <br>
+1. {% trans "Click in the top of Facebook and select Settings" %};<br>
+2. {% trans "Click Apps in the left menu" %};<br>
+3. {% trans "Hover over Social Ideation and click on the x." %}
+</p>
+<br><br>
+
+-----
+<br>
+{% trans "Social Ideation App is a part of a research project conducted by the" %}
+<a href="http://lifeparticipation.org/">Life Participation Group</a>
+{% trans "of the University of Trento (Italy) with the aim to exploit the advantages of social network " %}
+{% trans "services to improving the technologies for civic participation. For more information, drop us an" %}
+<a href="mailto:hola@social-ideation.com">email</a>
