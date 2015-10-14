@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-14 10:01+0200\n"
+"POT-Creation-Date: 2015-10-14 10:20+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,17 +18,17 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:457 app/sync.py:1046
+#: app/sync.py:457
+msgid "Socialize your contribution!"
+msgstr "Socializá tu contribución!"
+
+#: app/sync.py:459 app/sync.py:1048
 msgid "idea"
 msgstr "idea"
 
-#: app/sync.py:459 app/sync.py:1048
+#: app/sync.py:461 app/sync.py:1050
 msgid "comment"
 msgstr "comentario"
-
-#: app/sync.py:485
-msgid "Socialize your contribution!"
-msgstr "Socializá tu contribución!"
 
 #: app/sync.py:762
 msgid ""
@@ -53,6 +53,10 @@ msgstr ""
 "para identificar las campañas de ideas de la iniciativa. Si te equivocaste "
 "al escribir el hashtag, por favor editá el post y corregílo usando alguno de "
 "los siguientes: {}. Gracias!"
+
+#: app/sync.py:1046
+msgid "Problem with the installation of Social Ideation App"
+msgstr "Problema con la instalación de Social Ideation App"
 
 #: app/templates/app/email/email_join_group.html:3
 #: app/templates/app/email/email_join_group.txt:1
