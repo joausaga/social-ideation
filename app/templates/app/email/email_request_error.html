@@ -2,13 +2,12 @@
 
 {% trans "Hi" %} {{ author }},
 <br><br>
-{% trans "It seems there is a problem in trying to publish your" %} <a href="{{ content_utl }}">{{ type_content }}</a>
+{% trans "It seems that there is a problem in trying to publish your" %} <a href="{{ content_utl }}">{{ type_content }}</a>
 {% trans "on the" %} <a href="{{ community_url }}">{% trans "Facebook group" %}</a> of the initiative {{ initiative_name }}.
 <br><br>
-{% trans "Please uninstall Social Ideation App from your Facebook account" %} (<a href="#instructions">{% trans " for instructions see below" %}</a>)
-{% trans "and then install again the app by going through the steps" %}
-<a href="http://www.social-ideation.com/?ref=autoemail#how-to-use">{% trans "HERE" %}</a>
-<b><i>({% trans "be sure to select the option 'Public' from the dropdown menu of the following window, so all the members of the group can see your posts" %}).</i></b>
+{% trans "Please go the" %} <a href="https://www.facebook.com/settings?tab=applications">{% trans "Apps sections" %}</a>
+{% trans "in the settings of your Facebook account and change to public the visibility of the publications created by Social Ideation App; for detailed instuctions" %},
+<a href="#instructions">{% trans "see below" %}</a>).
 
 <br><br>
 {% trans "Thanks!," %}
@@ -20,10 +19,11 @@
 {% trans "PS." %}
 <br>
 <p id="instructions">
-{% trans "To uninstall Social Ideation App you need to" %}: <br>
+{% trans "To change the visibility the publications created by Social Ideation App you need to" %}: <br>
 1. {% trans "Click in the top of Facebook and select Settings" %};<br>
 2. {% trans "Click Apps in the left menu" %};<br>
-3. {% trans "Hover over Social Ideation and click on the x." %}
+3. {% trans "Hover over Social Ideation and click on the pen;" %}<br>
+4. {% trans "Choose the option Public from the top dropdown menu." %}
 </p>
 <br><br>
 

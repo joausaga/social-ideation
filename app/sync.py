@@ -452,7 +452,8 @@ def publish_comment_sn(comment, sn_app, mode=None):
                 _do_edit_comment_sn(sn_app, comment, text_to_sn, app_user)
 
 
-def _prepare_email_msg(content, author_name_utf8, type_content, snapp, type_email):
+def _prepare_email_msg(content, author_name_utf8, type_content, snapp, type_email, language):
+    activate(language)
     if type_content == 'idea':
         t_content = _('idea')
     else:
@@ -475,18 +476,17 @@ def _prepare_email_msg(content, author_name_utf8, type_content, snapp, type_emai
     else:
         logger.warning('Unknown type of email notification. Message could not be sent')
         return None
+    deactivate()
     return {'html': html_msg, 'txt': txt_msg}
 
 
-def _send_notification_email(recipient_address, msg, language):
-        activate(language)
+def _send_notification_email(recipient_address, msg):
         to_email = [recipient_address]
         from_email = 'Social Ideation App <hola@social-ideation.com>'
         subject = _('Socialize your contribution!')
         email = EmailMessage(subject, msg, to=to_email, from_email=from_email)
         email.content_subtype = 'html'
         email.send(fail_silently=True)
-        deactivate()
         return True
 
 
@@ -540,8 +540,8 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
             if initiative.notification_emails and \
                not _noti_email_already_sent(content.author, 'notification_email') and \
                _is_new_content(content, type_content):
-                msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'login_app')
-                ret = _send_notification_email(content.author.email, msgs['html'], ini_language)
+                msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'login_app', ini_language)
+                ret = _send_notification_email(content.author.email, msgs['html'])
                 if ret:
                     _update_author_payload(content.author, 'notification_email', True)
                     log_msg += '. A notification email was sent to the author'
@@ -559,8 +559,8 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                 if initiative.notification_emails and \
                    not _noti_email_already_sent(content.author, 'notification_email') and \
                    _is_new_content(content, type_content):
-                    msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'authorize_writing')
-                    ret = _send_notification_email(content.author.email, msgs['html'], ini_language)
+                    msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'authorize_writing', ini_language)
+                    ret = _send_notification_email(content.author.email, msgs['html'])
                     if ret:
                         _update_author_payload(content.author, 'notification_email', True)
                         log_msg += '. A notification email was sent to the author'
@@ -574,8 +574,8 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                 if initiative.notification_emails and \
                    not _noti_email_already_sent(content.author, 'notification_email') and \
                    _is_new_content(content, type_content):
-                    msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'join_group')
-                    ret = _send_notification_email(content.author.email, msgs['html'], ini_language)
+                    msgs = _prepare_email_msg(content, author_name_utf8, type_content, sn_app, 'join_group', ini_language)
+                    ret = _send_notification_email(content.author.email, msgs['html'])
                     if ret:
                         _update_author_payload(content.author, 'notification_email', True)
                         log_msg += '. A notification email was sent to the author'
@@ -1042,6 +1042,7 @@ def _send_request_error_notification_email(content, type_content):
 
     if author.email:
         if not _noti_email_already_sent(author, 'request_error_notification_email'):
+            activate(language)
             if type_content == 'idea':
                 t_content = _('idea')
             else:
@@ -1054,7 +1055,8 @@ def _send_request_error_notification_email(content, type_content):
                 'type_content': t_content
             }
             msg = get_template('app/email/email_request_error.html').render(Context(ctx))
-            ret = _send_notification_email(author.email, msg, language)
+            ret = _send_notification_email(author.email, msg)
+            deactivate()
             if ret:
                 _update_author_payload(author, 'request_error_notification_email', True)
                 return True

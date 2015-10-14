@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-09 12:39+0200\n"
+"POT-Creation-Date: 2015-10-14 10:01+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -123,7 +123,6 @@ msgstr "Clic"
 #: app/templates/app/email/email_join_group.txt:9
 #: app/templates/app/email/email_login_app.html:12
 #: app/templates/app/email/email_login_app.txt:9
-#: app/templates/app/email/email_request_error.html:10
 #: app/templates/app/email/email_writing_perm.html:12
 #: app/templates/app/email/email_writing_perm.txt:9
 msgid "HERE"
@@ -135,14 +134,14 @@ msgstr "para unirte al grupo de Facebook vínculado a la iniciativa"
 
 #: app/templates/app/email/email_join_group.html:15
 #: app/templates/app/email/email_login_app.html:15
-#: app/templates/app/email/email_request_error.html:14
+#: app/templates/app/email/email_request_error.html:13
 #: app/templates/app/email/email_writing_perm.html:15
 msgid "Thanks!,"
 msgstr "¡Gracias!,"
 
 #: app/templates/app/email/email_join_group.html:19
 #: app/templates/app/email/email_login_app.html:19
-#: app/templates/app/email/email_request_error.html:18
+#: app/templates/app/email/email_request_error.html:17
 #: app/templates/app/email/email_writing_perm.html:19
 msgid "Social Ideation App"
 msgstr "Social Ideation App"
@@ -225,7 +224,7 @@ msgstr ""
 "de Facebook de la iniciativa."
 
 #: app/templates/app/email/email_request_error.html:5
-msgid "It seems there is a problem in trying to publish your"
+msgid "It seems that there is a problem in trying to publish your"
 msgstr "Al parecer hay un problema intentando publicar tu"
 
 #: app/templates/app/email/email_request_error.html:6
@@ -233,46 +232,56 @@ msgid "on the"
 msgstr "en el"
 
 #: app/templates/app/email/email_request_error.html:8
-msgid "Please uninstall Social Ideation App from your Facebook account"
-msgstr "Por favor desinstala Social Ideation App de tu cuenta de Facebook"
+msgid "Please go the"
+msgstr "Por favor dirigete"
 
 #: app/templates/app/email/email_request_error.html:8
-msgid " for instructions see below"
-msgstr "ve más abajo las instrucciones de como hacerlo"
+msgid "Apps sections"
+msgstr "a la sección Apps"
 
 #: app/templates/app/email/email_request_error.html:9
-msgid "and then install again the app by going through the steps"
-msgstr "y luego instala de nuevo la app siguiendo los pasos"
-
-#: app/templates/app/email/email_request_error.html:11
 msgid ""
-"be sure to select the option 'Public' from the dropdown menu of the "
-"following window, so all the members of the group can see your posts"
+"in the settings of your Facebook account and change to public the visibility "
+"of the publications created by Social Ideation App; for detailed instuctions"
 msgstr ""
-"asegurate de elegir la opción 'Público' en el menú desplegable de "
-"la siguiente ventana; de esa manera todos los miembros del grupo podrán ver "
-"tus posts"
+"en las configuraciones de tu cuenta de Facebook y cambia a público la "
+"visibilidad de las publicaciones creadas por Social Ideation App; para "
+"instrucciones detalladas"
 
-#: app/templates/app/email/email_request_error.html:20
+#: app/templates/app/email/email_request_error.html:10
+msgid "see below"
+msgstr "ver más abajo"
+
+#: app/templates/app/email/email_request_error.html:19
 msgid "PS."
 msgstr "PD."
 
-#: app/templates/app/email/email_request_error.html:23
-msgid "To uninstall Social Ideation App you need to"
-msgstr "Para desinstalar Social Ideation App necesitas"
+#: app/templates/app/email/email_request_error.html:22
+msgid ""
+"To change the visibility the publications created by Social Ideation App you "
+"need to"
+msgstr ""
+"Para cambiar la visibilidad de las publicaciones creadas por Social Ideation "
+"App necesitas"
 
-#: app/templates/app/email/email_request_error.html:24
+#: app/templates/app/email/email_request_error.html:23
 msgid "Click in the top of Facebook and select Settings"
 msgstr ""
 "Hacer clic en la parte superior de Facebook y seleccionar Configuración"
 
-#: app/templates/app/email/email_request_error.html:25
+#: app/templates/app/email/email_request_error.html:24
 msgid "Click Apps in the left menu"
 msgstr "Hacer clic en Aplicaciones en el menú de la izquierda"
 
+#: app/templates/app/email/email_request_error.html:25
+msgid "Hover over Social Ideation and click on the pen;"
+msgstr ""
+"Buscar Social Ideation dentro de la lista y hacer clic en el lápiz pequeño "
+"que aparece al colocar el curso sobre el nombre de la aplicación;"
+
 #: app/templates/app/email/email_request_error.html:26
-msgid "Hover over Social Ideation and click on the x."
-msgstr "Buscar dentro Social Ideation dentro de la lista y hacer clic en la x."
+msgid "Choose the option Public from the top dropdown menu."
+msgstr "Elegir la opción Público del primer menú de arriba."
 
 #: app/templates/app/email/email_writing_perm.html:10
 msgid ""
@@ -571,6 +580,23 @@ msgstr ""
 #: social_ideation/settings.py:153
 msgid "Spanish"
 msgstr ""
+
+#~ msgid "Please uninstall Social Ideation App from your Facebook account"
+#~ msgstr "Por favor desinstala Social Ideation App de tu cuenta de Facebook"
+
+#~ msgid " for instructions see below"
+#~ msgstr "ve más abajo las instrucciones de como hacerlo"
+
+#~ msgid "and then install again the app by going through the steps"
+#~ msgstr "y luego instala de nuevo la app siguiendo los pasos"
+
+#~ msgid ""
+#~ "be sure to select the option 'Public' from the dropdown menu of the "
+#~ "following window, so all the members of the group can see your posts"
+#~ msgstr ""
+#~ "asegurate de elegir la opción 'Público' en el menú desplegable de la "
+#~ "siguiente ventana; de esa manera todos los miembros del grupo podrán ver "
+#~ "tus posts"
 
 #, fuzzy
 #~| msgid "don't forget to go through each of the 3 logging steps"
