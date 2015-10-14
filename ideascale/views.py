@@ -99,21 +99,24 @@ def cru_campaign(campaign_id, initiative):
 
 
 def cru_location(location_obj):
-    code = '{}_{}'.format(location_obj['country'].strip().lower(), location_obj['city'].strip().lower())
-    try:
-        location = Location.objects.get(code=code)
-        if location_obj['longitude'] and location_obj['latitude']:
-            location.longitude,  location.latitude = location_obj['longitude'], location_obj['latitude']
+    if location_obj['country'] and location_obj['city']:
+        code = '{}_{}'.format(location_obj['country'].strip().lower(), location_obj['city'].strip().lower())
+        try:
+            location = Location.objects.get(code=code)
+            if location_obj['longitude'] and location_obj['latitude']:
+                location.longitude,  location.latitude = location_obj['longitude'], location_obj['latitude']
+                location.save()
+            return location
+        except Location.DoesNotExist:
+            if location_obj['longitude'] and location_obj['latitude']:
+                location = Location(country=location_obj['country'], city=location_obj['city'], code=code,
+                                    longitude=location_obj['longitude'], latitude=location_obj['latitude'])
+            else:
+                location = Location(country=location_obj['country'], city=location_obj['city'], code=code)
             location.save()
-        return location
-    except Location.DoesNotExist:
-        if location_obj['longitude'] and location_obj['latitude']:
-            location = Location(country=location_obj['country'], city=location_obj['city'], code=code,
-                                longitude=location_obj['longitude'], latitude=location_obj['latitude'])
-        else:
-            location = Location(country=location_obj['country'], city=location_obj['city'], code=code)
-        location.save()
-        return location
+            return location
+    else:
+        return None
 
 
 def cru_idea(idea_id, initiative, idea_obj=None):
