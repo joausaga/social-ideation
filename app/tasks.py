@@ -216,8 +216,12 @@ def synchronize_content():
             logger.info('The synchronization has successfully finished!')
             logger.info('----------------------------')
         except Exception as e:
-            logger.error('The synchronization could not finish successfully. {}'.format(convert_to_utf8_str(e)))
-            logger.error(traceback.format_exc())
+            if 'HTTPConnectionPool' in e and 'timed out' in e:
+                # Only register in the log and don't notify via email when timed out errors occur
+                logger.warning('The synchronization could not finish successfully. {}'.format(convert_to_utf8_str(e)))
+            else:
+                logger.error('The synchronization could not finish successfully.\n{}\n\n{}'.
+                             format(convert_to_utf8_str(e), traceback.format_exc()))
         finally:
             release_lock()
     else:
