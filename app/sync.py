@@ -779,9 +779,11 @@ def _send_notification_comment(snapp, post, initiative, problem):
 
 
 def save_sn_post(sn_app, post, initiative):
+    logger.info(post)
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0 and initiative:
         campaign = _get_campaign(hashtags, initiative)
+        logger.info(post)
         if campaign:
             try:
                 filters = {'sn_id': post['id']}
@@ -792,8 +794,10 @@ def save_sn_post(sn_app, post, initiative):
                               'source_social': sn_app}
                 editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
                 changeable_fields = ('title', 'text')
+                logger.info(post)
                 idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
                                                 'social_network', changeable_fields)
+                logger.info(post)
                 # Check if the post has an auto comment, if it has then delete the comment
                 auto_comment = _post_auto_commented(post)
                 if auto_comment:
