@@ -530,8 +530,7 @@ def _user_can_publish(content, author_name_utf8, sn_app, type_content):
                     'his/her credentials to publish the {} on behalf of him/her on the social network '
                     'cannot be found'.
                     format(type_content,
-                           content.author.email if content.author.email else author_name_utf8),
-                           type_content)
+                           content.author.email if content.author.email else author_name_utf8, type_content))
         return False
     else:
         initiative = content.initiative
