@@ -237,7 +237,10 @@
       <div class="modal-body">
       {% trans "We are going to publish on your behalf" %} <b>{% trans "ONLY" %}</b> {% trans "inside the Facebook group associated to the initiative" %};
       {% trans "never on your wall nor on your friends' wall" %}.<br><br>
-      <b><i>{% trans "Please make sure to select the option 'Public' from the dropdown menu of the following window, so all the members of the group can see your posts" %}.</i></b>
+        <div class="alert alert-warning" role="alert">
+            <b>{% trans "Attention!" %}</b>
+            <i>{% trans "Please make sure to select the option 'Public' from the dropdown menu of the following window, so all the members of the group can see your posts" %}.</i>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" onclick="askWritingPermissions(); return false;">{% trans "Ok" %}</button>

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-14 10:20+0200\n"
+"POT-Creation-Date: 2015-10-21 23:33+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:457
+#: app/sync.py:461
 msgid "Socialize your contribution!"
 msgstr "Socializá tu contribución!"
 
-#: app/sync.py:459 app/sync.py:1048
+#: app/sync.py:463 app/sync.py:1066
 msgid "idea"
 msgstr "idea"
 
-#: app/sync.py:461 app/sync.py:1050
+#: app/sync.py:465 app/sync.py:1068
 msgid "comment"
 msgstr "comentario"
 
-#: app/sync.py:762
+#: app/sync.py:775
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -41,7 +41,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:766
+#: app/sync.py:779
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -54,7 +54,7 @@ msgstr ""
 "al escribir el hashtag, por favor editá el post y corregílo usando alguno de "
 "los siguientes: {}. Gracias!"
 
-#: app/sync.py:1046
+#: app/sync.py:1064
 msgid "Problem with the installation of Social Ideation App"
 msgstr "Problema con la instalación de Social Ideation App"
 
@@ -223,7 +223,7 @@ msgid ""
 "this one) are going to be automatically posted on your behalf on the "
 "Facebook group of the initiative."
 msgstr ""
-"Si utilizas <b>Social Ideation App</b>, todas tus ideas y comentarios "
+"Si instalas <b>Social Ideation App</b>, todas tus ideas y comentarios "
 "(incluyendo esta) serán automáticamente publicadas en tu nombre en el grupo "
 "de Facebook de la iniciativa."
 
@@ -381,7 +381,7 @@ msgstr "Paso 2"
 msgid ""
 "Log into <b>Social Ideation App</b> so the ideas and comments you post on the"
 msgstr ""
-"Ingresa a <b>Social Ideation App</b> para que las ideas y comentarios que "
+"Instalar <b>Social Ideation App</b> para que las ideas y comentarios que "
 "publiques en el"
 
 #: app/templates/app/index.html:144
@@ -432,7 +432,7 @@ msgstr "Unirme"
 
 #: app/templates/app/index.html:172
 msgid "Log in"
-msgstr "Ingresar"
+msgstr "Instalar"
 
 #: app/templates/app/index.html:178 app/templates/app/index.html.py:182
 msgid "Allow it"
@@ -530,20 +530,23 @@ msgstr "dentro del grupo de Facebook vínculado a la iniciativa"
 msgid "never on your wall nor on your friends' wall"
 msgstr "nunca en tu muro o en el muro de tus amigos"
 
-#: app/templates/app/index.html:240
+#: app/templates/app/index.html:241
+msgid "Attention!"
+msgstr "Atención!"
+
+#: app/templates/app/index.html:242
 msgid ""
 "Please make sure to select the option 'Public' from the dropdown menu of the "
 "following window, so all the members of the group can see your posts"
 msgstr ""
-"Por favor asegurate de elegir la opción 'Público' en el menú desplegable de "
-"la siguiente ventana; de esa manera todos los miembros del grupo podrán ver "
-"tus posts"
+"Asegurate de elegir la opción 'PUBLICO' en la siguiente ventana; de esa "
+"manera todos los miembros del grupo podrán ver tus posts"
 
-#: app/templates/app/index.html:243
+#: app/templates/app/index.html:246
 msgid "Ok"
 msgstr "Ok"
 
-#: app/templates/app/index.html:244
+#: app/templates/app/index.html:247
 msgid "Cancel"
 msgstr "Cancelar"
 
