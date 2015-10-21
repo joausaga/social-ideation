@@ -1,6 +1,8 @@
 import logging
 import json
 import traceback
+import re
+import string
 
 from app.error import AppError
 from app.models import Idea, Author, Location, Initiative, Comment, Vote, Campaign, ConsultationPlatform, \
@@ -689,12 +691,15 @@ def publish_comment_cp(comment):
 
 
 def _extract_hashtags(post):
+    regex = re.compile('[%s]' % re.escape(string.punctuation))
+
     text_utf8 = convert_to_utf8_str(post['text'])
     hashtags = []
     lines = text_utf8.split('\n')
     for line in lines:
         words = line.split(' ')
         for word in words:
+            word = regex.sub('', word)
             if '#' in word:
                 hashtags.append(word.replace('#','').replace('\n','').lower().strip())
     return hashtags
@@ -746,8 +751,15 @@ def _post_auto_commented(post):
     return None
 
 
-def _send_notification_comment(snapp, post, initiative, problem):
+def _is_story_from_admin(snapp, post):
     if 'story' in post.keys() and _post_authored_by_admin(snapp, post):
+        return True
+    else:
+        return False
+
+
+def _send_notification_comment(snapp, post, initiative, problem):
+    if _is_story_from_admin(snapp, post):
         return
     if _post_auto_commented(post):
         return
@@ -779,14 +791,12 @@ def _send_notification_comment(snapp, post, initiative, problem):
 
 
 def save_sn_post(sn_app, post, initiative):
-    logger.info(post)
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0 and initiative:
         logger.info(hashtags)
         campaign = _get_campaign(hashtags, initiative)
         logger.info(campaign)
-        if campaign:
-            logger.info(post)
+        if campaign and not _is_story_from_admin(sn_app, post):
             try:
                 filters = {'sn_id': post['id']}
                 idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
@@ -796,10 +806,8 @@ def save_sn_post(sn_app, post, initiative):
                               'source_social': sn_app}
                 editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
                 changeable_fields = ('title', 'text')
-                logger.info(post)
                 idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
                                                 'social_network', changeable_fields)
-                logger.info(post)
                 # Check if the post has an auto comment, if it has then delete the comment
                 auto_comment = _post_auto_commented(post)
                 if auto_comment:
