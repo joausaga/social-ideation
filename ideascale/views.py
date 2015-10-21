@@ -1,5 +1,6 @@
 import logging
 import os
+import six
 import sys
 
 from ideascale.models import Idea, Initiative, TestingParameter, Campaign, Client, Author, Location, Comment, Vote
@@ -27,6 +28,17 @@ logger = logging.getLogger(__name__)
 # ---
 # General methods and classes
 # ---
+
+
+def convert_to_utf8_str(arg):
+    # written by Michael Norton (http://docondev.blogspot.com/)
+    if isinstance(arg, six.text_type):
+        arg = arg.encode('utf-8')
+    elif not isinstance(arg, bytes):
+        arg = six.text_type(arg).encode('utf-8')
+    elif isinstance(arg, bytes):
+        arg = arg.decode('utf-8')
+    return arg
 
 
 def _get_timezone_aware_datetime(datetime):
@@ -100,7 +112,9 @@ def cru_campaign(campaign_id, initiative):
 
 def cru_location(location_obj):
     if location_obj['country'] and location_obj['city']:
-        code = '{}_{}'.format(location_obj['country'].strip().lower(), location_obj['city'].strip().lower())
+        country_utf8 = convert_to_utf8_str(location_obj['country'])
+        city_utf8 = convert_to_utf8_str(location_obj['city'])
+        code = '{}_{}'.format(country_utf8.strip().lower(), city_utf8.strip().lower())
         try:
             location = Location.objects.get(code=code)
             if location_obj['longitude'] and location_obj['latitude']:
