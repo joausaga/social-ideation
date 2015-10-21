@@ -147,7 +147,7 @@ def do_create_update_comment(platform, initiative, comment, source):
             campaign = parent_dict['parent_idea'].campaign
         else:
             campaign = parent_dict['parent_comment'].campaign
-        comment_attrs = {'source': source, 'datetime': comment['datetime'], 'text': comment['text'],
+        comment_attrs = {'source': source, 'datetime': comment['datetime'], 'text': convert_to_utf8_str(comment['text']),
                          'url': comment['url'], 'comments': comment['comments'], 'initiative': initiative,
                          'campaign': campaign, 'positive_votes': comment['positive_votes'],
                          'negative_votes': comment['negative_votes']}
@@ -779,16 +779,14 @@ def _send_notification_comment(snapp, post, initiative, problem):
 
 
 def save_sn_post(sn_app, post, initiative):
-    logger.info(post)
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0 and initiative:
         campaign = _get_campaign(hashtags, initiative)
-        logger.info(post)
         if campaign:
             try:
                 filters = {'sn_id': post['id']}
                 idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
-                              'title': post['title'], 'text': post['text'], 'url': post['url'],
+                              'title': post['title'], 'text': convert_to_utf8_str(post['text']), 'url': post['url'],
                               'comments': post['comments'], 'initiative': initiative, 'campaign': campaign,
                               'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
                               'source_social': sn_app}
