@@ -268,7 +268,7 @@ def login_fb(request):
 def check_user(request):
     user_id = request.GET.get('user_id')
     try:
-        msg_logged = _('Congrats!, You are already logged into')
+        msg_logged = _('Congrats!, You are already logged into') + ' <b>Social Ideation App</b>. '
         msg_group = _('{}group{}').format('<a href="{}" target="_blank"><u>','</u></a>')
         msg_join = _('Join the ')
         msg_ini = _('of the initiative to start participate from Facebook')
@@ -284,14 +284,12 @@ def check_user(request):
                     msg_give_write_perm = _('Please consider allowing the app the permission to post '
                                             'on your behalf inside the Facebook')
                     msg_ini_short = _('of the initiative (step 3 below)')
-                    msg = msg_logged + ' <b>Social Ideation App</b>. ' + msg_give_write_perm + ' ' + msg_group + \
-                          ' ' + msg_ini_short
+                    msg = msg_logged + msg_give_write_perm + ' ' + msg_group + ' ' + msg_ini_short
                 elif not is_user_community_member(fb_app, user):
-                    msg = msg_logged + ' <b>Social Ideation App</b>. ' + msg_join + msg_group + ' ' + msg_ini
+                    msg = msg_logged + msg_join + msg_group + ' ' + msg_ini
                 else:
                     msg_get_in_group = _('Get into the')
-                    msg = msg_logged + ' <b>Social Ideation App</b>. ' + msg_get_in_group + ' ' + msg_group + \
-                          ' ' + msg_ini
+                    msg = msg_logged + msg_get_in_group + ' ' + msg_group + ' ' + msg_ini
                 return HttpResponse(msg)
         return HttpResponse(msg_logged)
     except SocialNetworkAppUser.DoesNotExist:
