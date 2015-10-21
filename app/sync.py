@@ -782,7 +782,7 @@ def save_sn_post(sn_app, post, initiative):
     logger.info(post)
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0 and initiative:
-        logger.info(post)
+        logger.info(hashtags)
         campaign = _get_campaign(hashtags, initiative)
         logger.info(campaign)
         if campaign:
@@ -820,7 +820,7 @@ def save_sn_post(sn_app, post, initiative):
             _send_notification_comment(sn_app, post, initiative, 'wrong_hashtag')
             if 'text' in post.keys():
                 logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
-                            'identified from the hashtags.'.format(post['text']))
+                            'identified from the hashtags.'.format(convert_to_utf8_str(post['text'])))
             else:
                 logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
     else:
