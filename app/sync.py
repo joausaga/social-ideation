@@ -689,8 +689,9 @@ def publish_comment_cp(comment):
 
 
 def _extract_hashtags(post):
+    text_utf8 = convert_to_utf8_str(post['text'])
     hashtags = []
-    lines = post['text'].split('\n')
+    lines = text_utf8.split('\n')
     for line in lines:
         words = line.split(' ')
         for word in words:
