@@ -92,7 +92,7 @@ class Campaign(models.Model):
     external_id = models.IntegerField(editable=False)
     name = models.CharField(max_length=100)
     initiative = models.ForeignKey(Initiative)
-    hashtag = models.CharField(max_length=14, null=True, help_text="Max length 14 characters "
+    hashtag = models.CharField(max_length=20, null=True, help_text="Max length 20 characters "
                                                                    "(do not include '#')")
 
     def __unicode__(self):
