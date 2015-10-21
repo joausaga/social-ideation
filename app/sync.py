@@ -203,7 +203,8 @@ def do_create_update_vote(platform, initiative, vote, source):
 def _get_str_language(lang, type):
     if lang == 'es':
         if type == 'votes':
-            return '[Votos +: {}/-: {}]'
+            #return '[Votos +: {}/-: {}]'
+            return '[Votos: {}]'
         elif type == 'desc_attach':
             return 'Idea enviada por {} en el marco de la iniciativa {}'
         elif type == 'author':
@@ -216,7 +217,7 @@ def _get_str_language(lang, type):
             return 'Desde: {}'
     elif lang == 'it':
         if type == 'votes':
-            return '[Voti +: {}/-: {}]'
+            return '[Voti: {}]'
         elif type == 'desc_attach':
             return 'L\' idea e stata inviata da {} per l\'iniziativa {}'
         elif type == 'author':
@@ -230,7 +231,7 @@ def _get_str_language(lang, type):
     else:
         # default: lang == 'en'
         if type == 'votes':
-            return '[Votes +: {}/-: {}]'
+            return '[Votes: {}]'
         elif type == 'desc_attach':
             return 'Idea contributed by {} in the initiative {}'
         elif type == 'author':
@@ -316,7 +317,7 @@ def publish_idea_sn(idea, sn_app, mode=None):
     # TODO: New text should be bounded by the social network's text length restriction
     if idea.is_new:
         title_utf8 = convert_to_utf8_str(idea.title)
-        text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
+        text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes,
                                              text_uf8, cam_hashtag.lower(), platform_name_utf8, idea.url)
         if sn_app.community.type == 'page':
             return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode)
@@ -336,7 +337,7 @@ def publish_idea_sn(idea, sn_app, mode=None):
                 return _do_publish_idea_sn(sn_app, idea, text_to_sn, mode, app_user)
     elif idea.has_changed:
         title_utf8 = convert_to_utf8_str(idea.title)
-        text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes, idea.negative_votes,
+        text_to_sn = template_idea_sn.format(title_utf8, idea.positive_votes,
                                              text_uf8, cam_hashtag.lower(), platform_name_utf8, idea.url)
         if sn_app.community.type == 'page':
             _do_edit_idea_sn(sn_app, idea, text_to_sn)
@@ -396,7 +397,7 @@ def publish_comment_sn(comment, sn_app, mode=None):
     text_uf8 = convert_to_utf8_str(comment.text)
     author_name_utf8 = convert_to_utf8_str(comment.author.screen_name)
     if comment.is_new:
-        text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
+        text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes,
                                                 comment.source_consultation.name)
         if sn_app.community.type == 'page':
             try:
@@ -444,7 +445,7 @@ def publish_comment_sn(comment, sn_app, mode=None):
                     raise AppError('Something went wrong when trying to publish a comment. '
                                    'Reason: {}'.format(e))
     elif comment.has_changed:
-        text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes, comment.negative_votes,
+        text_to_sn = template_comment_sn.format(text_uf8, comment.positive_votes,
                                                 comment.source_consultation.name)
         if sn_app.community.type == 'page':
             _do_edit_comment_sn(sn_app, comment, text_to_sn)
