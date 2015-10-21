@@ -692,14 +692,15 @@ def publish_comment_cp(comment):
 
 def _extract_hashtags(post):
     regex = re.compile('[%s]' % re.escape(string.punctuation))
-
     text_utf8 = convert_to_utf8_str(post['text'])
     hashtags = []
     lines = text_utf8.split('\n')
     for line in lines:
         words = line.split(' ')
         for word in words:
+            logger.info(word)
             word = regex.sub('', word)
+            logger.info(word)
             if '#' in word:
                 hashtags.append(word.replace('#','').replace('\n','').lower().strip())
     return hashtags
