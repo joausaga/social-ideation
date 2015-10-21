@@ -779,9 +779,12 @@ def _send_notification_comment(snapp, post, initiative, problem):
 
 
 def save_sn_post(sn_app, post, initiative):
+    logger.info(post)
     hashtags = _extract_hashtags(post)
     if len(hashtags) > 0 and initiative:
+        logger.info(post)
         campaign = _get_campaign(hashtags, initiative)
+        logger.info(post)
         if campaign:
             try:
                 logger.info(post)
