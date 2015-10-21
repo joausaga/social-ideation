@@ -81,10 +81,11 @@ def _update_or_create_author(platform, author, source):
 
 
 def _get_or_create_location(location):
+    city_utf8 = convert_to_utf8_str(location['city'])
+    country_utf8 = convert_to_utf8_str(location['country'])
     attr_new_location = {'latitude': location['latitude'], 'longitude': location['longitude'],
-                         'city': convert_to_utf8_str(location['city']),
-                         'country': convert_to_utf8_str(location['country'])}
-    location_obj, location_created = Location.objects.get_or_create(city=location['city'], country=location['country'],
+                         'city': city_utf8, 'country': country_utf8}
+    location_obj, location_created = Location.objects.get_or_create(city=city_utf8, country=country_utf8,
                                                                     defaults=attr_new_location)
     return location_obj
 
