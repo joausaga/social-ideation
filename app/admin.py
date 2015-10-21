@@ -96,6 +96,7 @@ class InitiativeAdmin(admin.ModelAdmin):
 class CampaignAdmin(admin.ModelAdmin):
     list_display = ('name', 'initiative', 'hashtag', )
     ordering = ('name', 'initiative', 'hashtag', )
+    list_filter = ['initiative']
 
     def has_add_permission(self, request):
         return False
