@@ -149,7 +149,7 @@ def do_create_update_comment(platform, initiative, comment, source):
             campaign = parent_dict['parent_idea'].campaign
         else:
             campaign = parent_dict['parent_comment'].campaign
-        comment_attrs = {'source': source, 'datetime': comment['datetime'], 'text': convert_to_utf8_str(comment['text']),
+        comment_attrs = {'source': source, 'datetime': comment['datetime'], 'text': comment['text'],
                          'url': comment['url'], 'comments': comment['comments'], 'initiative': initiative,
                          'campaign': campaign, 'positive_votes': comment['positive_votes'],
                          'negative_votes': comment['negative_votes']}
@@ -691,16 +691,14 @@ def publish_comment_cp(comment):
 
 
 def _extract_hashtags(post):
-    regex = re.compile('[%s]' % re.escape(string.punctuation))
+    regex = re.compile('[%s]' % re.escape(string.punctuation.replace('#','')))
     text_utf8 = convert_to_utf8_str(post['text'])
     hashtags = []
     lines = text_utf8.split('\n')
     for line in lines:
         words = line.split(' ')
         for word in words:
-            logger.info(word)
             word = regex.sub('', word)
-            logger.info(word)
             if '#' in word:
                 hashtags.append(word.replace('#','').replace('\n','').lower().strip())
     return hashtags
@@ -801,7 +799,7 @@ def save_sn_post(sn_app, post, initiative):
             try:
                 filters = {'sn_id': post['id']}
                 idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
-                              'title': post['title'], 'text': convert_to_utf8_str(post['text']), 'url': post['url'],
+                              'title': post['title'], 'text': post['text'], 'url': post['url'],
                               'comments': post['comments'], 'initiative': initiative, 'campaign': campaign,
                               'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
                               'source_social': sn_app}
@@ -836,7 +834,7 @@ def save_sn_post(sn_app, post, initiative):
         _send_notification_comment(sn_app, post, initiative, 'missing_hashtag')
         if 'text' in post.keys():
             logger.info('The post \'{}\' could not be created/updated. Reason: It seems it does not have hashtags'.
-                        format(post['text']))
+                        format(convert_to_utf8_str(post['text'])))
         else:
             logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
     return None
