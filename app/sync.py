@@ -790,53 +790,56 @@ def _send_notification_comment(snapp, post, initiative, problem):
 
 
 def save_sn_post(sn_app, post, initiative):
-    hashtags = _extract_hashtags(post)
-    if len(hashtags) > 0 and initiative:
-        logger.info(hashtags)
-        campaign = _get_campaign(hashtags, initiative)
-        logger.info(campaign)
-        if campaign and not _is_story_from_admin(sn_app, post):
-            try:
-                filters = {'sn_id': post['id']}
-                idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
-                              'title': post['title'], 'text': post['text'], 'url': post['url'],
-                              'comments': post['comments'], 'initiative': initiative, 'campaign': campaign,
-                              'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
-                              'source_social': sn_app}
-                editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
-                changeable_fields = ('title', 'text')
-                idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
-                                                'social_network', changeable_fields)
-                # Check if the post has an auto comment, if it has then delete the comment
-                auto_comment = _post_auto_commented(post)
-                if auto_comment:
-                    params = {'app': sn_app, 'id_comment': auto_comment.sn_id, 'app_user': auto_comment.author}
-                    try:
-                        call_social_network_api(sn_app.connector, 'delete_comment', params)
-                        auto_comment.exist = False
-                        auto_comment.save()
-                    except Exception as e:
-                        logger.warning('An error occurred when trying to delete the auto comment placed '
-                                       'on the post \'{}\'. Reason: {}'.format(post['text'], e))
-                return {'idea': idea, 'initiative': initiative, 'campaign': campaign}
-            except Exception as e:
-                logger.warning('An error occurred when trying to insert/update the post {} in the db. '
-                               'Reason: {}'.format(post, e))
-                logger.warning(traceback.format_exc())
+    if _is_story_from_admin(sn_app, post):
+        if 'text' in post.keys():
+            logger.info('The post will be ignored since it is a story and has been placed by the administrator. '
+                        'Text: {}'.format(convert_to_utf8_str(post['text'])))
+    else:
+        hashtags = _extract_hashtags(post)
+        if len(hashtags) > 0 and initiative:
+            campaign = _get_campaign(hashtags, initiative)
+            if campaign:
+                try:
+                    filters = {'sn_id': post['id']}
+                    idea_attrs = {'sn_id': post['id'], 'source': 'social_network', 'datetime': post['datetime'],
+                                  'title': post['title'], 'text': post['text'], 'url': post['url'],
+                                  'comments': post['comments'], 'initiative': initiative, 'campaign': campaign,
+                                  'positive_votes': post['positive_votes'], 'negative_votes': post['negative_votes'],
+                                  'source_social': sn_app}
+                    editable_fields = ('title', 'text', 'comments', 'positive_votes', 'negative_votes')
+                    changeable_fields = ('title', 'text')
+                    idea = update_or_create_content(sn_app, post, Idea, filters, idea_attrs, editable_fields,
+                                                    'social_network', changeable_fields)
+                    # Check if the post has an auto comment, if it has then delete the comment
+                    auto_comment = _post_auto_commented(post)
+                    if auto_comment:
+                        params = {'app': sn_app, 'id_comment': auto_comment.sn_id, 'app_user': auto_comment.author}
+                        try:
+                            call_social_network_api(sn_app.connector, 'delete_comment', params)
+                            auto_comment.exist = False
+                            auto_comment.save()
+                        except Exception as e:
+                            logger.warning('An error occurred when trying to delete the auto comment placed '
+                                           'on the post \'{}\'. Reason: {}'.format(convert_to_utf8_str(post['text']), e))
+                    return {'idea': idea, 'initiative': initiative, 'campaign': campaign}
+                except Exception as e:
+                    logger.warning('An error occurred when trying to insert/update the post {} in the db. '
+                                   'Reason: {}'.format(post, e))
+                    logger.warning(traceback.format_exc())
+            else:
+                _send_notification_comment(sn_app, post, initiative, 'wrong_hashtag')
+                if 'text' in post.keys():
+                    logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
+                                'identified from the hashtags.'.format(convert_to_utf8_str(post['text'])))
+                else:
+                    logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
         else:
-            _send_notification_comment(sn_app, post, initiative, 'wrong_hashtag')
+            _send_notification_comment(sn_app, post, initiative, 'missing_hashtag')
             if 'text' in post.keys():
-                logger.info('The post \'{}\' could not be created/updated. Reason: The campaign could not be '
-                            'identified from the hashtags.'.format(convert_to_utf8_str(post['text'])))
+                logger.info('The post \'{}\' could not be created/updated. Reason: It seems it does not have hashtags'.
+                            format(convert_to_utf8_str(post['text'])))
             else:
                 logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
-    else:
-        _send_notification_comment(sn_app, post, initiative, 'missing_hashtag')
-        if 'text' in post.keys():
-            logger.info('The post \'{}\' could not be created/updated. Reason: It seems it does not have hashtags'.
-                        format(convert_to_utf8_str(post['text'])))
-        else:
-            logger.info('A post could not be created/updated. Reason: It seems it does not have hashtags')
     return None
 
 
@@ -1242,7 +1245,7 @@ def cud_initiative_comments(platform, initiative):
         if not comment_obj:
             logger.warning('Comment {} couldn\'t be synchronized because its parent {} with id {} couldn\'t be found. '
                            '{}'.format(delayed_comment['id'], delayed_comment['parent_type'],
-                                       delayed_comment['parent_id'], delayed_comment['text']))
+                                       delayed_comment['parent_id'], convert_to_utf8_str(delayed_comment['text'])))
 
 
 def cud_initiative_ideas(platform, initiative):
