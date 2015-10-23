@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-10-21 23:33+0200\n"
+"POT-Creation-Date: 2015-10-23 15:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,19 +18,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: app/sync.py:461
+#: app/sync.py:462
 msgid "Socialize your contribution!"
 msgstr "Socializá tu contribución!"
 
-#: app/sync.py:463 app/sync.py:1066
+#: app/sync.py:464 app/sync.py:1067
 msgid "idea"
 msgstr "idea"
 
-#: app/sync.py:465 app/sync.py:1068
+#: app/sync.py:466 app/sync.py:1069
 msgid "comment"
 msgstr "comentario"
 
-#: app/sync.py:775
+#: app/sync.py:776
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea without specifying the "
 "hashtag of the campaign. If you've forgotten to include the hashtag, please "
@@ -41,7 +41,7 @@ msgstr ""
 "campaña a la que corresponde la idea, agregando uno de los siguientes "
 "hashtags: {}. Gracias!"
 
-#: app/sync.py:779
+#: app/sync.py:780
 msgid ""
 "Hi {}!, it seems you've tried to submit an idea however the hashtag included "
 "in your post matches none of the hashtags defined to identify the "
@@ -54,7 +54,7 @@ msgstr ""
 "al escribir el hashtag, por favor editá el post y corregílo usando alguno de "
 "los siguientes: {}. Gracias!"
 
-#: app/sync.py:1064
+#: app/sync.py:1065
 msgid "Problem with the installation of Social Ideation App"
 msgstr "Problema con la instalación de Social Ideation App"
 
@@ -93,7 +93,7 @@ msgstr "Sería realmente muy bueno si la gente en el"
 #: app/templates/app/email/email_request_error.html:6
 #: app/templates/app/email/email_writing_perm.html:7
 #: app/templates/app/email/email_writing_perm.txt:5
-#: app/templates/app/index.html:201
+#: app/templates/app/index.html:206
 msgid "Facebook group"
 msgstr "grupo de Facebook"
 
@@ -157,7 +157,7 @@ msgstr "Social Ideation App"
 #: app/templates/app/email/email_request_error.html:32
 #: app/templates/app/email/email_writing_perm.html:23
 #: app/templates/app/email/email_writing_perm.txt:17
-#: app/templates/app/index.html:217
+#: app/templates/app/index.html:222
 msgid "Social Ideation App is a part of a research project conducted by the"
 msgstr ""
 "Social Ideation App es parte de un proyecto de investigación llevado "
@@ -184,7 +184,7 @@ msgstr ""
 #: app/templates/app/email/email_request_error.html:35
 #: app/templates/app/email/email_writing_perm.html:26
 #: app/templates/app/email/email_writing_perm.txt:19
-#: app/templates/app/index.html:220
+#: app/templates/app/index.html:225
 msgid ""
 "services to improving the technologies for civic participation. For more "
 "information, drop us an"
@@ -331,7 +331,7 @@ msgstr "Inicio"
 msgid "How to use it"
 msgstr "Cómo utilizar"
 
-#: app/templates/app/index.html:96 app/templates/app/index.html.py:187
+#: app/templates/app/index.html:96 app/templates/app/index.html.py:192
 msgid "How it works"
 msgstr "Cómo funciona"
 
@@ -361,84 +361,92 @@ msgstr "Si quieres utilizar la App, favor haz clic en el botón de abajo"
 msgid "I agree to use the App"
 msgstr "Quiero usar la App"
 
-#: app/templates/app/index.html:130
+#: app/templates/app/index.html:126 app/templates/app/index.html.py:247
+msgid "Attention!"
+msgstr "Atención!"
+
+#: app/templates/app/index.html:127
+msgid "Make sure to perform ALL of the 3 steps to correctly install the app"
+msgstr "Asegurate de realizar TODOS los 3 pasos para instalar la app correctamente"
+
+#: app/templates/app/index.html:135
 msgid "Step 1"
 msgstr "Paso 1"
 
-#: app/templates/app/index.html:132
+#: app/templates/app/index.html:137
 msgid "Join the Facebook linked to the initiative"
 msgstr "Únete al grupo de Facebook vínculado a la iniciativa"
 
-#: app/templates/app/index.html:134
+#: app/templates/app/index.html:139
 msgid "which will offer you a an alternative participation channel"
 msgstr "el cual te ofrecerá un canal alternativo de participación"
 
-#: app/templates/app/index.html:142
+#: app/templates/app/index.html:147
 msgid "Step 2"
 msgstr "Paso 2"
 
-#: app/templates/app/index.html:143
+#: app/templates/app/index.html:148
 msgid ""
 "Log into <b>Social Ideation App</b> so the ideas and comments you post on the"
 msgstr ""
 "Instalar <b>Social Ideation App</b> para que las ideas y comentarios que "
 "publiques en el"
 
-#: app/templates/app/index.html:144
+#: app/templates/app/index.html:149
 msgid "group's"
 msgstr "grupo"
 
-#: app/templates/app/index.html:145
+#: app/templates/app/index.html:150
 msgid "timeline will be automatically replicated on the page of the initiative"
 msgstr "sean automáticamente replicados en la página de la iniciativa"
 
-#: app/templates/app/index.html:146 app/templates/app/index.html.py:157
+#: app/templates/app/index.html:151 app/templates/app/index.html.py:162
 msgid "on IdeaScale"
 msgstr "en IdeaScale"
 
-#: app/templates/app/index.html:147 app/templates/app/index.html.py:158
+#: app/templates/app/index.html:152 app/templates/app/index.html.py:163
 msgid "(see the"
 msgstr "(fijate en el"
 
-#: app/templates/app/index.html:147 app/templates/app/index.html.py:158
+#: app/templates/app/index.html:152 app/templates/app/index.html.py:163
 msgid "scenario"
 msgstr "escenario"
 
-#: app/templates/app/index.html:147 app/templates/app/index.html.py:158
+#: app/templates/app/index.html:152 app/templates/app/index.html.py:163
 msgid "to better understand how it works)"
 msgstr "para entender mejor como funciona)"
 
-#: app/templates/app/index.html:154
+#: app/templates/app/index.html:159
 msgid "Step 3"
 msgstr "Paso 3"
 
-#: app/templates/app/index.html:155
+#: app/templates/app/index.html:160
 msgid ""
 "Give <b>Social Ideation App</b> the permission to post on your behalf inside "
 "the"
 msgstr "Permite a <b>Social Ideation App</b> postear en tu nombre dentro del "
 
-#: app/templates/app/index.html:156
+#: app/templates/app/index.html:161
 msgid "group"
 msgstr "grupo"
 
-#: app/templates/app/index.html:156
+#: app/templates/app/index.html:161
 msgid "the ideas and comments you publish on the page of the initiative"
 msgstr "las ideas y comentarios que publiques en la página de la iniciativa"
 
-#: app/templates/app/index.html:166
+#: app/templates/app/index.html:171
 msgid "Join Group"
 msgstr "Unirme"
 
-#: app/templates/app/index.html:172
+#: app/templates/app/index.html:177
 msgid "Log in"
 msgstr "Instalar"
 
-#: app/templates/app/index.html:178 app/templates/app/index.html.py:182
+#: app/templates/app/index.html:183 app/templates/app/index.html.py:187
 msgid "Allow it"
 msgstr "Permitir"
 
-#: app/templates/app/index.html:188
+#: app/templates/app/index.html:193
 msgid ""
 "The following images illustrates how Social Ideation App works under "
 "different situations"
@@ -446,43 +454,43 @@ msgstr ""
 "Las siguientes imagenes muestran como funciona la aplicación Social Ideation "
 "App en diferentes situaciones"
 
-#: app/templates/app/index.html:189
+#: app/templates/app/index.html:194
 msgid "Scenario 1"
 msgstr "Escenario 1"
 
-#: app/templates/app/index.html:190
+#: app/templates/app/index.html:195
 msgid "The ideas posted on"
 msgstr "Las ideas posteadas en el"
 
-#: app/templates/app/index.html:190
+#: app/templates/app/index.html:195
 msgid "the Facebook group"
 msgstr "grupo de Facebook"
 
-#: app/templates/app/index.html:191
+#: app/templates/app/index.html:196
 msgid "are later automatically replicated on the page of"
 msgstr "son automáticamente replicadas en la página de la iniciativa"
 
-#: app/templates/app/index.html:193
+#: app/templates/app/index.html:198
 msgid "the initiative on IdeaScale"
 msgstr "en IdeaScale"
 
-#: app/templates/app/index.html:197
+#: app/templates/app/index.html:202
 msgid "Scenario 2"
 msgstr "Escenario 2"
 
-#: app/templates/app/index.html:198
+#: app/templates/app/index.html:203
 msgid "The ideas posted on the page of"
 msgstr "Las ideas posteadas en la página de"
 
-#: app/templates/app/index.html:200
+#: app/templates/app/index.html:205
 msgid "on IdeaScale are later automatically replicated on the"
 msgstr "en IdeaScale son luego automáticamente replicadas en el"
 
-#: app/templates/app/index.html:205
+#: app/templates/app/index.html:210
 msgid "Scenario 3"
 msgstr "Escenario 3"
 
-#: app/templates/app/index.html:206
+#: app/templates/app/index.html:211
 msgid ""
 "Comment posted on Facebook and then automatically replicated on the "
 "initiative page on IdeaScale"
@@ -490,11 +498,11 @@ msgstr ""
 "Comentario posteado en Facebook que posteriormente es replicado "
 "automáticamente en el página de la iniciativa en IdeaScale"
 
-#: app/templates/app/index.html:209
+#: app/templates/app/index.html:214
 msgid "Scenario 4"
 msgstr "Escenario 4"
 
-#: app/templates/app/index.html:210
+#: app/templates/app/index.html:215
 msgid ""
 "Comment posted on IdeaScale and then automatically replicated on the "
 "Facebook group"
@@ -502,7 +510,7 @@ msgstr ""
 "Comentario posteado en IdeaScale que posteriormente es replicado "
 "automáticamente en el grupo de Facebook"
 
-#: app/templates/app/index.html:219
+#: app/templates/app/index.html:224
 msgid ""
 "of the University of Trento (Italy) with the aim to exploit the advantages "
 "of social network"
@@ -510,31 +518,27 @@ msgstr ""
 "de la Universidad de Trento (Italia) con el objetivo de explotar las "
 "ventajas de los servicios"
 
-#: app/templates/app/index.html:221
+#: app/templates/app/index.html:226
 msgid "email"
 msgstr "email"
 
-#: app/templates/app/index.html:238
+#: app/templates/app/index.html:243
 msgid "We are going to publish on your behalf"
 msgstr "Publicaremos en tu nombre"
 
-#: app/templates/app/index.html:238
+#: app/templates/app/index.html:243
 msgid "ONLY"
 msgstr "SOLO"
 
-#: app/templates/app/index.html:238
+#: app/templates/app/index.html:243
 msgid "inside the Facebook group associated to the initiative"
 msgstr "dentro del grupo de Facebook vínculado a la iniciativa"
 
-#: app/templates/app/index.html:239
+#: app/templates/app/index.html:244
 msgid "never on your wall nor on your friends' wall"
 msgstr "nunca en tu muro o en el muro de tus amigos"
 
-#: app/templates/app/index.html:241
-msgid "Attention!"
-msgstr "Atención!"
-
-#: app/templates/app/index.html:242
+#: app/templates/app/index.html:248
 msgid ""
 "Please make sure to select the option 'Public' from the dropdown menu of the "
 "following window, so all the members of the group can see your posts"
@@ -542,11 +546,11 @@ msgstr ""
 "Asegurate de elegir la opción 'PUBLICO' en la siguiente ventana; de esa "
 "manera todos los miembros del grupo podrán ver tus posts"
 
-#: app/templates/app/index.html:246
+#: app/templates/app/index.html:252
 msgid "Ok"
 msgstr "Ok"
 
-#: app/templates/app/index.html:247
+#: app/templates/app/index.html:253
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -576,7 +580,7 @@ msgstr "Permite a <b>Social Ideation App</b> postear en tu nombre dentro del "
 msgid "of the initiative (step 3 below)"
 msgstr "de la iniciativa (paso 3 más abajo)"
 
-#: app/views.py:292
+#: app/views.py:291
 msgid "Get into the"
 msgstr "Ingresá al"
 
