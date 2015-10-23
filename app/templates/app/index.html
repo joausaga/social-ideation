@@ -133,38 +133,49 @@
                 <img src="/static/img/group.png" alt="Facebook Group" height="100" width="100">
               </p>
               <h2>{% trans "Step 1" %}</h2>
-              <p>
+              <p style="height:160px">
                   {% trans "Join the Facebook linked to the initiative" %}
                   <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>,
                   {% trans "which will offer you a an alternative participation channel" %}.
-                  <br><br><br>
               </p>
+              <a class="btn btn-primary" href="{{ fb_group_url }}" role="button">
+                    <span class="glyphicon glyphicon-home" aria-hidden="true"></span>
+                    &nbsp;&nbsp;{% trans "Join Group" %}
+                </a>
             </div>
             <div class="col-md-4">
               <p align="center">
                 <img src="/static/img/login.png" alt="App Icon" height="100" width="90">
               </p>
               <h2>{% trans "Step 2" %}</h2>
-              <p>{% trans "Log into <b>Social Ideation App</b> so the ideas and comments you post on the" %}
+              <p style="height:160px">{% trans "Log into <b>Social Ideation App</b> so the ideas and comments you post on the" %}
                  <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group's" %}</a></b>
                  {% trans "timeline will be automatically replicated on the page of the initiative" %}
                  <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
-                 {% trans "(see the" %} <b><a href="#scenario-1">{% trans "scenario" %} 1</a></b> {%trans "to better understand how it works)" %}.
+                 {% trans "(see the" %} <b><a href="#scenario-1">{% trans "scenario" %} 1</a></b> {%trans "to better understand how it works)" %}
               </p>
+              <a class="btn btn-success" href="javascript:;" role="button" onclick="startConnect(); return false;">
+                      <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
+                      &nbsp;&nbsp;{% trans "Log in" %}
+                  </a>
            </div>
             <div class="col-md-4">
               <p align="center">
                 <img src="/static/img/write_permission.png" alt="App Icon" height="100" width="100">
               </p>
               <h2>{% trans "Step 3" %}</h2>
-              <p>{% trans "Give <b>Social Ideation App</b> the permission to post on your behalf inside the" %}
+              <p style="height:160px">{% trans "Give <b>Social Ideation App</b> the permission to post on your behalf inside the" %}
                  <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group" %}</a></b> {% trans "the ideas and comments you publish on the page of the initiative" %}
                  <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
                  {% trans "(see the" %} <b><a href="#scenario-2">{% trans "scenario" %} 2</a></b> {% trans "to better understand how it works)" %}.
               </p>
+              <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#writingPermissionModal">
+                    <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+                    &nbsp;&nbsp;{% trans "Allow it" %}
+                </button>
             </div>
           </div>
-          <div class="row">
+          <!--<div class="row">
               <div class="col-md-4">
                 <a class="btn btn-primary" href="{{ fb_group_url }}" role="button">
                     <span class="glyphicon glyphicon-home" aria-hidden="true"></span>
@@ -182,12 +193,12 @@
                     <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
                     &nbsp;&nbsp;{% trans "Allow it" %}
                 </button>
-                <!-- <a class="btn btn-warning" href="javascript:;" role="button" onclick="askWritingPermissions(); return false;">
+                <a class="btn btn-warning" href="javascript:;" role="button" onclick="askWritingPermissions(); return false;">
                   <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
                   &nbsp;&nbsp;{% trans "Allow it" %}
-                </a> -->
+                </a>
               </div>
-          </div>
+          </div> -->
           <br><br>
           <h1 id="how-it-works" class="page-header">{% trans "How it works" %}</h1>
           {% trans "The following images illustrates how Social Ideation App works under different situations" %}<br><br>
