@@ -69,7 +69,7 @@ def _update_or_create_author(platform, author, source):
                     author = call_social_network_api(connector, 'get_info_user', params)
         attr_new_author = {'screen_name': author['name'], 'channel': source, 'external_id': author['id']}
         if 'email' in author.keys():
-            attr_new_author.update({'email': author['email']})
+            attr_new_author.update({'email': author['email'].lower()})
         if 'url' in author.keys():
             attr_new_author.update({'url': author['url']})
         if source == 'consultation_platform':

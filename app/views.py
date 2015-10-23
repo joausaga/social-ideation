@@ -243,7 +243,7 @@ def _save_user(user_id, access_token, type_permission):
         user.save()
     except SocialNetworkAppUser.DoesNotExist:
         user_fb = Facebook.get_info_user(fb_app, user_id, access_token)
-        new_app_user = {'email': user_fb['email'], 'snapp': fb_app, 'access_token': ret_token['access_token'],
+        new_app_user = {'email': user_fb['email'].lower(), 'snapp': fb_app, 'access_token': ret_token['access_token'],
                         'access_token_exp': calculate_token_expiration_time(ret_token['expiration']),
                         'external_id': user_id}
         if type_permission == 'write':
