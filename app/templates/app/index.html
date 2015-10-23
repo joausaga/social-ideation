@@ -133,7 +133,7 @@
                 <img src="/static/img/group.png" alt="Facebook Group" height="100" width="100">
               </p>
               <h2>{% trans "Step 1" %}</h2>
-              <p style="height:160px">
+              <p>
                   {% trans "Join the Facebook linked to the initiative" %}
                   <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>,
                   {% trans "which will offer you a an alternative participation channel" %}.
@@ -148,7 +148,7 @@
                 <img src="/static/img/login.png" alt="App Icon" height="100" width="90">
               </p>
               <h2>{% trans "Step 2" %}</h2>
-              <p style="height:160px">{% trans "Log into <b>Social Ideation App</b> so the ideas and comments you post on the" %}
+              <p>{% trans "Log into <b>Social Ideation App</b> so the ideas and comments you post on the" %}
                  <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group's" %}</a></b>
                  {% trans "timeline will be automatically replicated on the page of the initiative" %}
                  <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
@@ -164,7 +164,7 @@
                 <img src="/static/img/write_permission.png" alt="App Icon" height="100" width="100">
               </p>
               <h2>{% trans "Step 3" %}</h2>
-              <p style="height:160px">{% trans "Give <b>Social Ideation App</b> the permission to post on your behalf inside the" %}
+              <p>{% trans "Give <b>Social Ideation App</b> the permission to post on your behalf inside the" %}
                  <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group" %}</a></b> {% trans "the ideas and comments you publish on the page of the initiative" %}
                  <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
                  {% trans "(see the" %} <b><a href="#scenario-2">{% trans "scenario" %} 2</a></b> {% trans "to better understand how it works)" %}.
