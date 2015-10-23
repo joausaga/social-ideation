@@ -286,7 +286,7 @@ class SocialNetworkAdminCommunity(admin.ModelAdmin):
 
 
 class SocialNetworkAppUserAdmin(admin.ModelAdmin):
-    list_display = ('sn_id', 'name', 'email', 'url')
+    list_display = ('sn_id', 'name', 'email', 'url', 'read_permissions', 'write_permissions')
     ordering = ('name', )
 
     def sn_id(self, obj):
