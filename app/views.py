@@ -228,40 +228,54 @@ def index(request):
     return render(request, 'app/index.html', context)
 
 
-def _save_user(user_id, access_token, type_permission):
-    fb_app = _get_facebook_app()
-    ret_token = Facebook.get_long_lived_access_token(fb_app.app_id, fb_app.app_secret,
-                                                     access_token)
-    try:
-        user = SocialNetworkAppUser.objects.get(external_id=user_id)
-        user.access_token = ret_token['access_token']
-        user.access_token_exp = calculate_token_expiration_time(ret_token['expiration'])
-        if type_permission == 'write':
-            user.write_permissions = True
-        else:
-            user.read_permissions = True
-        user.save()
-    except SocialNetworkAppUser.DoesNotExist:
-        user_fb = Facebook.get_info_user(fb_app, user_id, access_token)
-        new_app_user = {'email': user_fb['email'].lower(), 'snapp': fb_app, 'access_token': ret_token['access_token'],
-                        'access_token_exp': calculate_token_expiration_time(ret_token['expiration']),
-                        'external_id': user_id}
-        if type_permission == 'write':
-            new_app_user.update({'write_permissions': True})
-        else:
-            new_app_user.update({'read_permissions': True})
-        if 'name' in user_fb.keys():
-            new_app_user.update({'name': user_fb['name']})
-        if 'url' in user_fb.keys():
-            new_app_user.update({'url': user_fb['url']})
-        user = SocialNetworkAppUser(**new_app_user)
-        user.save()
+def _get_initiative_fb_app(initiative_url):
+    initiative = Initiative.objects.get(url=initiative_url)
+    for snapp in initiative.social_network.all():
+        connector = snapp.connector
+        if connector.name.lower() == 'facebook':  # Take the Facebook app used to execute the initiative on this sn
+            return snapp
+    return None
+
+
+def _save_user(user_id, access_token, initiative_url, type_permission):
+    fb_app = _get_initiative_fb_app(initiative_url)
+    if fb_app:
+        ret_token = Facebook.get_long_lived_access_token(fb_app.app_id, fb_app.app_secret,
+                                                         access_token)
+        try:
+            user = SocialNetworkAppUser.objects.get(external_id=user_id)
+            user.access_token = ret_token['access_token']
+            user.access_token_exp = calculate_token_expiration_time(ret_token['expiration'])
+            if type_permission == 'write':
+                user.write_permissions = True
+            else:
+                user.read_permissions = True
+            user.save()
+        except SocialNetworkAppUser.DoesNotExist:
+            user_fb = Facebook.get_info_user(fb_app, user_id, access_token)
+            new_app_user = {'email': user_fb['email'].lower(), 'snapp': fb_app, 'access_token': ret_token['access_token'],
+                            'access_token_exp': calculate_token_expiration_time(ret_token['expiration']),
+                            'external_id': user_id}
+            if type_permission == 'write':
+                new_app_user.update({'write_permissions': True})
+            else:
+                new_app_user.update({'read_permissions': True})
+            if 'name' in user_fb.keys():
+                new_app_user.update({'name': user_fb['name']})
+            if 'url' in user_fb.keys():
+                new_app_user.update({'url': user_fb['url']})
+            user = SocialNetworkAppUser(**new_app_user)
+            user.save()
+    else:
+        logger.warning('It could not be found the facebook app used to execute '
+                       'the initiative {}'.format(initiative_url))
 
 
 def login_fb(request):
     access_token = request.GET.get('access_token')
     user_id = request.GET.get('user_id')
-    _save_user(user_id, access_token, 'read')
+    initiatiative_url = request.GET.get('initiative_url')
+    _save_user(user_id, access_token, initiatiative_url, 'read')
     return redirect('/')
 
 
@@ -299,5 +313,6 @@ def check_user(request):
 def write_permissions_fb(request):
     access_token = request.GET.get('access_token')
     user_id = request.GET.get('user_id')
-    _save_user(user_id, access_token, 'write')
+    initiatiative_url = request.GET.get('initiative_url')
+    _save_user(user_id, access_token, initiatiative_url, 'write')
     return redirect('/')
