@@ -200,7 +200,7 @@ def synchronize_content():
     lock_id = '{0}-lock-{1}'.format('synchronize_content', hexdigest)
 
     # cache.add fails if the key already exists
-    acquire_lock = lambda: cache.add(lock_id, 'true', 60 * 5)  # Lock expires in 5 minutes
+    acquire_lock = lambda: cache.add(lock_id, 'true', 60 * 20)  # Lock expires in 20 minutes
     # memcache delete is very slow, but we have to use it to take
     # advantage of using add() for atomic locking
     release_lock = lambda: cache.delete(lock_id)
