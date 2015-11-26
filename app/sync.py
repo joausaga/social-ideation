@@ -105,6 +105,7 @@ def update_or_create_content(platform, raw_obj, model, filters, obj_attrs, edita
         content_obj.exist_cp = True
     else:
         content_obj.exist_sn = True
+    content_obj.save()
     if not content_created and content_obj.source == source:
         for editable_field in editable_fields:
             obj_field = getattr(content_obj, editable_field)
