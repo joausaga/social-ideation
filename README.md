@@ -16,7 +16,7 @@ reducing as much as possible the participation barrier.
 Examples
 -------------
 
-![app_scenarios](https://dl.dropboxusercontent.com/u/55956367/app_scenarios.png "Mapping Model")
+![app_scenarios](https://www.dropbox.com/s/62sr92vhdj4quih/app_scenarios.png?dl=0 "Mapping Model")
 
 Mapping Model
 -------------
@@ -24,7 +24,7 @@ Mapping Model
 Social Ideation proposes the model outlined in the next figure to map IdeaScale elements (initiatives, campaigns, ideas,
 comments) with Facebook elements (groups, hashtags, posts and comments).
 
-![mapping_model](https://dl.dropboxusercontent.com/u/55956367/mapping_model.png "Mapping Model")
+![mapping_model](https://www.dropbox.com/s/muxfj5bl7vwlktm/mapping_scheme.pdf?dl=0 "Mapping Model")
 
 As seen on the figure the proposed mapping model is based entirely on native elements of Facebook (posts, comments, 
 groups, and hashtags). Posts published on a Facebook group that is linked to an IdeaScale initiative and contain the 
@@ -43,7 +43,7 @@ The integration between the two platforms are performed mainly through API funct
 primitives through which is possible to read and create new content. The following figure presents the details of how 
 the integration works.
 
-![integration_model](https://dl.dropboxusercontent.com/u/55956367/app_model.png "Social Ideation Model")
+![integration_model](https://www.dropbox.com/s/m0zhc1s4ytf8bh8/sys_architecture.pdf?dl=0 "Social Ideation Model")
 
 The app maintains records about the mapping between IdeaScale initiatives and Facebook groups. Each record saves also the 
 hashtags that identify IdeaScale initiatives and their campaigns. To get content from IdeaScale, the app hits the API 
