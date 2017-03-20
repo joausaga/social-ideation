@@ -16,7 +16,7 @@ reducing as much as possible the participation barrier.
 Examples
 -------------
 
-![app_scenarios](https://www.dropbox.com/s/62sr92vhdj4quih/app_scenarios.png?dl=0 "Mapping Model")
+![app_scenarios](/figures/app_scenarios.png?raw=true "Scenarios")
 
 Mapping Model
 -------------
