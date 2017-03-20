@@ -16,7 +16,7 @@ reducing as much as possible the participation barrier.
 Examples
 -------------
 
-![app_scenarios](/figures/app_scenarios.png?raw=true "Scenarios")
+![app_scenarios](/figures_repo/app_scenarios.png?raw=true "Scenarios")
 
 Mapping Model
 -------------
@@ -24,7 +24,7 @@ Mapping Model
 Social Ideation proposes the model outlined in the next figure to map IdeaScale elements (initiatives, campaigns, ideas,
 comments) with Facebook elements (groups, hashtags, posts and comments).
 
-![mapping_model](/figures/mapping_scheme.png?raw=true "Mapping Model")
+![mapping_model](/figures_repo/mapping_scheme.png?raw=true "Mapping Model")
 
 As seen on the figure the proposed mapping model is based entirely on native elements of Facebook (posts, comments, 
 groups, and hashtags). Posts published on a Facebook group that is linked to an IdeaScale initiative and contain the 
@@ -41,7 +41,7 @@ Architecture
 
 The system architecture is composed of four modules and interfacing with IdeaScale and Facebook. The figure below shows on the sides the platforms IdeaScale and Facebook providing, through Web APIs, services to our system. The modules **Social Network Connector** and **Ideation Platform Connector** support the communication logic with the APIs of IdeaScale and Facebook, respectively.
 
-![integration_model](/figures/architecture.png?raw=true "Architecture")
+![integration_model](/figures_repo/architecture.png?raw=true "Architecture")
 
 The module Synchronization Launcher is in charge of launching synchronization tasks. Every certain time (5 minutes by default), it requests **Social Network Connector** and **Ideation Platform Connector** for the most recent content (e.g., ideas, comments, replies) of a given Facebook group and IdeaScale community. After receiving the information from **Social Network Connector** and **Ideation Platform Connector**, it passes the information to **Content Synchronizer**. At the request of Content Synchronizer, it asks the third party connectors for the creation, modification, or elimination of posts/ideas, comments, replies, and likes/upvotes.
 
@@ -52,14 +52,14 @@ Mapping records
 
 A key ingredient in our implementation is the set of records used to implement the mapping between the elements of IdeaScale platform presented previously (e.g., campaigns, ideas, comments) and the features of Facebook described before (e.g., posts, comments, hashtags). The records are saved in tables of the database controlled by the module Content Synchronizer. We define the record **Ideation Initiative (II)** to keep the association between instances of IdeaScale communities to concrete cases of Facebook groups. The pairing between campaigns and hashtags is registered in the record **Campaign Hashtag (CH)**. Our system saves the mapping between ideas and posts in the record **Idea Post (IP)**, it also registers the mapping between IdeaScale comments and Facebook comments in the record **Comments (C)**. Similarly, the association between replies in both platforms is kept in the record **Replies (R)**. The record **User (U)** is used to store the mapping between members of associated IdeaScale communities and Facebook groups. The figure below shows the records with their corresponding properties.
 
-![mapping_records](/figures/mapping_records.png?raw=true "Mapping Records")
+![mapping_records](/figures_repo/mapping_records.png?raw=true "Mapping Records")
 
 Synchronization Algorithm
 -----------------
 
 We implement custom synchronization algorithms to handle change propagation. Let's say we want to synchronize the ideas posted on the Facebook group $fg_i$. A pseudocode of the algorithm is outlined in the figure below. First, the algorithm consults the records **Ideation Initiative (II)** looking for the IdeaScale community associated to *fg_i*, say $ic_i$ (line 1). Then, it asks for the list of posts published in *fg_i* (line 2). Later, for each post *pos_i* it checks whether the post is equipped with a campaign hashtag and if the post has not been replicated in IdeaScale yet (line 4). If the previous conditions are met, it saves the post into a record of the type *po*, say *po_i* (line 5). After that, it queries **Campaign Hashtag (CH)** records to obtain the campaign hashtag $ht_i$ of the post, e.g., *ca_i* (line 6-7). Then, it gets, by consulting **User (U)** records, information of the IdeaScale user associated with the author of the post, say *iu_i* (line 8). It publishes, later, an idea, say *ie_i*, on behalf of *iu_i* in the community *ic_i* with *po_i.text* as description, the first 64 characters of *po_i.text* as the title (titles in IdeaScale are limited to 64 characters), and within the campaign *ca_i* (line 9). A record **Idea Post (IP)** is created next to preserve the association between *po_i* and *ie_i* (line 10). If the post *pos_i* has already been mirrored, the algorithm updated the idea linked to *pos_i* if any change in the content of the post is detected (line 12-13).
 
-![integration_model](/figures/algorithm.png?raw=true "Synchronization Algorithm")
+![integration_model](/figures_repo/algorithm.png?raw=true "Synchronization Algorithm")
 
 The synchronization finishes with a double loop that checks that still exist all posts registered in IP records as originally published on Facebook (posts created to mirror ideas are not considered here). If a post associated with an IP record cannot be found in the recently obtained list of posts, we assume that the post has been eliminated and thus its counterpart in IdeaScale together with the mapping record should be deleted to keep the system consistent (lines 15-23). The steps followed by the system to replicate ideas in the other direction, from IdeaScale to Facebook, are alike. Similar algorithms are also used to synchronize comment, replies, and likes.
 
