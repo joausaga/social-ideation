@@ -24,7 +24,7 @@ Mapping Model
 Social Ideation proposes the model outlined in the next figure to map IdeaScale elements (initiatives, campaigns, ideas,
 comments) with Facebook elements (groups, hashtags, posts and comments).
 
-![mapping_model](https://www.dropbox.com/s/muxfj5bl7vwlktm/mapping_scheme.pdf?dl=0 "Mapping Model")
+![mapping_model](/figures/mapping_scheme.png?raw=true "Mapping Model")
 
 As seen on the figure the proposed mapping model is based entirely on native elements of Facebook (posts, comments, 
 groups, and hashtags). Posts published on a Facebook group that is linked to an IdeaScale initiative and contain the 
@@ -52,7 +52,7 @@ Mapping records
 
 A key ingredient in our implementation is the set of records used to implement the mapping between the elements of IdeaScale platform presented previously (e.g., campaigns, ideas, comments) and the features of Facebook described before (e.g., posts, comments, hashtags). The records are saved in tables of the database controlled by the module Content Synchronizer. We define the record **Ideation Initiative (II)** to keep the association between instances of IdeaScale communities to concrete cases of Facebook groups. The pairing between campaigns and hashtags is registered in the record **Campaign Hashtag (CH)**. Our system saves the mapping between ideas and posts in the record **Idea Post (IP)**, it also registers the mapping between IdeaScale comments and Facebook comments in the record **Comments (C)**. Similarly, the association between replies in both platforms is kept in the record **Replies (R)**. The record **User (U)** is used to store the mapping between members of associated IdeaScale communities and Facebook groups. The figure below shows the records with their corresponding properties.
 
-![mapping_records](https://www.dropbox.com/s/m0zhc1s4ytf8bh8/sys_architecture.pdf?dl=0 "Mapping Records")
+![mapping_records](/figures/mapping_records.png?raw=true "Mapping Records")
 
 Synchronization Algorithm
 -----------------
