@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import hashlib
 import os
 
@@ -132,7 +133,7 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
     def _cu_initiatives(self, platform, initiatives):
         new_initiatives = 0
         for initiative in initiatives:
-            ini_obj, created = Initiative.objects.get_or_create(external_id=initiative['id'], platform=platform,
+                ini_obj, created = Initiative.objects.get_or_create(external_id=initiative['id'], community_id=initiative['community'], platform=platform,
                                                                 url=initiative['url'], defaults={'name': initiative['name']})
             name_formatted = initiative['name'].replace(" ", "").lower()
             if created:

@@ -10,6 +10,7 @@ class Initiative(models.Model):
     name = models.CharField(max_length=100)
     url = models.URLField()
     token = models.CharField(max_length=255)
+    community = models.IntegerField()
 
     def __unicode__(self):
         return self.name

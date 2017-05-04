@@ -1,0 +1,10 @@
+Hola {{ user }},
+
+Queríamos comentarte que la temática "{{ campaing }}" ha sido agregada.
+
+* Para crear tus ideas desde el Grupo de Facebook debes usar el hashtag #{{ hashtag }}.
+* Para crear tus ideas desde IdeaScale puedes acceder aquí.
+
+Saludos,
+
+El equipo de {{ initiative_name }}

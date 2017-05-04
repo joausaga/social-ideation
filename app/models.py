@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import connectors.models
 
 from django.db import models
@@ -13,6 +14,8 @@ class SocialNetworkAppUser(models.Model):
     access_token_exp = models.DateTimeField(editable=False)
     read_permissions = models.BooleanField(default=False, editable=False)
     write_permissions = models.BooleanField(default=False, editable=False)
+    registration_timestamp = models.DateTimeField(auto_now_add=True, editable=True)
+    welcome_msg_sent = models.BooleanField(default=False)
 
     def __unicode__(self):
         if self.name:
@@ -43,7 +46,7 @@ class SocialNetworkApp(models.Model):
     app_id = models.CharField(max_length=50)
     app_secret = models.CharField(max_length=50, null=True, blank=True)
     redirect_uri = models.URLField(null=True, blank=True)
-    community = models.ForeignKey(SocialNetworkAppCommunity, default=None)
+    community = models.ForeignKey(SocialNetworkAppCommunity, null=True, blank=True)
     app_access_token = models.CharField(max_length=300, null=True, blank=True)
     callback_real_time_updates = models.URLField(null=True, blank=True)
     object_real_time_updates = models.CharField(max_length=100, null=True, blank=True, default='page')
@@ -69,12 +72,15 @@ class ConsultationPlatform(models.Model):
 
 class Initiative(models.Model):
     external_id = models.IntegerField(editable=False)
+    community_id = models.IntegerField(editable=True)
     name = models.CharField(max_length=50, editable=False)
-    platform = models.ForeignKey(ConsultationPlatform, editable=False)
+    platform = models.ForeignKey(ConsultationPlatform, editable=True)
     social_network = models.ManyToManyField(SocialNetworkApp, blank=True)
     hashtag = models.CharField(unique=True, max_length=14, null=True,
                                help_text="Max length 14 characters (do not include '#')")
     url = models.URLField(editable=False)
+    site_url = models.URLField(editable=True, default=None, null=True, blank=True)
+    survey_url = models.URLField(editable=True, default=None, null=True, blank=True)
     users = models.IntegerField(editable=False, default=0)
     ideas = models.IntegerField(editable=False, default=0)
     votes = models.IntegerField(editable=False, default=0)
@@ -94,6 +100,7 @@ class Campaign(models.Model):
     initiative = models.ForeignKey(Initiative)
     hashtag = models.CharField(max_length=20, null=True, help_text="Max length 20 characters "
                                                                    "(do not include '#')")
+    notified = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.name
@@ -106,7 +113,7 @@ class Location(models.Model):
     longitude = models.FloatField(null=True)
 
     def __unicode__(self):
-        return self.county + ', ' + self.city
+        return self.country + ', ' + self.city
 
 
 class Author(models.Model):
@@ -159,6 +166,8 @@ class BaseContent(models.Model):
     exist_cp = models.BooleanField(default=False)
     exist_sn = models.BooleanField(default=False)
     sync = models.BooleanField(default=False)
+    # Extra datetime field used when the author deactivates its account.
+    deactivation_time = models.DateTimeField(null=True)
 
     class Meta:
         abstract = True

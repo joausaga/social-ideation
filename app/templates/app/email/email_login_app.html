@@ -1,27 +1,25 @@
-{% load i18n %}
-
-{% trans "Hi" %} {{ author }},
-<br><br>
-{% trans "Thanks for contributing to" %} {{ initiative_name }}!
-<br><br>
-{% trans "It would be really good if the people on the" %} <a href="{{ group_url }}">{% trans "Facebook group" %}</a>
-{% trans "of the initiative are also involved in the discussion of your" %} {{ type_content }}.
-<br><br>
-{% trans "If you log into <b>Social Ideation App</b>, all your ideas and comments (including this one) are going to be automatically posted on your behalf on the Facebook group of the initiative." %}
-<br><br>
-{% trans "Click" %} <a href="http://www.social-ideation.com/?ref=autoemail#how-to-use">{% trans "HERE" %}</a>
-{% trans "if you want to log into the app" %} <b>({% trans "don't forget to go through each of the 3 logging steps" %})</b>.
-<br><br>
-{% trans "Thanks!," %}
-<br><br>
-<i>Jorge Saldivar Galli</i>
-<br>
-<a href="http://www.social-ideation.com/?ref=autoemail">{% trans "Social Ideation App" %}</a>
-<br><br>
------
-<br>
-{% trans "Social Ideation App is a part of a research project conducted by the" %}
-<a href="http://lifeparticipation.org/">Life Participation Group</a>
-{% trans "of the University of Trento (Italy) with the aim to exploit the advantages of social network " %}
-{% trans "services to improving the technologies for civic participation. For more information, drop us an" %}
-<a href="mailto:hola@social-ideation.com">email</a>
+<div>
+    <!-- <img src="{{ initiative_site_url }}/static/img/email_banner_{{ initiative_community_id }}.jpg" alt="{{ initiative_name }}" width="650" style="display:block"> -->
+    <br><br>
+    Hola {{ author }},
+    <br><br>
+    Gracias por contribuir a la iniciativa <strong>{{ initiative_name }}</strong>.
+    <br><br>
+    Ser&iacute;a muy bueno que la gente en el Grupo de Facebook se involucrara en la discusi&oacute;n sobre tu {{ type_content }}.
+    <br><br>
+    Si te registras en {{ initiative_name }} con Facebook, todas tus ideas y comentarios ser&aacute;n autom&aacute;ticamente publicados en tu nombre en el grupo de Facebook de la iniciativa.
+    <br><br>
+    Para registrarte en {{ initiative_name }} con Facebook, ve a siguiente enlace y reg&iacute;strate, escogiendo Facebook como canal de participaci&oacute;n.
+    <br><br>
+    <h2 style="text-align: center;">
+        <a href="{{ initiative_site_url }}">Registrarme con Facebook</a>
+    </h2>
+    <br><br>
+    Cualquier consulta no dudes en escribirnos a este correo.
+    <br><br>
+    Desde ya muchas gracias,
+    <br><br>
+    Saludos cordiales.
+    <br><br>
+    El equipo de <a href="{{ initiative_site_url }}">{{ initiative_name }}.</a>
+</div>

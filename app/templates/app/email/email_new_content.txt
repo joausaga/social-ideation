@@ -1,0 +1,8 @@
+Muchas gracias {{ author }} por tu contribución!
+
+Tu publicación ha sido replicada en el sitio de {{ url_name}}. Puedes ver tu {{ type_content }} {{ link }} aquí.
+
+Saludos.
+
+El equipo de {{ initiative_name }}
+
