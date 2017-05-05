@@ -1,0 +1,1 @@
+./env/bin/supervisorctl status

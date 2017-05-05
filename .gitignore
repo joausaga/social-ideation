@@ -69,3 +69,14 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Configuration files (for not changing parameters across multiple servers)
+supervisord.conf
+social_ideation/settings.py
+
+# Rabbit mq broker, celery and other output:
+opt
+rabbitmq-server-generic-unix-3.6.5.tar.xz
+celerybeat.pid
+nohup.out
+celerybeat-schedule
