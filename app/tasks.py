@@ -5,7 +5,7 @@ from app.models import ConsultationPlatform, Initiative, Idea, Comment, SocialNe
 from app.sync import save_sn_post, save_sn_comment, save_sn_vote, cud_initiative_votes, cud_initiative_ideas, \
                      cud_initiative_comments, invalidate_initiative_content, do_push_content, do_delete_content, \
                      revalidate_initiative_content, notify_new_campaigns, count_other_platform_votes, notify_new_users, \
-                     notify_join_group, check_reactivated_accounts_activity, update_IS_user_demographic_data
+                     notify_join_group, check_reactivated_accounts_activity
 from app.utils import convert_to_utf8_str, call_social_network_api
 from app.error import AppError
 from celery import shared_task

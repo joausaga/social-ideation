@@ -1673,7 +1673,7 @@ def notify_join_group(initiative):
         community = snapp.community
         for user in users:
             if not is_a_community_member(user.snapp, user, members):
-            now = timezone.now()
+                now = timezone.now()
                 delta = now - user.registration_timestamp
                 logger.info("9nov User registration timestamp: " + str(user.registration_timestamp))
                 logger.info("9nov Now timestamp: " + str(now))
