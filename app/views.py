@@ -5,7 +5,7 @@ import hmac
 import json
 import traceback
 
-from app.models import SocialNetworkApp, SocialNetworkAppUser, Initiative, Idea, Campaign, ParticipaUser
+from app.models import SocialNetworkApp, SocialNetworkAppUser, Initiative, Idea, Campaign
 from app.sync import save_sn_post, publish_idea_cp, save_sn_comment, publish_comment_cp, save_sn_vote, \
                      delete_post, delete_comment, delete_vote, is_user_community_member
 from app.utils import get_timezone_aware_datetime, calculate_token_expiration_time, get_url_cb, \
@@ -257,7 +257,7 @@ def index(request):
     else:
         activate(language_to_render)
     # TODO, cambiar URL1 por la url del request. User request.get_host()
-    context = get_initiative_info(URL_1)
+    context = get_initiative_info("")
     # form = SignInForm()
     # context['form'] = form
     context['top'] = _get_top_ideas(3, context['initiative_url'])
