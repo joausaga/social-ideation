@@ -1,0 +1,8 @@
+Hola {{ parent_author }},
+
+Tu {{ type_content }} ha recibido un nuevo comentario de {{ author }}, puedes acceder al mismo aquí.
+
+Saludos,
+
+El equipo de {{ initiative_name }}
+

@@ -129,9 +129,9 @@ class Facebook(SocialNetworkBase):
         if resp.status_code and not 200 <= resp.status_code < 300:
             raise ConnectorError('Error when trying to get long-lived access token')
         else:
-            str_resp = resp.text
-            resps = str_resp.split('&')
-            return {'access_token': resps[0].split('=')[1], 'expiration': resps[1].split('=')[1]}
+            json_resp = json.loads(resp.text)
+            return {'access_token': json_resp['access_token'], 'expiration': json_resp['expires_in']}
+
 
     @classmethod
     def get_long_lived_page_token(cls, app_id, app_secret, access_token, page_id):
@@ -169,7 +169,8 @@ class Facebook(SocialNetworkBase):
         else:  # community type = group
             if type_auth == 'write':  # User access_token
                 code = cls.get_code(app.app_id, app.app_secret, app.redirect_uri, app_user.access_token)
-                access_token_info = facebook.get_access_token_from_code(code, app.redirect_uri,
+                graph = facebook.GraphAPI(app_user.access_token)
+                access_token_info = graph.get_access_token_from_code(code, app.redirect_uri,
                                                                         app.app_id, app.app_secret)
                 token = access_token_info['access_token']
                 app_user.access_token = token
@@ -451,9 +452,18 @@ class Facebook(SocialNetworkBase):
         cls.authenticate(app)
         members_email = []
         member_list = cls.graph.get_connections(group_id, 'members')
-        print member_list
-        for member in member_list['data']:
-            members_email.append(member['id'])
+        #print member_list
+        #for member in member_list['data']:
+        #    members_email.append(member['id'])
+        #return members_email
+        while (True):
+            for member in member_list['data']:
+                members_email.append(member['id'])
+            try:    
+                member_list = requests.get(member_list['paging']['next']).json()
+            except:
+                break
+
         return members_email
 
     @classmethod

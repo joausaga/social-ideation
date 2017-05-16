@@ -1,19 +1,19 @@
-{% trans "Hi" %} {{ author }},
+Hola {{ author }},
 
-{% trans "Thanks for contributing to" %} {{ initiative_name }}!
+Gracias por contribuir a la iniciativa {{ initiative_name }}.
 
-{% trans "It would be really good if the people on the" %} {% trans "Facebook group" %} {% trans "of the initiative are also involved in the discussion of your" %} {{ type_content }}.
+Sería muy bueno que la gente en el Grupo de Facebook se involucrara en la discusión sobre tu {{ type_content }}.
 
-{% trans "If you log into Social Ideation App, all your ideas and comments (including this one) are going to be automatically posted on your behalf on the Facebook group of the initiative." %}
+Si te registras en {{ initiative_name }} con Facebook, todas tus ideas y comentarios serán automáticamente publicados en tu nombre en el grupo de Facebook de la iniciativa.
 
-{% trans "Get in" %} {% trans "HERE"} http://www.social-ideation.com/?ref=autoemail#how-to-use {% trans "if you want to log into the app" %} ({% trans "don't forget to go through each of the 3 logging steps" %}).
+Para registrarte en {{ initiative_name }} con Facebook, ve a siguiente enlace y regístrate, escogiendo Facebook como plataforma de participación.
 
-{% "Thanks!," %}
+Registrarme con Facebook
 
-Jorge Saldivar Galli
-Social Ideation App
+Cualquier consulta no dudes en escribirnos a este correo.
 
------
-{% trans "Social Ideation App is a part of a research project conducted by the" %}
-Life Participation Group {% trans "of the University of Trento (Italy) with the aim to exploit the advantages of social network " %}
-{% trans "services to improving the technologies for civic participation. For more information, drop us an" %} email:hola@social-ideation.com
+Desde ya muchas gracias,
+
+Saludos.
+
+El equipo de {{ initiative_name }}

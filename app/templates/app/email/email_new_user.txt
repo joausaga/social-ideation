@@ -1,0 +1,11 @@
+Hola {{ author }},
+
+Gracias por unirte a la iniciativa {{ initiative_name }}, estamos seguros que tus opiniones serán muy valiosas para ir delineando ideas que apunten a mejorar nuestra educación.
+
+Cualquier consulta no dudes en escribirnos a este correo.
+
+Desde ya muchas gracias,
+
+Saludos.
+
+El equipo de {{ initiative_name }}

@@ -64,20 +64,26 @@ We implement custom synchronization algorithms to handle change propagation. Let
 The synchronization finishes with a double loop that checks that still exist all posts registered in IP records as originally published on Facebook (posts created to mirror ideas are not considered here). If a post associated with an IP record cannot be found in the recently obtained list of posts, we assume that the post has been eliminated and thus its counterpart in IdeaScale together with the mapping record should be deleted to keep the system consistent (lines 15-23). The steps followed by the system to replicate ideas in the other direction, from IdeaScale to Facebook, are alike. Similar algorithms are also used to synchronize comment, replies, and likes.
 
 
+The ideas and comments deleted on the Facebook group are deleted too on IdeaScale by calling the corresponding API function. On the other hand, IdeaScale doesn't provide the option delete ideas nor comments, only administrators of the initiative can do this. So, if the administrator deletes ideas or comments on IdeaScale, they will be deleted too on the Facebook group only if they have been posted by the Social Ideation App on behalf of the Facebook users.
+
 Installation
 ------------
 
-1. Clone the repository `git clone https://github.com/joausaga/social-ideation.git`
+ 1. Clone the repository `git clone https://github.com/joausaga/social-ideation.git`
 
-2. Go inside the repository folder and execute `pip install -r requirements.txt` to install dependencies
+ 2. Go inside the repository folder and execute `pip install -r requirements.txt` to install dependencies.
+    If an error occurs during the installation, it might be because some of these resons:
+    a) Package *python-dev* is missing
+    b) Package *libmysqlclient-dev* is missing
+    c) The environment variables *LC_ALL* and/or *LC_CTYPE* are not defined or don't have a valid value
 
-3. Clone Facebook API client library `git clone https://github.com/pythonforfacebook/facebook-sdk`
+ 3. Clone Facebook API client library `git clone https://github.com/pythonforfacebook/facebook-sdk`
 
-4. Go inside Facebook API client library and install it `python setup.py install`
+ 4. Go inside Facebook API client library and install it `python setup.py install`
 
-4. Create a mysql database
+ 5. Create a mysql database. Make sure your database collation is set to UTF-8, if not, edit the script *fix_database_to_utf8.py* and set the *user* and *passwd* parameters of your database and then run the script `python fix_database_to_utf8.py`
 
-5. Set the configuration parameters of the database in social-ideation/settings.py
+ 6. Set the configuration parameters of the database in social-ideation/settings.py
 
     ```
     DATABASES = {
@@ -91,59 +97,61 @@ Installation
     }
     ```
 
-6. Run `python manage.py migrate` to set up the database schema
-
-7. Run `python manage.py syncdb` to create an admin user and install the authentication system
-
-7. Install Rabbit MQ broker. [Unix installation instructions](http://www.rabbitmq.com/install-generic-unix.html)
-
-8. Set the static url in social-ideation/settings.py
+ 7. Run `python manage.py migrate` to set up the database schema
+ 
+ 8. Run `python manage.py syncdb` to create an admin user and install the authentication system
+ 
+ 9. Install Rabbit MQ broker. [Unix installation instructions](http://www.rabbitmq.com/install-generic-unix.html)
+ 
+ 10. Set the static url in social-ideation/settings.py
+ 
+ 11. Add the following programs (rabbit, celery and celerybeat) at the *program section* of the supervisor configuration file (supervisord.conf). You can look at the example file (supervisord-example.conf) 
 
 Getting started
 ---------------
 
-1. [Sign up to IdeaScale](http://www.ideascale.com)
+ 1. [Sign up to IdeaScale](http://www.ideascale.com)
 
-2. Create an IdeaScale Community
+ 2. Create an IdeaScale Community
 
-3. [Request an API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api)
+ 3. [Request an API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api)
 
-4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html)
+ 4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html)
 
-5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel
+ 5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel
 
-6. Create a Facebook Group and set the privacy setting to Public
+ 6. Create a Facebook Group and set the privacy setting to Public
 
-7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
+ 7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
 
-8. Hit the social ideation URL, i.e., http://www.social-ideation.com, and log in with the admin credentials
+ 8. Hit the social ideation URL, i.e., http://www.social-ideation.com, and log in with the admin credentials
 
-9. Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*)
+ 9. Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*)
 
-10. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
+ 10. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
 (*Home->Connectors->URL Callbacks*)
 
-11. Update IdeaScale connector token (*Home->Connectors->IdeaScale*) The correct token should be located in the table 
+ 11. Update IdeaScale connector token (*Home->Connectors->IdeaScale*) The correct token should be located in the table 
 authtoken_token (user_id = 1)
 
-12. Create a consultation platform choosing IdeaScale as the connector (*Home->App->Consultation platforms->Add*) 
+ 12. Create a consultation platform (*Home->App->Consultation platforms->Add*) choosing IdeaScale as the connector  
 
-13. Import the consultation platform initiatives. Select the new consultation platform in *Home->App->Consultation Platforms* 
-and choose the option **'Get Initiatives'** from the **Action menu** located on the top of the list.
+ 13. Import the consultation platform initiatives. Select the new consultation platform in (*Home->App->Consultation Platforms*) 
+and choose the option **'Get Initiatives'** from the **Action menu** located on the top of the list
 
-14. Obtain Facebook OAuth token. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/) and 
+ 14. Obtain Facebook OAuth token. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/) and 
 in the application drop down select the app created in Step 4. Click Get Access Token; in permissions popup go to 
 extended permissions tab and select **publish_actions**. 
 
-15. Create a social network app user, setting in the field access token the previously obtained access token
-(*Home->App->Social network app users->Add*)
+ 15. Create a social network app (*Home->App->Social network apps->Add*) choosing Facebook as the connector, setting the **app id**, **app secret**, **app access token** (app id|app secret) and  the **redirect uri** (that matches the *Site URL*) of the created Facebook App in Step 4
 
-16. Create a social network app community (*Home->App->Social network app communities->Add*) and put the user created in
+ 16.  Create a social network app user (*Home->App->Social network app users->Add*) setting in the field access token the previously obtained access token in Step 14
+
+ 17. Create a social network app community (*Home->App->Social network app communities->Add*) and put the user created in
 Step 15 as the admin
 
-17. Create a social network app choosing Facebook as the connector, setting the **app id**, **app access token** and 
-**app secret** of the created Facebook App, and configuring the **community** as the community created before.
-(*Home->App->Social network apps->Add*)
+ 18. Edit the previously social network app created, configuring the **community** as the community created before.
+
 
 License
 -------

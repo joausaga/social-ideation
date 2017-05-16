@@ -548,7 +548,7 @@ class Authors(ISObject):
     def post(self, request, initiative_id, format=None):
         try:
             author_details = {'name': request.data['name'], 'email': request.data['email']}
-            author_details.update({'silent': True})
+            author_details.update({'silent': False}) # by Marce: previously True. 
             self.api_method_params = author_details
             self.api_method = 'create_new_member'
             self.create_obj = cru_author

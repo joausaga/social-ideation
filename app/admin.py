@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import hashlib
 import os
 
@@ -115,8 +116,7 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
         campaigns = get_json_or_error(connector.name, campaigns_url_cb.callback, resp)
         if len(campaigns) > 0:
             for campaign in campaigns:
-                cam_obj, created = Campaign.objects.get_or_create(external_id=campaign['id'], initiative=ini_obj,
-                                                                  defaults={'name': campaign['name']})
+                cam_obj, created = Campaign.objects.get_or_create(external_id=campaign['id'], initiative=ini_obj, defaults={'name': campaign['name']})
                 name_formatted = campaign['name'].replace(" ", "").lower()
                 if created:
                     if len(name_formatted) > 14:
@@ -132,8 +132,7 @@ class ConsultationPlatformAdmin(admin.ModelAdmin):
     def _cu_initiatives(self, platform, initiatives):
         new_initiatives = 0
         for initiative in initiatives:
-            ini_obj, created = Initiative.objects.get_or_create(external_id=initiative['id'], platform=platform,
-                                                                url=initiative['url'], defaults={'name': initiative['name']})
+            ini_obj, created = Initiative.objects.get_or_create(external_id=initiative['id'], community_id=initiative['community'], platform=platform, url=initiative['url'], defaults={'name': initiative['name']})
             name_formatted = initiative['name'].replace(" ", "").lower()
             if created:
                 new_initiatives += 1

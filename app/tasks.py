@@ -1,9 +1,11 @@
+# -*- coding: UTF-8 -*-
 from __future__ import absolute_import
 
 from app.models import ConsultationPlatform, Initiative, Idea, Comment, SocialNetworkApp
 from app.sync import save_sn_post, save_sn_comment, save_sn_vote, cud_initiative_votes, cud_initiative_ideas, \
                      cud_initiative_comments, invalidate_initiative_content, do_push_content, do_delete_content, \
-                     revalidate_initiative_content
+                     revalidate_initiative_content, notify_new_campaigns, count_other_platform_votes, notify_new_users, \
+                     notify_join_group, check_reactivated_accounts_activity
 from app.utils import convert_to_utf8_str, call_social_network_api
 from app.error import AppError
 from celery import shared_task
@@ -48,6 +50,12 @@ def _pull_content_consultation_platform(platform, initiative):
     cud_initiative_ideas(platform, initiative)
     cud_initiative_comments(platform, initiative)
     cud_initiative_votes(platform, initiative)
+    notify_new_campaigns(initiative)
+    count_other_platform_votes()
+    notify_new_users(initiative)
+    notify_join_group(initiative)
+    check_reactivated_accounts_activity()
+    #update_IS_user_demographic_data(initiative)
 
 
 def _handle_pull_exceptions(initiative, platform, invalidate_filters, update_attrs):
@@ -64,23 +72,23 @@ def pull_data():
         invalidate_filters = {'initiative': initiative, 'is_new': False}
         try:
             invalidate_initiative_content(invalidate_filters, {'exist_cp': False})
-            logger.info('Pulling content of the initiative {} from the platform {}'.format(initiative,
+            logger.info(u'Pulling content of the initiative {} from the platform {}'.format(initiative,
                                                                                            initiative.platform))
             _pull_content_consultation_platform(initiative.platform, initiative)
             for socialnetwork in initiative.social_network.all():
                 if not socialnetwork.subscribed_read_time_updates:
                     try:
                         invalidate_initiative_content(invalidate_filters, {'exist_sn': False})
-                        logger.info('Pulling content of the initiative {} from the platform {}'.format(initiative,
+                        logger.info(u'Pulling content of the initiative {} from the platform {}'.format(initiative,
                                                                                                        socialnetwork))
                         _pull_content_social_network(socialnetwork, initiative)
                     except Exception as e:
                         _handle_pull_exceptions(initiative, socialnetwork, invalidate_filters, {'exist_sn': True})
                         raise AppError(e)
+                        
         except Exception as e:
             _handle_pull_exceptions(initiative, initiative.platform, invalidate_filters, {'exist_cp': True})
             raise AppError(e)
-
 
 def push_data():
     batch_req_ideas = {}
@@ -117,6 +125,7 @@ def push_data():
                 logger.warning('Error when trying to publish the idea with the id={} on the consultation platforms.'
                                .format(idea.id))
             raise AppError(e)
+
     # Push comments to consultation platforms and social networks
     logger.info('Pushing comments to social networks and consultation platforms')
     existing_comments = Comment.objects.filter(Q(exist_sn=True, sn_id__isnull=False) |
@@ -148,8 +157,7 @@ def push_data():
                 logger.warning('Error when trying to publish the comment with the id={} on the consultation platforms.'
                                .format(comment.id))
             raise AppError(e)
-
-
+            
 def delete_data():
     # Delete comments that don't exist anymore in their original social networks or consultation platforms
     logger.info('Checking whether exists comments that do not exist anymore')

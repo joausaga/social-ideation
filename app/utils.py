@@ -5,6 +5,7 @@ import unicodedata
 import six
 
 from django.utils import timezone
+from django.utils.encoding import smart_str, smart_unicode
 from celery.utils.log import get_task_logger
 from connectors.error import ConnectorError
 
@@ -132,14 +133,18 @@ def validate_email_local_part(str):
 
 
 def convert_to_utf8_str(arg):
-    # written by Michael Norton (http://docondev.blogspot.com/)
-    if isinstance(arg, six.text_type):
-        arg = arg.encode('utf-8')
-    elif not isinstance(arg, bytes):
-        arg = six.text_type(arg).encode('utf-8')
-    elif isinstance(arg, bytes):
-        arg = arg.decode('utf-8')
-    return arg
+    try:
+        return smart_str(arg)
+    except:
+        # written by Michael Norton (http://docondev.blogspot.com/)
+        if isinstance(arg, six.text_type):
+            arg = arg.encode('utf-8')
+        elif not isinstance(arg, bytes):
+            arg = six.text_type(arg).encode('utf-8')
+        elif isinstance(arg, bytes):
+            arg = arg.decode('utf-8')
+        return arg
+        #return str(arg)
 
 
 def get_timezone_aware_datetime(datetime):
