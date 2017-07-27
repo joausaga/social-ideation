@@ -20,7 +20,7 @@ class ProposalSerializer(serializers.ModelSerializer):
     campaign_info = CampaignSerializer(source='campaign', read_only=True)
 
     class Meta:
-        model = Idea
+        model = Proposal
         exclude = ('appcivist_id', 'sync', 'user', 'campaign')
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -39,5 +39,5 @@ class FeedbackSerializer(serializers.ModelSerializer):
     parent_id = serializers.IntegerField(read_only=True)
 
     class Meta:
-        model = Vote
+        model = Feedback
         exclude = ('appcivist_id', 'sync', 'author', 'parent_proposal', 'parent_comment')

@@ -3,8 +3,8 @@ from django.db import models
 # Create your models here.
 class Assembly (models.Model):
     # TODO en el ideascale app, el initiative tiene solo id, no ideascale id, tendria que hacer que el appcivist_id sea el PK de la clase
-    # appcivist_id = models.PositiveIntegerField(primary_key=True)
-    appcivist_id = models.PositiveIntegerField(unique=True)
+    appcivist_id = models.PositiveIntegerField(primary_key=True)
+    # appcivist_id = models.PositiveIntegerField(unique=True)
     appcivist_uuid = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     url = models.URLField()

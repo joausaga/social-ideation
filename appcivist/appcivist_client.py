@@ -45,7 +45,7 @@ class appcivist_api():
     social_ideation_user_source_id=""
 
     def set_headers(self):
-        headers = {"SESSION_KEY": self.session_key, "IGNORE_ADMIN_USER": self.ignore_admin_user, "SOCIAL_IDEATION_SOURCE": self.social_ideation_source_url, "SOCIAL_IDEATION_SOURCE_URL": source.social_ideation_source_url, "SOCIAL_IDEATION_USER_SOURC_ID": self.social_ideation_user_source_id, "SOCIAL_IDEATION_USER_SOURCE_URL": self.social_ideation_user_source_url}
+        headers = {"SESSION_KEY": self.session_key, "IGNORE_ADMIN_USER": self.ignore_admin_user, "SOCIAL_IDEATION_SOURCE": self.social_ideation_source, "SOCIAL_IDEATION_SOURCE_URL": self.social_ideation_source_url, "SOCIAL_IDEATION_USER_SOURC_ID": self.social_ideation_user_source_id, "SOCIAL_IDEATION_USER_SOURCE_URL": self.social_ideation_user_source_url}
         return headers
 
 
@@ -73,7 +73,8 @@ class appcivist_api():
     def get_all_authors(self, aid):
         list_of_users = []
         url = self.base_url + "/api/assembly/" + str(aid) + "/membership/ACCEPTED"
-        headers = {"SESSION_KEY": self.session_key, "IGNORE_ADMIN_USER": self.ignore_admin_user, "SOCIAL_IDEATION_SOURCE": self.social_ideation_source_url, "SOCIAL_IDEATION_SOURCE_URL": source.social_ideation_source_url, "SOCIAL_IDEATION_USER_SOURC_ID": self.social_ideation_user_source_id, "SOCIAL_IDEATION_USER_SOURCE_URL": self.social_ideation_user_source_url}
+        headers = {"SESSION_KEY": self.session_key}
+        # headers = {"SESSION_KEY": self.session_key, "IGNORE_ADMIN_USER": self.ignore_admin_user, "SOCIAL_IDEATION_SOURCE": self.social_ideation_source, "SOCIAL_IDEATION_SOURCE_URL": self.social_ideation_source_url, "SOCIAL_IDEATION_USER_SOURC_ID": self.social_ideation_user_source_id, "SOCIAL_IDEATION_USER_SOURCE_URL": self.social_ideation_user_source_url}
         response = doRequest(url=url, method="get", headers=headers)
         for membership in response:
             list_of_users.append(membership["user"])
@@ -109,11 +110,15 @@ class appcivist_api():
         headers = {"SESSION_KEY": self.session_key}
         params = {"type": "proposal"}
         response = doRequest(url=url, method="get", headers=headers, params=params)
-        return response
+        final_list = []
+        for proposal in response:
+            print proposal.keys()
+            if "firstAuthor" in proposal.keys():
+                final_list.append(proposal)
+        return final_list
 
     # return info about a single proposal
     # GET /api/assembly/:aid/contribution/:cid
-    # sera que es necesario?
     # TESTED
     def get_proposal_details(self, aid, coid):
         url = self.base_url + "/api/assembly/" + str(aid) + "/contribution/" + str(coid)
@@ -125,7 +130,7 @@ class appcivist_api():
         list_of_proposals = []
         campaigns = self.get_campaigns(aid)
         for c in campaigns:
-            proposals = self.get_proposals_of_capaign(aid, c["campaignId"])
+            proposals = self.get_proposals_of_campaign(aid, c["campaignId"])
             for p in proposals:
                 list_of_proposals.append(p)
         return list_of_proposals        
@@ -133,9 +138,7 @@ class appcivist_api():
 
     # return the list of comments of a proposal
     # GET /api/assembly/:aid/contribution/:cid/comment (no me sirve este. No retorna bien)
-    # Does this api return all nested comments for a proposal (discussions and comments?
     # GET /api/space/:sid/contribution (1st, get the discussion, then, foreach discussion get comments)
-    # TODO. ver como calcular el comentario padre o idea padre 
     # TESTED
     def get_comments_of_proposal(self, sid):
         list_of_comments = []
@@ -171,13 +174,12 @@ class appcivist_api():
         campaigns = self.get_campaigns(aid)
         for c in campaigns:
             comments = self.get_comments_of_campaign(aid, c["campaignId"])
-            for p in proposals:
-                list_of_proposals.append(p)
-        return list_of_proposals   
+            for co in comments:
+                list_of_comments.append(co)
+        return list_of_comments
 
     # return info about a single comment
     # GET /api/assembly/:aid/contribution/:cid
-    # sera que es necesario?
     # TESTED
     def get_comment_details(self, aid, coid):
         url = self.base_url + "/api/assembly/" + str(aid) + "/contribution/" + str(coid)
