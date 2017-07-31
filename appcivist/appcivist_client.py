@@ -246,12 +246,6 @@ class appcivist_api():
         return response
 
 
-    # creates a new user
-    # This endpoint is implemented in appcivist platform
-    def create_new_author(self):
-        pass
-
-
     # creates a comment (appcivist's DICUSSION) on an proposal
     # implemented with create_proposal() method since it uses the same contribution creation endpoint
     def comment_proposal(self, sid, discussion):
