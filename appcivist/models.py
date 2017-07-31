@@ -2,13 +2,10 @@ from django.db import models
 
 # Create your models here.
 class Assembly (models.Model):
-    # TODO en el ideascale app, el initiative tiene solo id, no ideascale id, tendria que hacer que el appcivist_id sea el PK de la clase
     appcivist_id = models.PositiveIntegerField(primary_key=True)
-    # appcivist_id = models.PositiveIntegerField(unique=True)
     appcivist_uuid = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     url = models.URLField()
-    #assembly_id = models.IntegerField()
     resource_space_id = models.IntegerField()
     forum_resource_space_id = models.IntegerField()
     admin_session_key = models.CharField(max_length=255)
@@ -32,9 +29,9 @@ class Author(models.Model):
     appcivist_uuid = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
     email = models.EmailField(null=True)
-    assembly = models.ForeignKey(Assembly) #VER SI ES QUE NO QUITAMOS ESTO
+    assembly = models.ForeignKey(Assembly)
     sync = models.BooleanField(default=False)
-    source = models.CharField(max_length=100, null=True) #VER SI NO QUITAMOS ESTO
+    source = models.CharField(max_length=100, null=True)
 
     def __unicode__(self):
         return self.name
@@ -53,7 +50,6 @@ class Proposal(models.Model):
     campaign = models.ForeignKey(Campaign)
     url = models.URLField()
     user = models.ForeignKey(Author)
-    #location = models.ForeignKey(Location, null=True)
     sync = models.BooleanField(default=False)
 
     def __unicode__(self):
@@ -74,7 +70,6 @@ class Comment(models.Model):
     parent_comment = models.ForeignKey('Comment', null=True)
     url = models.URLField()
     user = models.ForeignKey(Author)
-    #location = models.ForeignKey(Location, null=True)
     sync = models.BooleanField(default=False)
 
     def __unicode__(self):
@@ -88,7 +83,6 @@ class Comment(models.Model):
 
 class Feedback(models.Model):
     appcivist_id = models.PositiveIntegerField(unique=True)
-    # appcivist_uuid = models.CharField(max_length=100)
     value = models.IntegerField()
     datetime = models.DateTimeField()
     parent_type = models.CharField(max_length=50)
