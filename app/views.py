@@ -195,11 +195,14 @@ def is_supported_language(language_code):
     return language_code in supported_languages
 
 # cambiar initiative_url por site_url
-def get_initiative_info(initiative_url):
+def get_initiative_info(initiative_url=None):
     # Hardcoded get the first active initiative and the
     # url of the community associated to the first social network
     # where it is executed
-    initiative = Initiative.objects.get(active=True, url=initiative_url)
+    if initiative_url:
+        initiative = Initiative.objects.get(active=True, url=initiative_url)
+    else:
+        initiative = Initiative.objects.filter(active=True)[0]
     return {'initiative_name': initiative.name, 'initiative_url': initiative.url,
             'fb_group_url': initiative.social_network.all()[0].community.url, 
              'site_url': initiative.site_url}
@@ -257,7 +260,7 @@ def index(request):
     else:
         activate(language_to_render)
     # TODO, cambiar URL1 por la url del request. User request.get_host()
-    context = get_initiative_info("")
+    context = get_initiative_info()
     # form = SignInForm()
     # context['form'] = form
     context['top'] = _get_top_ideas(3, context['initiative_url'])
@@ -558,7 +561,7 @@ def write_permissions_fb(request):
     user_id = request.GET.get('user_id')
     initiative_url = request.GET.get('initiative_url')
     #demo_data = _get_demo_data(request)
-    _save_user(user_id, access_token, initiative_url, 'write', demo_data)
+    _save_user(user_id, access_token, initiative_url, 'write')
     return redirect('/')
     # if initiative_url == URL_1:
     #     return redirect("/app/v1#joinFB")
