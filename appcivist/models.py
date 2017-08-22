@@ -13,6 +13,10 @@ class Assembly (models.Model):
     def __unicode__(self):
         return self.name
 
+    class Meta:
+        verbose_name = "Assembly"
+        verbose_name_plural = "Assemblies"
+
 class Campaign(models.Model):
     appcivist_id = models.PositiveIntegerField(unique=True)
     appcivist_uuid = models.CharField(max_length=100)
@@ -36,7 +40,7 @@ class Author(models.Model):
     def __unicode__(self):
         return self.name
 
-class Proposal(models.Model):
+class Idea(models.Model):
     appcivist_id = models.PositiveIntegerField(unique=True)
     appcivist_uuid = models.CharField(max_length=100)
     resource_space_id = models.IntegerField()
@@ -66,7 +70,7 @@ class Comment(models.Model):
     negative_votes = models.PositiveIntegerField(null=True)
     comments = models.PositiveIntegerField(null=True)
     parent_type = models.CharField(max_length=50)
-    parent_proposal = models.ForeignKey(Proposal, null=True)
+    parent_idea = models.ForeignKey(Idea, null=True)
     parent_comment = models.ForeignKey('Comment', null=True)
     url = models.URLField()
     user = models.ForeignKey(Author)
@@ -76,8 +80,8 @@ class Comment(models.Model):
         return self.url
 
     def parent_id(self):
-        if self.parent_proposal:
-            return self.parent_proposal.appcivist_id
+        if self.parent_idea:
+            return self.parent_idea.appcivist_id
         elif self.parent_comment:
             return self.parent_comment.appcivist_id
 
@@ -86,20 +90,20 @@ class Feedback(models.Model):
     value = models.IntegerField()
     datetime = models.DateTimeField()
     parent_type = models.CharField(max_length=50)
-    parent_proposal = models.ForeignKey(Proposal, null=True)
+    parent_idea = models.ForeignKey(Idea, null=True)
     parent_comment = models.ForeignKey(Comment, null=True)
     author = models.ForeignKey(Author)
     sync = models.BooleanField(default=False)
 
     def __unicode__(self):
-        if self.parent_proposal:
-            return 'Vote {} on proposal {}'.format(self.value, self.parent_proposal.title)
+        if self.parent_idea:
+            return 'Vote {} on idea {}'.format(self.value, self.parent_idea.title)
         elif self.parent_comment:
             return 'Vote {} on comment {}'.format(self.value, self.parent_comment.text)
 
     def parent_id(self):
-        if self.parent_proposal:
-            return self.parent_proposal.appcivist_id
+        if self.parent_idea:
+            return self.parent_idea.appcivist_id
         elif self.parent_comment:
             return self.parent_comment.appcivist_id
 
