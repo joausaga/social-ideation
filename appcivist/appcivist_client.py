@@ -42,6 +42,7 @@ class appcivist_api():
     social_ideation_source_url=""
     social_ideation_user_source_url=""
     social_ideation_user_source_id=""
+    social_ideation_user_name=""
     assembly_id = ""
 
     def set_headers(self):
@@ -50,6 +51,7 @@ class appcivist_api():
                   "SOCIAL_IDEATION_SOURCE_URL": self.social_ideation_source_url, 
                   "SOCIAL_IDEATION_USER_SOURCE_ID": self.social_ideation_user_source_id, 
                   "SOCIAL_IDEATION_USER_SOURCE_URL": self.social_ideation_user_source_url,
+                  "SOCIAL_IDEATION_USER_NAME": self.social_ideation_user_name,
                   "ASSEMBLY_ID": self.assembly_id}
         return headers
 

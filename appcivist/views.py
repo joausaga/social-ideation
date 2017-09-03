@@ -126,8 +126,11 @@ def cru_idea(idea_id, assembly, idea_obj=None):
     try:
         idea = Idea.objects.get(appcivist_id=idea_id)
         if idea_obj:
-            idea.title = idea_obj["title"]
-            idea.text = idea_obj["text"]
+            if 'title' in idea_obj.keys() and 'text' in idea_obj.keys():
+                idea.title = idea_obj["title"]
+                idea.text = idea_obj["text"]
+            else:
+                idea.text = idea_obj["title"]
             idea.positive_votes = idea_obj["stats"]['ups']
             idea.negative_votes = idea_obj["stats"]['downs']
             idea.comments = idea_obj["commentCount"]
@@ -149,7 +152,13 @@ def cru_idea(idea_id, assembly, idea_obj=None):
         idea_ac_dt = datetime.strptime(idea_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         idea_dt = _get_timezone_aware_datetime(idea_ac_dt) if timezone.is_naive(idea_ac_dt) else idea_ac_dt
         # We use the 'title' attribute of the response as the 'text' attribute of the instance because that's where appcivist's ideas store the text
-        idea = Idea(appcivist_id=idea_obj["contributionId"], appcivist_uuid=idea_obj["uuidAsString"] ,title="", text=idea_obj["title"],
+        if 'title' in idea_obj.keys() and 'text' in idea_obj.keys():
+            title = idea_obj["title"]
+            text = idea_obj["text"]
+        else:
+            title = ""
+            text = idea_obj["title"]
+        idea = Idea(appcivist_id=idea_obj["contributionId"], appcivist_uuid=idea_obj["uuidAsString"] ,title=title, text=text,
                     datetime=idea_dt, positive_votes=positive_votes, negative_votes=negative_votes, comments=comments,
                     campaign=campaign_idea, url=url, user=author, sync=False, resource_space_id=idea_obj["resourceSpaceId"], forum_resource_space_id=idea_obj["forumResourceSpaceId"])
         idea.save()
@@ -193,7 +202,8 @@ def cru_comment(comment_id, assembly, comment_obj=None):
             parent_type = "idea"
         else:
             parent_type = "comment"
-        comment_ac_dt = parse(comment_obj["creation"])
+        #comment_ac_dt = parse(comment_obj["creation"])
+        comment_ac_dt = datetime.strptime(comment_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         comment_dt = _get_timezone_aware_datetime(comment_ac_dt) if timezone.is_naive(comment_ac_dt) else comment_ac_dt
         comment = Comment(appcivist_id=comment_obj["contributionId"], appcivist_uuid=comment_obj["uuidAsString"], text=comment_obj["text"],
                           datetime=comment_dt, positive_votes=positive_votes, negative_votes=negative_votes,
@@ -226,7 +236,8 @@ def cru_feedback(feedback_id, assembly, feedback_obj):
         # author_id = vote_obj.authorId if hasattr(vote_obj, 'authorId') else vote_obj.memberId
         author_id = feedback_obj["userId"]
         author = cru_author(author_id, assembly)
-        feedback_ac_dt = parse(feedback_obj["creation"])
+        #feedback_ac_dt = parse(feedback_obj["creation"])
+        feedback_ac_dt = datetime.strptime(feedback_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         feedback_dt = _get_timezone_aware_datetime(feedback_ac_dt) if timezone.is_naive(feedback_ac_dt) else feedback_ac_dt
         
         if feedback_obj["up"]:
@@ -315,14 +326,16 @@ class AppCivistObject(APIView):
             return resp
 
     def post(self, request, assembly, format=None):
+        respmsg = "inicio"
         try:
             api = get_api_obj(assembly)
 
             api.ignore_admin_user = "true"
             api.social_ideation_source = request.data['source'] # indicates the name of the providerId (e.g., social_ideation_facebook)
-            api.social_ideation_source_url= request.data['source_url'] # source to the original post
-            api.social_ideation_user_source_url= request.data['user_url'] # link to the user
-            api.social_ideation_user_source_id= request.data['user_external_id'] # email or id of the user in the source social network
+            api.social_ideation_source_url = request.data['source_url'] # source to the original post
+            api.social_ideation_user_source_url = request.data['user_url'] # link to the user
+            api.social_ideation_user_source_id = request.data['user_external_id'] # email or id of the user in the source social network
+            api.social_ideation_user_name = request.data['user_name'] # the name of the author in the social network
             api.assembly_id = assembly.appcivist_id
             new_obj_raw = getattr(api, self.api_method)(**self.api_method_params)
             new_obj_id = find_obj_id(new_obj_raw)
@@ -638,7 +651,7 @@ class CommentsIdea(AppCivistObject):
         try:
             idea = Idea.objects.get(appcivist_id=idea_id)
             assembly = idea.campaign.assembly
-            comment_details = {"status": "PUBLISHED", "text": request.data["text"], "type": "DISCUSSION", "campaigns":[request.data['campaign_id']]}
+            comment_details = {"status": "PUBLISHED", "title": request.data['text'][:10], "text": request.data["text"], "type": "DISCUSSION"}
             self.api_method = 'comment_idea'
             self.api_method_params = {"sid": idea.resource_space_id, "discussion": comment_details}
             self.create_obj = cru_comment
@@ -669,7 +682,8 @@ class CommentsComment(AppCivistObject):
         try:
             comment = Comment.objects.get(appcivist_id=comment_id)
             assembly = self.get_assembly(comment)
-            comment_details = {"status": "PUBLISHED", "text": request.data["text"], "type": "COMMENT", "campaigns":[request.data['campaign_id']]}
+            comment_details = {"status": "PUBLISHED", "title": request.data["text"][:10], "text": request.data["text"], "type": "COMMENT"}
+            self.api_method = "comment_discussion"
             self.api_method_params = {"sid": comment.resource_space_id, "comment": comment_details}
             self.create_obj = cru_comment
             self.serializer_class = CommentSerializer

@@ -23,6 +23,7 @@ def _pull_content_social_network(social_network, initiative):
     if social_network.community:
         params = {'app': social_network}
         posts = call_social_network_api(social_network.connector, 'get_posts', params)
+        #logger.info(str(posts))
         for post in posts:
             ret_data = save_sn_post(social_network, post, initiative)
             if ret_data:
@@ -50,11 +51,11 @@ def _pull_content_consultation_platform(platform, initiative):
     cud_initiative_ideas(platform, initiative)
     cud_initiative_comments(platform, initiative)
     cud_initiative_votes(platform, initiative)
-    notify_new_campaigns(initiative)
-    count_other_platform_votes()
-    notify_new_users(initiative)
-    notify_join_group(initiative)
-    check_reactivated_accounts_activity()
+    #notify_new_campaigns(initiative)
+    #count_other_platform_votes()
+    #notify_new_users(initiative)
+    #notify_join_group(initiative)
+    #check_reactivated_accounts_activity()
     #update_IS_user_demographic_data(initiative)
 
 
@@ -85,7 +86,6 @@ def pull_data():
                     except Exception as e:
                         _handle_pull_exceptions(initiative, socialnetwork, invalidate_filters, {'exist_sn': True})
                         raise AppError(e)
-                        
         except Exception as e:
             _handle_pull_exceptions(initiative, initiative.platform, invalidate_filters, {'exist_cp': True})
             raise AppError(e)
