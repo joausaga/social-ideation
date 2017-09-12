@@ -1,4 +1,7 @@
 from django.db import models
+from appcivist_client import doUpdateSessionkey
+from django.utils import timezone
+import datetime
 
 # Create your models here.
 class Assembly (models.Model):
@@ -9,6 +12,26 @@ class Assembly (models.Model):
     resource_space_id = models.IntegerField()
     forum_resource_space_id = models.IntegerField()
     admin_session_key = models.CharField(max_length=255)
+    admin_email = models.CharField(max_length=25)
+    admin_password = models.CharField(max_length=25)
+    session_key_last_update = models.DateTimeField(auto_now_add=True, editable=True)
+    session_key_longevity_days = models.PositiveIntegerField()
+        
+    def updateSessionKey(self):
+        new_key = doUpdateSessionkey(self.url, self.admin_email, self.admin_password)
+        if new_key:
+            self.admin_session_key = new_key
+            self.session_key_last_update = datetime.datetime.now()
+            self.save()
+        else:
+            return
+
+    def keyAboutToExpire(self):
+        diff = timezone.now() - self.session_key_last_update
+        if (diff.total_seconds() >= (self.session_key_longevity_days*24*60*60)):
+            return True
+        else:
+            return False
 
     def __unicode__(self):
         return self.name

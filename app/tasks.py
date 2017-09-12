@@ -7,6 +7,7 @@ from app.sync import save_sn_post, save_sn_comment, save_sn_vote, cud_initiative
                      revalidate_initiative_content, notify_new_campaigns, count_other_platform_votes, notify_new_users, \
                      notify_join_group, check_reactivated_accounts_activity
 from app.utils import convert_to_utf8_str, call_social_network_api
+from appcivist.utils import updateAssembliesSessionKeys
 from app.error import AppError
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -48,6 +49,7 @@ def _pull_content_social_network(social_network, initiative):
 
 
 def _pull_content_consultation_platform(platform, initiative):
+    updateAssembliesSessionKeys()
     cud_initiative_ideas(platform, initiative)
     cud_initiative_comments(platform, initiative)
     cud_initiative_votes(platform, initiative)

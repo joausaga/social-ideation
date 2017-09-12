@@ -6,7 +6,7 @@ class AssemblySerializer(serializers.ModelSerializer):
     community = serializers.IntegerField(source='appcivist_id', read_only=True)
     class Meta:
         model = Assembly
-        exclude = ('appcivist_id', 'appcivist_uuid', 'resource_space_id', 'forum_resource_space_id', 'admin_session_key')
+        exclude = ('appcivist_id', 'appcivist_uuid', 'resource_space_id', 'forum_resource_space_id', 'admin_session_key', 'admin_email', 'admin_password', 'session_key_last_update', 'session_key_longevity_days')
 
 
 class CampaignSerializer(serializers.ModelSerializer):

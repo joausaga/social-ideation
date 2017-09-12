@@ -558,7 +558,7 @@ def write_permissions_fb(request):
     user_id = request.GET.get('user_id')
     initiative_url = request.GET.get('initiative_url')
     #demo_data = _get_demo_data(request)
-    _save_user(user_id, access_token, initiative_url, 'write', demo_data)
+    _save_user(user_id, access_token, initiative_url, 'write')
     return redirect('/')
     # if initiative_url == URL_1:
     #     return redirect("/app/v1#joinFB")

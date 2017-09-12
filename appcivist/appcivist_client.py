@@ -4,7 +4,7 @@ import json
 def doUpdateSessionkey(url, email, password):
     params =  {"email": email, "password": password}
     headers = {"content-type": "application/json; charset=utf8"}
-    r = requests.post(url, headers=headers, json=params)
+    r = requests.post(url+"/api/user/login", headers=headers, json=params)
     if r.status_code == 200:
         response = r.json()
         return response["sessionKey"]
