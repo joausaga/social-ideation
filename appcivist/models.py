@@ -11,7 +11,7 @@ class Assembly (models.Model):
     url = models.URLField()
     resource_space_id = models.IntegerField()
     forum_resource_space_id = models.IntegerField()
-    admin_session_key = models.CharField(max_length=255)
+    admin_session_key = models.CharField(max_length=255, blank=True)
     admin_email = models.CharField(max_length=25)
     admin_password = models.CharField(max_length=25)
     session_key_last_update = models.DateTimeField(auto_now_add=True, editable=True)
@@ -26,7 +26,7 @@ class Assembly (models.Model):
         else:
             return
 
-    def keyAboutToExpire(self):
+    def keyHasExpired(self):
         diff = timezone.now() - self.session_key_last_update
         if (diff.total_seconds() >= (self.session_key_longevity_days*24*60*60)):
             return True
