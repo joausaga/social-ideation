@@ -256,8 +256,8 @@ def cru_feedback(feedback_id, assembly, feedback_obj):
             feedback_value = -1
         feedback_parent_type = feedback_obj["parentType"]
         feedback_parent_id = feedback_obj["contributionId"]
-        feedback = Feedback(appcivist_id=feedback_obj["id"], value=feedback_value, datetime=feedback_dt, author=author, sync=False,
-                    parent_type=feedback_parent_type)
+        feedback = Feedback(appcivist_id=feedback_obj["id"], value=feedback_value, datetime=feedback_dt, 
+                            author=author, sync=False, parent_type=feedback_parent_type)
         if feedback_parent_type == 'idea':
             feedback.parent_idea = cru_idea(feedback_parent_id, assembly)
         else:
