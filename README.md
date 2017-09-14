@@ -73,8 +73,10 @@ Installation
 
 2. Create a virtual environment by running `virtualenv env`
 
+ 3. Activate the virtual environment by running `source env/bin/activate`
+
  3. Go inside the repository folder and execute `pip install -r requirements.txt` to install dependencies.
-    If an error occurs during the installation, it might be because some of these resons:
+    If an error occurs during the installation, it might be because some of these reasons:
     a) Package *python-dev* is missing
     b) Package *libmysqlclient-dev* is missing
     c) The environment variables *LC_ALL* and/or *LC_CTYPE* are not defined or don't have a valid value
@@ -105,7 +107,7 @@ Installation
 
 10. Create a copy of the supervisord configuration file from the sample file by typing the command `cp supervisord.conf.sample supervisord.conf`
 
- 11. Add the following programs routes(rabbit, celery and celerybeat) at the *program section* of the supervisor configuration file (supervisord.conf).
+ 11. Add the following programs routes (rabbit, celery and celerybeat) at the *program section* of the supervisor configuration file (supervisord.conf).
 
 12. Create the folder for the application logs and empty logs files with the following commands
 ```
@@ -123,23 +125,23 @@ Getting started
     1. [Sign up to IdeaScale](http://www.ideascale.com), or
     2. Sign up to an AppCivist instance.
 
- 2. If your are using IdeaScale, Create an IdeaScale Community. If you are using AppCivist create an Assembly with at least one member with administrator role, and at least with one campaign.
+ 2. If you are using IdeaScale, Create an IdeaScale Community. If you are using AppCivist create an Assembly with at least one member with administrator role, and at least one campaign.
 
  3. Get an API token from your Consultation Platform.
     1. If your are using IdeaScale,[Request an API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api). You will also need the IdeaScale Portal ID, which you can find on *Community Settings -> Integration -> Developer's API -> Community API*.
     2. If you are using AppCivist, get your admin user email and password. These would be used to generate a token.
 
- 4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html). OBS: This app need to be reviewed and approved by Facebook to ask for _**email**_, _**public_profile**_ and _**publish_actions**_ permissions before you can use it in Social Ideation. [More details here](https://developers.facebook.com/docs/apps/review/).
+ 4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html). Because the app requires _**email**_, _**public_profile**_ and _**publish_actions**_ permissions to work, it, first, has to be approved by Facebook. [More details here](https://developers.facebook.com/docs/apps/review/).
 
  5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel.
 
  6. Create a Facebook Group and set the privacy setting to Public.
 
- 7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`. This will load both, IdeaScale and AppCivist connectors data.
+ 7. Go inside social ideation directory and load initial IdeaScale and AppCivist data by running `python manage.py loaddata initial_connectors_data.json`.
 
 8. Run the Django server by running the following command `python manage.py runserver`.
 
- 9. Hit the social ideation URL, i.e., http://www.social-ideation.com/admin, http://localhost:8000/admin. This will send you to the Administration Login page. Log in with the admin credentials.
+ 9. Hit the social ideation URL, i.e., http://www.social-ideation.com/admin, http://localhost:8000/admin. This will redirect you to the Administration Login page. Log in with the admin credentials.
 
  10. If your consultation platform is IdeaScale: Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*). Do not end the url with a / (slash character). If you are using AppCivist Instead: create a new Assembly (*Home->AppCivist->Assemblies->Add*).
 
@@ -155,13 +157,13 @@ Getting started
 
  16. Create a social network app (*Home->App->Social network apps->Add*) choosing Facebook as the connector, setting the **app id**, **app secret**, **app access token** ( which is the string _<app id>|<app secret>_) and  the **redirect uri** (that matches the *Site URL*) of the created Facebook App in Step 4. Check the **batch requests** checkbox.
 
- 17.  Create a social network app user (*Home->App->Social network app users->Add*) setting in the field access token the previously obtained access token in Step 15.
+ 17.  Create a social network app user (*Home->App->Social network app users->Add*).For the form field called *access token*, use the value obtained in the Step 15.
 
- 18. Create a social network app community (*Home->App->Social network app communities->Add*) choosing **Group** as type and the social network app user created in Step 17 as the admin.
+ 18. Create a social network app community (*Home->App->Social network app communities->Add*) choosing **Group** as type and the social network app user created in the Step 17 as the admin.
 
  19. Edit the social network app previously created: set **community** to the social network app community created before.
  
- 20. To start syncrhonization run the bash script called init_things.sh with the following command: ```bash init_sync.sh```. Be sure than the Django server it's up and running before running this command.
+ 20. To start syncrhonization run the bash script called init_sync.sh with the following command: ```bash init_sync.sh```. Be sure than the Django server it's up and running before running this command.
  
- 21. To stop synchronization run the bash script called stop_things.sh with the following command: ```bash stop_sync.sh```
+ 21. To stop synchronization run the bash script called stop_sync.sh with the following command: ```bash stop_sync.sh```
  

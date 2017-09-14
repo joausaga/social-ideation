@@ -16,7 +16,8 @@ from django.utils import timezone
 # from ideascaly.api import API
 
 from appcivist.models import Assembly, Author, Campaign, Idea, Comment, Feedback
-from appcivist.serializers import AssemblySerializer, CampaignSerializer, AuthorSerializer, IdeaSerializer, CommentSerializer, FeedbackSerializer
+from appcivist.serializers import AssemblySerializer, CampaignSerializer,\
+      AuthorSerializer, IdeaSerializer, CommentSerializer, FeedbackSerializer
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -92,7 +93,8 @@ def cru_author(author_id, assembly, author_info=None):
             author = Author(appcivist_id=author_info["userId"], name=author_info["name"], email=author_info["email"],
                             assembly=assembly, appcivist_uuid=author_info["uuid"])
         else:
-            author = Author(appcivist_id=author_info["userId"], name=author_info["name"], assembly=assembly, appcivist_uuid=author_info["uuid"])
+            author = Author(appcivist_id=author_info["userId"], name=author_info["name"], assembly=assembly,
+                            appcivist_uuid=author_info["uuid"])
         author.save()
         return author
 
@@ -105,7 +107,9 @@ def cu_campaigns(assembly):
             campaign.name = campaign_raw["title"]
             campaign.save()
         except Campaign.DoesNotExist:
-            campaign = Campaign(appcivist_id=campaign_raw["campaignId"], appcivist_uuid=campaign_raw["uuid"], name=campaign_raw["title"], assembly=assembly, resource_space_id=campaign_raw["resourceSpaceId"], forum_resource_space_id=campaign_raw["forumResourceSpaceId"])
+            campaign = Campaign(appcivist_id=campaign_raw["campaignId"], appcivist_uuid=campaign_raw["uuid"], 
+                       name=campaign_raw["title"], assembly=assembly, resource_space_id=campaign_raw["resourceSpaceId"],
+                       forum_resource_space_id=campaign_raw["forumResourceSpaceId"])
             campaign.save()
 
 
@@ -140,7 +144,8 @@ def cru_idea(idea_id, assembly, idea_obj=None):
         return idea
     except Idea.DoesNotExist:
         if not idea_obj:
-            idea_obj = get_appcivist_data(assembly, 'get_idea_details', {'coid': idea_id, 'aid': assembly.appcivist_id})
+            idea_obj = get_appcivist_data(assembly, 'get_idea_details', 
+                       {'coid': idea_id, 'aid': assembly.appcivist_id})
         if 'firstAuthor' not in idea_obj.keys():
             return
         author = cru_author(idea_obj["firstAuthor"]['userId'], assembly, idea_obj["firstAuthor"])
@@ -151,16 +156,19 @@ def cru_idea(idea_id, assembly, idea_obj=None):
         url = ""
         idea_ac_dt = datetime.strptime(idea_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         idea_dt = _get_timezone_aware_datetime(idea_ac_dt) if timezone.is_naive(idea_ac_dt) else idea_ac_dt
-        # We use the 'title' attribute of the response as the 'text' attribute of the instance because that's where appcivist's ideas store the text
+        # We use the 'title' attribute of the response as the 'text' attribute of the instance
+        # because that's where appcivist's ideas store the text
         if 'title' in idea_obj.keys() and 'text' in idea_obj.keys():
             title = idea_obj["title"]
             text = idea_obj["text"]
         else:
             title = ""
             text = idea_obj["title"]
-        idea = Idea(appcivist_id=idea_obj["contributionId"], appcivist_uuid=idea_obj["uuidAsString"] ,title=title, text=text,
-                    datetime=idea_dt, positive_votes=positive_votes, negative_votes=negative_votes, comments=comments,
-                    campaign=campaign_idea, url=url, user=author, sync=False, resource_space_id=idea_obj["resourceSpaceId"], forum_resource_space_id=idea_obj["forumResourceSpaceId"])
+        idea = Idea(appcivist_id=idea_obj["contributionId"], appcivist_uuid=idea_obj["uuidAsString"],
+                    title=title, text=text, datetime=idea_dt, positive_votes=positive_votes, 
+                    negative_votes=negative_votes, comments=comments, campaign=campaign_idea, 
+                    url=url, user=author, sync=False, resource_space_id=idea_obj["resourceSpaceId"],
+                    forum_resource_space_id=idea_obj["forumResourceSpaceId"])
         idea.save()
         return idea
 
@@ -190,7 +198,8 @@ def cru_comment(comment_id, assembly, comment_obj=None):
         return comment
     except Comment.DoesNotExist:
         if not comment_obj:
-            comment_obj = get_appcivist_data(assembly, 'get_comment_details', {'coid': comment_id, 'aid': assembly.appcivist_id})
+            comment_obj = get_appcivist_data(assembly, 'get_comment_details', {'coid': comment_id,
+                                                                      'aid': assembly.appcivist_id})
         if 'firstAuthor' not in comment_obj.keys():
             return
         author = cru_author(comment_obj["firstAuthor"]['userId'], assembly, comment_obj["firstAuthor"])
@@ -205,10 +214,11 @@ def cru_comment(comment_id, assembly, comment_obj=None):
         #comment_ac_dt = parse(comment_obj["creation"])
         comment_ac_dt = datetime.strptime(comment_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         comment_dt = _get_timezone_aware_datetime(comment_ac_dt) if timezone.is_naive(comment_ac_dt) else comment_ac_dt
-        comment = Comment(appcivist_id=comment_obj["contributionId"], appcivist_uuid=comment_obj["uuidAsString"], text=comment_obj["text"],
-                          datetime=comment_dt, positive_votes=positive_votes, negative_votes=negative_votes,
-                          comments=comments, url=url, user=author,
-                          parent_type=parent_type, sync=False, resource_space_id=comment_obj["resourceSpaceId"], forum_resource_space_id=comment_obj["forumResourceSpaceId"])
+        comment = Comment(appcivist_id=comment_obj["contributionId"], appcivist_uuid=comment_obj["uuidAsString"],
+                          text=comment_obj["text"], datetime=comment_dt, positive_votes=positive_votes, 
+                          negative_votes=negative_votes, comments=comments, url=url, user=author, 
+                          parent_type=parent_type, sync=False, resource_space_id=comment_obj["resourceSpaceId"],
+                          forum_resource_space_id=comment_obj["forumResourceSpaceId"])
         parent_id = comment_obj["containingContributionsIds"][0]
         parent = get_parent_comment(parent_type, parent_id, assembly)
         if parent_type == 'idea':
@@ -481,7 +491,9 @@ class Ideas(AppCivistObject):
     def post(self, request, initiative_id, format=None):
         assembly_id = initiative_id
         try:
-            idea_details = {"status": "PUBLISHED", "title": request.data["title"], "text": request.data["text"], "type": "IDEA", "campaigns":[request.data['campaign_id']]}
+            idea_details = {"status": "PUBLISHED", "title": request.data["title"], 
+                            "text": request.data["text"], "type": "IDEA", 
+                            "campaigns":[request.data['campaign_id']]}
             campaign = Campaign.objects.get(appcivist_id=request.data["campaign_id"])
             # if 'tags' in request.data.keys():
             #     tags = [tag.strip() for tag in idea_details['tags'].split(',')]
@@ -651,7 +663,8 @@ class CommentsIdea(AppCivistObject):
         try:
             idea = Idea.objects.get(appcivist_id=idea_id)
             assembly = idea.campaign.assembly
-            comment_details = {"status": "PUBLISHED", "title": request.data['text'][:10], "text": request.data["text"], "type": "DISCUSSION"}
+            comment_details = {"status": "PUBLISHED", "title": request.data['text'][:10],
+                               "text": request.data["text"], "type": "DISCUSSION"}
             self.api_method = 'comment_idea'
             self.api_method_params = {"sid": idea.resource_space_id, "discussion": comment_details}
             self.create_obj = cru_comment
@@ -659,7 +672,8 @@ class CommentsIdea(AppCivistObject):
             self.filters = {'sync':True}
             return super(CommentsIdea,self).post(request, assembly)
         except Idea.DoesNotExist:
-            return Response('Error: Idea with id {} does not exist'.format(idea_id), status=status.HTTP_400_BAD_REQUEST)
+            return Response('Error: Idea with id {} does not exist'.format(idea_id), \
+                             status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentsComment(AppCivistObject):
@@ -682,7 +696,8 @@ class CommentsComment(AppCivistObject):
         try:
             comment = Comment.objects.get(appcivist_id=comment_id)
             assembly = self.get_assembly(comment)
-            comment_details = {"status": "PUBLISHED", "title": request.data["text"][:10], "text": request.data["text"], "type": "COMMENT"}
+            comment_details = {"status": "PUBLISHED", "title": request.data["text"][:10],
+                               "text": request.data["text"], "type": "COMMENT"}
             self.api_method = "comment_discussion"
             self.api_method_params = {"sid": comment.resource_space_id, "comment": comment_details}
             self.create_obj = cru_comment

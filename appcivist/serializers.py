@@ -6,7 +6,10 @@ class AssemblySerializer(serializers.ModelSerializer):
     community = serializers.IntegerField(source='appcivist_id', read_only=True)
     class Meta:
         model = Assembly
-        exclude = ('appcivist_id', 'appcivist_uuid', 'resource_space_id', 'forum_resource_space_id', 'admin_session_key', 'admin_email', 'admin_password', 'session_key_last_update', 'session_key_longevity_days')
+        exclude = ('appcivist_id', 'appcivist_uuid', 'resource_space_id', 
+                   'forum_resource_space_id', 'admin_session_key', 
+                   'admin_email', 'admin_password', 'session_key_last_update', 
+                   'session_key_longevity_days')
 
 
 class CampaignSerializer(serializers.ModelSerializer):
@@ -33,7 +36,8 @@ class IdeaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Idea
-        exclude = ('appcivist_id', 'sync', 'user', 'campaign', 'appcivist_uuid', 'resource_space_id', 'forum_resource_space_id')
+        exclude = ('appcivist_id', 'sync', 'user', 'campaign', 'appcivist_uuid',
+                   'resource_space_id', 'forum_resource_space_id')
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -44,7 +48,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        exclude = ('appcivist_id', 'user', 'parent_idea', 'parent_comment', 'sync', 'resource_space_id', 'forum_resource_space_id')
+        exclude = ('appcivist_id', 'user', 'parent_idea', 'parent_comment', 'sync',
+                   'resource_space_id', 'forum_resource_space_id')
 
 
 class FeedbackSerializer(serializers.ModelSerializer):
