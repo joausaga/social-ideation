@@ -71,19 +71,19 @@ Installation
 
  1. Clone the repository `git clone https://github.com/joausaga/social-ideation.git`
 
- 2. Go inside the repository folder and execute `pip install -r requirements.txt` to install dependencies.
-    If an error occurs during the installation, it might be because some of these resons:
+2. Create a virtual environment by running `virtualenv env`
+
+ 3. Activate the virtual environment by running `source env/bin/activate`
+
+ 3. Go inside the repository folder and execute `pip install -r requirements.txt` to install dependencies.
+    If an error occurs during the installation, it might be because some of these reasons:
     a) Package *python-dev* is missing
     b) Package *libmysqlclient-dev* is missing
     c) The environment variables *LC_ALL* and/or *LC_CTYPE* are not defined or don't have a valid value
 
- 3. Clone Facebook API client library `git clone https://github.com/pythonforfacebook/facebook-sdk`
+ 4. Create a mysql database. Make sure your database collation is set to UTF-8, if not, edit the script *fix_database_to_utf8.py* and set the *user* and *passwd* parameters of your database and then run the script `python fix_database_to_utf8.py`
 
- 4. Go inside Facebook API client library and install it `python setup.py install`
-
- 5. Create a mysql database. Make sure your database collation is set to UTF-8, if not, edit the script *fix_database_to_utf8.py* and set the *user* and *passwd* parameters of your database and then run the script `python fix_database_to_utf8.py`
-
- 6. Set the configuration parameters of the database in social-ideation/settings.py
+ 5. Set the configuration parameters of the database in social-ideation/settings.py
 
     ```
     DATABASES = {
@@ -97,62 +97,76 @@ Installation
     }
     ```
 
- 7. Run `python manage.py migrate` to set up the database schema
+ 6. Run `python manage.py migrate` to set up the database schema
  
- 8. Run `python manage.py syncdb` to create an admin user and install the authentication system
+ 7. Run `python manage.py syncdb` to create an admin user and install the authentication system
  
- 9. Install Rabbit MQ broker. [Unix installation instructions](http://www.rabbitmq.com/install-generic-unix.html)
+ 8. Install Rabbit MQ broker. [Unix installation instructions](http://www.rabbitmq.com/install-generic-unix.html). Tip: Use the `tar xf archive.tar.xz <name_of_the_rabbit_package>` command to uncompress your Rabbit MQ broker installer.
  
- 10. Set the static url in social-ideation/settings.py
- 
- 11. Add the following programs (rabbit, celery and celerybeat) at the *program section* of the supervisor configuration file (supervisord.conf). You can look at the example file (supervisord-example.conf) 
+ 9. Set the static url in social-ideation/settings.py. The default value is "static"
+
+10. Create a copy of the supervisord configuration file from the sample file by typing the command `cp supervisord.conf.sample supervisord.conf`
+
+ 11. Add the following programs routes (rabbit, celery and celerybeat) at the *program section* of the supervisor configuration file (supervisord.conf).
+
+12. Create the folder for the application logs and empty logs files with the following commands
+```
+    mkdir var
+    mkdir var/log
+    touch var/log/rabbit.log
+    touch var/log/celerybeat.log
+    touch var/log/worker.log
+```
 
 Getting started
 ---------------
 
- 1. [Sign up to IdeaScale](http://www.ideascale.com)
+ 1. Choose a Consultation Platform to connect to Social Ideation App:
+    1. [Sign up to IdeaScale](http://www.ideascale.com), or
+    2. Sign up to an AppCivist instance.
 
- 2. Create an IdeaScale Community
+ 2. If you are using IdeaScale, Create an IdeaScale Community. If you are using AppCivist create an Assembly with at least one member with administrator role, and at least one campaign.
 
- 3. [Request an API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api)
+ 3. Get an API token from your Consultation Platform.
+    1. If your are using IdeaScale,[Request an API token for the new community](http://support.ideascale.com/customer/portal/articles/1001563-ideascale-rest-api). You will also need the IdeaScale Portal ID, which you can find on *Community Settings -> Integration -> Developer's API -> Community API*.
+    2. If you are using AppCivist, get your admin user email and password. These would be used to generate a token.
 
- 4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html)
+ 4. [Create a Facebook App](http://nodotcom.org/python-facebook-tutorial.html). Because the app requires _**email**_, _**public_profile**_ and _**publish_actions**_ permissions to work, it, first, has to be approved by Facebook. [More details here](https://developers.facebook.com/docs/apps/review/).
 
- 5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel
+ 5. Set the App Domains (Basic) and the Valid OAuth redirect URIs (Advanced) on the App Settings panel.
 
- 6. Create a Facebook Group and set the privacy setting to Public
+ 6. Create a Facebook Group and set the privacy setting to Public.
 
- 7. Go inside social ideation directory and load initial IdeaScale data `python manage.py loaddata ideascale_connector_data.json`
+ 7. Go inside social ideation directory and load initial IdeaScale and AppCivist data by running `python manage.py loaddata initial_connectors_data.json`.
 
- 8. Hit the social ideation URL, i.e., http://www.social-ideation.com, and log in with the admin credentials
+8. Run the Django server by running the following command `python manage.py runserver`.
 
- 9. Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*)
+ 9. Hit the social ideation URL, i.e., http://www.social-ideation.com/admin, http://localhost:8000/admin. This will redirect you to the Administration Login page. Log in with the admin credentials.
 
- 10. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed 
-(*Home->Connectors->URL Callbacks*)
+ 10. If your consultation platform is IdeaScale: Create a new IdeaScale initiative (*Home->IdeaScale->Initiative->Add*). Do not end the url with a / (slash character). If you are using AppCivist Instead: create a new Assembly (*Home->AppCivist->Assemblies->Add*).
 
- 11. Update IdeaScale connector token (*Home->Connectors->IdeaScale*) The correct token should be located in the table 
-authtoken_token (user_id = 1)
+ 11. Update the URLs of the callbacks replacing the host part of the callback URLs with the URL where the app is installed  (*Home->Connectors->URL Callbacks*).
 
- 12. Create a consultation platform (*Home->App->Consultation platforms->Add*) choosing IdeaScale as the connector  
+ 12. Update IdeaScale (or AppCivist) connector token (*Home->Connectors->Connectors->IdeaScale*) The correct token should be located in the table (*Home->Authokens->Tokens*) (user_id = 1. This is the user you created as an admin of the Django application). Do not remove the word "Token" from the token value. This value has to be **Token** followed by a blank space and finally the alphanumeric value you have copied from the *Tokens* table.
 
- 13. Import the consultation platform initiatives. Select the new consultation platform in (*Home->App->Consultation Platforms*) 
-and choose the option **'Get Initiatives'** from the **Action menu** located on the top of the list
+ 13. Create a consultation platform (*Home->App->Consultation platforms->Add*) choosing IdeaScale (or AppCivist) as the connector.
 
- 14. Obtain Facebook OAuth token. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/) and 
-in the application drop down select the app created in Step 4. Click Get Access Token; in permissions popup go to 
-extended permissions tab and select **publish_actions**. 
+ 14. Import the consultation platform initiatives. Select the new consultation platform in (*Home->App->Consultation Platforms*) and choose the option **'Get Initiatives'** from the **Action menu** located on the top of the list.
 
- 15. Create a social network app (*Home->App->Social network apps->Add*) choosing Facebook as the connector, setting the **app id**, **app secret**, **app access token** (app id|app secret) and  the **redirect uri** (that matches the *Site URL*) of the created Facebook App in Step 4
+ 15. Obtain Facebook OAuth token. Go to [Graph API Explorer](https://developers.facebook.com/tools/explorer/) and in the application drop down select the app created in Step 4. Click Get Access Token; in permissions popup go to extended permissions tab and select **email** and **publish_actions**. 
 
- 16.  Create a social network app user (*Home->App->Social network app users->Add*) setting in the field access token the previously obtained access token in Step 14
+ 16. Create a social network app (*Home->App->Social network apps->Add*) choosing Facebook as the connector, setting the **app id**, **app secret**, **app access token** ( which is the string _<app id>|<app secret>_) and  the **redirect uri** (that matches the *Site URL*) of the created Facebook App in Step 4. Check the **batch requests** checkbox.
 
- 17. Create a social network app community (*Home->App->Social network app communities->Add*) and put the user created in
-Step 15 as the admin
+ 17.  Create a social network app user (*Home->App->Social network app users->Add*).For the form field called *access token*, use the value obtained in the Step 15.
 
- 18. Edit the previously social network app created, configuring the **community** as the community created before.
+ 18. Create a social network app community (*Home->App->Social network app communities->Add*) choosing **Group** as type and the social network app user created in the Step 17 as the admin.
 
-
+ 19. Edit the social network app previously created: set **community** to the social network app community created before.
+ 
+ 20. To start syncrhonization run the bash script called init_sync.sh with the following command: ```bash init_sync.sh```. Be sure than the Django server it's up and running before running this command.
+ 
+ 21. To stop synchronization run the bash script called stop_sync.sh with the following command: ```bash stop_sync.sh```
+ 
 License
 -------
 MIT
@@ -179,3 +193,4 @@ Let me know
 
 If you use social ideation, please [write me](mailto:jorgesaldivar@gmail.com) a short message with a link to your project. 
 It is not mandatory, but I will really appreciate it!
+ 
