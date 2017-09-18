@@ -493,7 +493,6 @@ def is_user_community_member(sn_app, app_user):
     #        return True
     params = {'app': sn_app, 'group_id': sn_app.community.external_id}
     members = call_social_network_api(sn_app.connector, 'get_community_member_list', params)
-    #logger.info('12sep members: ' + str(members))
     for member in members:
         if member == app_user.external_id:
             app_community.members.add(app_user)
@@ -505,7 +504,6 @@ def get_community_members_list(sn_app):
     app_community = sn_app.community
     params = {'app': sn_app, 'group_id': sn_app.community.external_id}
     members = call_social_network_api(sn_app.connector, 'get_community_member_list', params)
-    #logger.info('12sep members: ' + str(members))
     return members
 
 def is_a_community_member(sn_app, app_user, members):
@@ -831,7 +829,9 @@ def publish_idea_cp(idea):
         url_cb = get_url_cb(connector, 'create_idea_cb')
         url = build_request_url(url_cb.url, url_cb.callback, {'initiative_id': initiative.external_id})
         params = {'title': generate_idea_title_from_text(idea.text), 'text': text_to_cp,
-                  'campaign_id': campaign.external_id}
+                  'campaign_id': campaign.external_id, 'source': 'social_ideation_facebook' ,
+                  'source_url': idea.source_social.community.url, 'user_external_id': idea.author.external_id,
+                  'user_url': idea.author.url, 'user_name': idea.author.screen_name}
         body_param = build_request_body(connector, url_cb.callback, params)
         resp = do_request(connector, url, url_cb.callback.method, body_param)
         new_content = get_json_or_error(connector.name, url_cb.callback, resp)
@@ -878,11 +878,9 @@ def publish_comment_cp(comment):
     initiative = comment.initiative
     template_comment_cp = '{}\n'
     template_comment_cp += _get_str_language(initiative.language, 'author_p')
-
     text_uf8 = convert_to_utf8_str(comment.text)
     author_name_utf8 = convert_to_utf8_str(comment.author.screen_name)
     text_cplatform = remove_hashtags(text_uf8)
-
     if _is_in_black_list(comment.author):
         return
 
@@ -890,7 +888,12 @@ def publish_comment_cp(comment):
     cplatform = initiative.platform
     connector = cplatform.connector
     text_to_cp = template_comment_cp.format(text_cplatform, author_name_utf8, sn_source)
-    params = {'text': text_to_cp}
+    params = {'text': text_to_cp, 
+              'source': 'social_ideation_facebook' ,
+              'source_url': comment.source_social.community.url, 
+              'user_external_id': comment.author.external_id,
+              'user_url': comment.author.url,
+              'user_name': comment.author.screen_name}
     if comment.is_new:
         if comment.parent == 'idea':
             url_cb = get_url_cb(connector, 'create_comment_idea_cb')

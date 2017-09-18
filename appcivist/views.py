@@ -15,8 +15,9 @@ from django.utils import timezone
 # from ideascaly.error import IdeaScalyError
 # from ideascaly.api import API
 
-from appcivist.models import Assembly, Author, Campaign, Proposal, Comment, Feedback
-from appcivist.serializers import AssemblySerializer, CampaignSerializer, AuthorSerializer, ProposalSerializer, CommentSerializer, FeedbackSerializer
+from appcivist.models import Assembly, Author, Campaign, Idea, Comment, Feedback
+from appcivist.serializers import AssemblySerializer, CampaignSerializer,\
+      AuthorSerializer, IdeaSerializer, CommentSerializer, FeedbackSerializer
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -92,7 +93,8 @@ def cru_author(author_id, assembly, author_info=None):
             author = Author(appcivist_id=author_info["userId"], name=author_info["name"], email=author_info["email"],
                             assembly=assembly, appcivist_uuid=author_info["uuid"])
         else:
-            author = Author(appcivist_id=author_info["userId"], name=author_info["name"], assembly=assembly, appcivist_uuid=author_info["uuid"])
+            author = Author(appcivist_id=author_info["userId"], name=author_info["name"], assembly=assembly,
+                            appcivist_uuid=author_info["uuid"])
         author.save()
         return author
 
@@ -105,7 +107,9 @@ def cu_campaigns(assembly):
             campaign.name = campaign_raw["title"]
             campaign.save()
         except Campaign.DoesNotExist:
-            campaign = Campaign(appcivist_id=campaign_raw["campaignId"], appcivist_uuid=campaign_raw["uuid"], name=campaign_raw["title"], assembly=assembly, resource_space_id=campaign_raw["resourceSpaceId"], forum_resource_space_id=campaign_raw["forumResourceSpaceId"])
+            campaign = Campaign(appcivist_id=campaign_raw["campaignId"], appcivist_uuid=campaign_raw["uuid"], 
+                       name=campaign_raw["title"], assembly=assembly, resource_space_id=campaign_raw["resourceSpaceId"],
+                       forum_resource_space_id=campaign_raw["forumResourceSpaceId"])
             campaign.save()
 
 
@@ -122,43 +126,59 @@ def cru_campaign(campaign_id, assembly):
 
 
 
-def cru_proposal(proposal_id, assembly, proposal_obj=None):
+def cru_idea(idea_id, assembly, idea_obj=None):
     try:
-        proposal = Proposal.objects.get(appcivist_id=proposal_id)
-        if proposal_obj:
-            proposal.title = proposal_obj["title"]
-            proposal.text = proposal_obj["text"]
-            proposal.positive_votes = proposal_obj["stats"]['ups']
-            proposal.negative_votes = proposal_obj["stats"]['downs']
-            proposal.comments = proposal_obj["commentCount"]
-            proposal.campaign = cru_campaign(proposal_obj["campaignIds"][0], assembly)
-        proposal.sync = False
-        proposal.save()
-        return proposal
-    except Proposal.DoesNotExist:
-        if not proposal_obj:
-            proposal_obj = get_appcivist_data(assembly, 'get_proposal_details', {'coid': proposal_id, 'aid': assembly.appcivist_id})
-        author = cru_author(proposal_obj["firstAuthor"]['userId'], assembly, proposal_obj["firstAuthor"])
-        campaign_proposal = cru_campaign(proposal_obj["campaignIds"][0], assembly)
-        positive_votes = proposal_obj["stats"]['ups']
-        negative_votes = proposal_obj["stats"]['downs']
-        comments = proposal_obj["commentCount"]
+        idea = Idea.objects.get(appcivist_id=idea_id)
+        if idea_obj:
+            if 'title' in idea_obj.keys() and 'text' in idea_obj.keys():
+                idea.title = idea_obj["title"]
+                idea.text = idea_obj["text"]
+            else:
+                idea.text = idea_obj["title"]
+            idea.positive_votes = idea_obj["stats"]['ups']
+            idea.negative_votes = idea_obj["stats"]['downs']
+            idea.comments = idea_obj["commentCount"]
+            idea.campaign = cru_campaign(idea_obj["campaignIds"][0], assembly)
+        idea.sync = False
+        idea.save()
+        return idea
+    except Idea.DoesNotExist:
+        if not idea_obj:
+            idea_obj = get_appcivist_data(assembly, 'get_idea_details', 
+                       {'coid': idea_id, 'aid': assembly.appcivist_id})
+        if 'firstAuthor' not in idea_obj.keys():
+            return
+        author = cru_author(idea_obj["firstAuthor"]['userId'], assembly, idea_obj["firstAuthor"])
+        campaign_idea = cru_campaign(idea_obj["campaignIds"][0], assembly)
+        positive_votes = idea_obj["stats"]['ups']
+        negative_votes = idea_obj["stats"]['downs']
+        comments = idea_obj["commentCount"]
         url = ""
-        proposal_ac_dt = datetime.strptime(proposal_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
-        proposal_dt = _get_timezone_aware_datetime(proposal_ac_dt) if timezone.is_naive(proposal_ac_dt) else proposal_ac_dt
-        proposal = Proposal(appcivist_id=proposal_obj["contributionId"], appcivist_uuid=proposal_obj["uuidAsString"] ,title=proposal_obj["title"], text=proposal_obj["text"],
-                    datetime=proposal_dt, positive_votes=positive_votes, negative_votes=negative_votes, comments=comments,
-                    campaign=campaign_proposal, url=url, user=author, sync=False, resource_space_id=proposal_obj["resourceSpaceId"], forum_resource_space_id=proposal_obj["forumResourceSpaceId"])
-        proposal.save()
-        return proposal
+        idea_ac_dt = datetime.strptime(idea_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
+        idea_dt = _get_timezone_aware_datetime(idea_ac_dt) if timezone.is_naive(idea_ac_dt) else idea_ac_dt
+        # We use the 'title' attribute of the response as the 'text' attribute of the instance
+        # because that's where appcivist's ideas store the text
+        if 'title' in idea_obj.keys() and 'text' in idea_obj.keys():
+            title = idea_obj["title"]
+            text = idea_obj["text"]
+        else:
+            title = ""
+            text = idea_obj["title"]
+        idea = Idea(appcivist_id=idea_obj["contributionId"], appcivist_uuid=idea_obj["uuidAsString"],
+                    title=title, text=text, datetime=idea_dt, positive_votes=positive_votes, 
+                    negative_votes=negative_votes, comments=comments, campaign=campaign_idea, 
+                    url=url, user=author, sync=False, resource_space_id=idea_obj["resourceSpaceId"],
+                    forum_resource_space_id=idea_obj["forumResourceSpaceId"])
+        idea.save()
+        return idea
 
 
 def get_parent_comment(parent_type, parent_id, assembly):
-    if parent_type == 'proposal':
+    if parent_type == 'idea':
         try:
-            return Proposal.objects.get(appcivist_id=parent_id)
-        except Proposal.DoesNotExist:
-            return cru_proposal(parent_id, assembly)
+            return Idea.objects.get(appcivist_id=parent_id)
+        except Idea.DoesNotExist:
+            return cru_idea(parent_id, assembly)
     else:
         try:
             return Comment.objects.get(appcivist_id=parent_id)
@@ -178,26 +198,31 @@ def cru_comment(comment_id, assembly, comment_obj=None):
         return comment
     except Comment.DoesNotExist:
         if not comment_obj:
-            comment_obj = get_appcivist_data(assembly, 'get_comment_details', {'coid': comment_id, 'aid': assembly.appcivist_id})
+            comment_obj = get_appcivist_data(assembly, 'get_comment_details', {'coid': comment_id,
+                                                                      'aid': assembly.appcivist_id})
+        if 'firstAuthor' not in comment_obj.keys():
+            return
         author = cru_author(comment_obj["firstAuthor"]['userId'], assembly, comment_obj["firstAuthor"])
         positive_votes = comment_obj["stats"]['ups']
         negative_votes = comment_obj["stats"]['downs']
         comments = comment_obj["commentCount"]
         url = ""
         if comment_obj["type"] == "DISCUSSION":
-            parent_type = "proposal"
+            parent_type = "idea"
         else:
             parent_type = "comment"
-        comment_ac_dt = parse(comment_obj["creation"])
+        #comment_ac_dt = parse(comment_obj["creation"])
+        comment_ac_dt = datetime.strptime(comment_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         comment_dt = _get_timezone_aware_datetime(comment_ac_dt) if timezone.is_naive(comment_ac_dt) else comment_ac_dt
-        comment = Comment(appcivist_id=comment_obj["contributionId"], appcivist_uuid=comment_obj["uuidAsString"], text=comment_obj["text"],
-                          datetime=comment_dt, positive_votes=positive_votes, negative_votes=negative_votes,
-                          comments=comments, url=url, user=author,
-                          parent_type=parent_type, sync=False, resource_space_id=comment_obj["resourceSpaceId"], forum_resource_space_id=comment_obj["forumResourceSpaceId"])
+        comment = Comment(appcivist_id=comment_obj["contributionId"], appcivist_uuid=comment_obj["uuidAsString"],
+                          text=comment_obj["text"], datetime=comment_dt, positive_votes=positive_votes, 
+                          negative_votes=negative_votes, comments=comments, url=url, user=author, 
+                          parent_type=parent_type, sync=False, resource_space_id=comment_obj["resourceSpaceId"],
+                          forum_resource_space_id=comment_obj["forumResourceSpaceId"])
         parent_id = comment_obj["containingContributionsIds"][0]
         parent = get_parent_comment(parent_type, parent_id, assembly)
-        if parent_type == 'proposal':
-            comment.parent_proposal = parent
+        if parent_type == 'idea':
+            comment.parent_idea = parent
         else:
             comment.parent_comment = parent
         comment.save()
@@ -221,7 +246,8 @@ def cru_feedback(feedback_id, assembly, feedback_obj):
         # author_id = vote_obj.authorId if hasattr(vote_obj, 'authorId') else vote_obj.memberId
         author_id = feedback_obj["userId"]
         author = cru_author(author_id, assembly)
-        feedback_ac_dt = parse(feedback_obj["creation"])
+        #feedback_ac_dt = parse(feedback_obj["creation"])
+        feedback_ac_dt = datetime.strptime(feedback_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         feedback_dt = _get_timezone_aware_datetime(feedback_ac_dt) if timezone.is_naive(feedback_ac_dt) else feedback_ac_dt
         
         if feedback_obj["up"]:
@@ -230,12 +256,12 @@ def cru_feedback(feedback_id, assembly, feedback_obj):
             feedback_value = -1
         feedback_parent_type = feedback_obj["parentType"]
         feedback_parent_id = feedback_obj["contributionId"]
-        feedback = Feedback(appcivist_id=feedback_obj["id"], value=feedback_value, datetime=feedback_dt, author=author, sync=False,
-                    parent_type=feedback_parent_type)
-        if feedback_parent_type == 'proposal':
-            feedback.parent_proposal = cru_proposal(feedback_parent_id, assembly)
+        feedback = Feedback(appcivist_id=feedback_obj["id"], value=feedback_value, datetime=feedback_dt, 
+                            author=author, sync=False, parent_type=feedback_parent_type)
+        if feedback_parent_type == 'idea':
+            feedback.parent_idea = cru_idea(feedback_parent_id, assembly)
         else:
-            feedback.parent_comment = cru_comment(feedback_parent_id, proposal)
+            feedback.parent_comment = cru_comment(feedback_parent_id, idea)
         feedback.save()
         return feedback
 
@@ -310,15 +336,17 @@ class AppCivistObject(APIView):
             return resp
 
     def post(self, request, assembly, format=None):
+        respmsg = "inicio"
         try:
             api = get_api_obj(assembly)
 
-            api.ignore_admin_user = True
-            api.social_ideation_source = reques.source # indicates the name of the providerId (e.g., social_ideation_facebook)
-            api.social_ideation_source_url= request.source_url # source to the original post
-            api.social_ideation_user_source_url= request.user_url # link to the user
-            api.social_ideation_user_source_id= request.user_id # email or id of the user in the source social network
-
+            api.ignore_admin_user = "true"
+            api.social_ideation_source = request.data['source'] # indicates the name of the providerId (e.g., social_ideation_facebook)
+            api.social_ideation_source_url = request.data['source_url'] # source to the original post
+            api.social_ideation_user_source_url = request.data['user_url'] # link to the user
+            api.social_ideation_user_source_id = request.data['user_external_id'] # email or id of the user in the source social network
+            api.social_ideation_user_name = request.data['user_name'] # the name of the author in the social network
+            api.assembly_id = assembly.appcivist_id
             new_obj_raw = getattr(api, self.api_method)(**self.api_method_params)
             new_obj_id = find_obj_id(new_obj_raw)
             new_obj= self.create_obj(new_obj_id, assembly, new_obj_raw)
@@ -424,7 +452,8 @@ class Campaigns(APIView):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request, assembly_id, format=None):
+    def get(self, request, initiative_id, format=None):
+        assembly_id = initiative_id
         try:
             assembly = Assembly.objects.get(appcivist_id=assembly_id)
             campaigns = cru_campaign(-100, assembly)
@@ -435,74 +464,79 @@ class Campaigns(APIView):
             resp.content = e
             return resp
 
-class Proposals(AppCivistObject):
+class Ideas(AppCivistObject):
     """
     Return the list of ideas or create a new one.
     """
 
-    def get(self, request, assembly_id, format=None):
+    def get(self, request, initiative_id, format=None):
+        assembly_id = initiative_id
         try:
-            self.api_method = 'get_all_proposals'
+            self.api_method = 'get_all_ideas'
             self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
             self.iterate = False
-            self.create_obj = cru_proposal
-            self.queryset = Proposal
-            self.serializer_class = ProposalSerializer
+            self.create_obj = cru_idea
+            self.queryset = Idea
+            self.serializer_class = IdeaSerializer
             self.filters = {'sync': False}
             self.client_attr = 'last_idea'
             assembly = Assembly.objects.get(appcivist_id=assembly_id)
             self.api_method_params = {"aid" : assembly.appcivist_id}
-            return super(Proposals, self).get(request, assembly)
+            return super(Ideas, self).get(request, assembly)
         except Exception as e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
 
-    def post(self, request, assembly_id, format=None):
+    def post(self, request, initiative_id, format=None):
+        assembly_id = initiative_id
         try:
-            proposal_details = {"status": "PUBLISHED", "titel": request.data["title"], "text": request.data["text"], "type": "PROPOSAL", "campaigns":[request.data['campaign_id']]}
+            idea_details = {"status": "PUBLISHED", "title": request.data["title"], 
+                            "text": request.data["text"], "type": "IDEA", 
+                            "campaigns":[request.data['campaign_id']]}
             campaign = Campaign.objects.get(appcivist_id=request.data["campaign_id"])
-            if 'tags' in request.data.keys():
-                tags = [tag.strip() for tag in proposal_details['tags'].split(',')]
-                proposal_details['tags'] = tags
-            self.api_method_params = {"sid": campaign.resource_space_id, "proposal": proposal_details}
-            self.api_method = 'create_proposal'
-            self.create_obj = cru_proposal
-            self.serializer_class = ProposalSerializer
+            # if 'tags' in request.data.keys():
+            #     tags = [tag.strip() for tag in idea_details['tags'].split(',')]
+            #     idea_details['tags'] = tags
+            self.api_method_params = {"sid": campaign.resource_space_id, "idea": idea_details}
+            self.api_method = 'create_idea'
+            self.create_obj = cru_idea
+            self.serializer_class = IdeaSerializer
             self.filters = {}
             assembly = Assembly.objects.get(appcivist_id=assembly_id)
-            return super(Proposals,self).post(request, assembly)
+            return super(Ideas,self).post(request, assembly)
         except Exception as e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
+            return "hola mundo"
             return resp
 
 
-class ProposalDetail(AppCivistObjectDetail):
+class IdeaDetail(AppCivistObjectDetail):
     """
     Retrieve or delete an idea instance
     """
-    queryset = Proposal
-    serializer_class = ProposalSerializer
+    queryset = Idea
+    serializer_class = IdeaSerializer
 
-    def get(self, request, proposal_id, format=None):
+    def get(self, request, idea_id, format=None):
         try:
-            proposal = Proposal.objects.get(appcivist_id=proposal_id)
-            self.assembly = proposal.campaign.assembly
-            self.api_method = 'get_proposal_details'
-            self.api_method_params = {"aid": self.assembly.appcivist_id, "coid": proposal_id}
-            self.create_obj = cru_proposal
-            return super(ProposalDetail, self).get(request, proposal_id)
-        except Proposal.DoesNotExist, e:
+            idea = Idea.objects.get(appcivist_id=idea_id)
+            self.assembly = idea.campaign.assembly
+            self.api_method = 'get_idea_details'
+            self.api_method_params = {"aid": self.assembly.appcivist_id, "coid": idea_id}
+            self.create_obj = cru_idea
+            return super(IdeaDetail, self).get(request, idea_id)
+        except Idea.DoesNotExist, e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
-    def delete(self, request, proposal_id, format=None):
+    def delete(self, request, idea_id, format=None):
         try:
-            proposal = Proposal.objects.get(appcivist_id=proposal_id)
-            api = get_api_obj(proposal.campaign.assembly)
-            api.delete_proposal(aid=proposal.campaign.assembly.appcivist_id, coid=proposal.appcivist_id)
-            return super(ProposalDetail, self).delete(request, proposal_id)
+            idea = Idea.objects.get(appcivist_id=idea_id)
+            api = get_api_obj(idea.campaign.assembly)
+            api.delete_idea(aid=idea.campaign.assembly.appcivist_id, coid=idea.appcivist_id)
+            return super(IdeaDetail, self).delete(request, idea_id)
         except Exception as e:
             return Response('Error: {}'.format(e.reason), status=status.HTTP_400_BAD_REQUEST)
 
@@ -515,7 +549,8 @@ class Authors(AppCivistObject):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request, assembly_id, format=None):
+    def get(self, request, initiative_id, format=None):
+        assembly_id = initiative_id
         try:
             self.api_method = 'get_all_authors'
             self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
@@ -574,13 +609,15 @@ class Comments(AppCivistObject):
     Return the list of comments or create a new one.
     """
 
-    def get_assembly(self, assembly_id):
+    def get_assembly(self, initiative_id):
+        assembly_id = initiative_id
         try:
             return Assembly.objects.get(appcivist_id=assembly_id)
         except Assembly.DoesNotExist:
             return Http404
 
-    def get(self, request, assembly_id, format=None):
+    def get(self, request, initiative_id, format=None):
+        assembly_id = initiative_id
         self.api_method = 'get_all_comments'
         self.client_attr = 'last_comment'
         self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
@@ -593,11 +630,11 @@ class Comments(AppCivistObject):
         self.api_method_params = {"aid" : assembly.appcivist_id}
         return super(Comments,self).get(request, assembly)
 
-    def post(self, request, assembly_id, format=None):
+    def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class CommentsProposal(AppCivistObject):
+class CommentsIdea(AppCivistObject):
     """
     Return the list of comments of an idea
     """
@@ -605,36 +642,38 @@ class CommentsProposal(AppCivistObject):
     permission_classes = (IsAuthenticated,)
 
 
-    def get(self, request, proposal_id, format=None):
+    def get(self, request, idea_id, format=None):
         try:
-            proposal = Proposal.objects.get(appcivist_id=proposal_id)
-            assembly = proposal.campaign.assembly
-            self.api_method = 'get_comments_of_proposal'
-            self.api_method_params = {'sid': proposal.resource_space_id}
+            idea = Idea.objects.get(appcivist_id=idea_id)
+            assembly = idea.campaign.assembly
+            self.api_method = 'get_comments_of_idea'
+            self.api_method_params = {'sid': idea.resource_space_id}
             self.client_attr = 'last_comment_idea'
             self.create_obj = cru_comment
             self.queryset = Comment
             self.serializer_class = CommentSerializer
-            self.filters = {'sync':False, 'parent_proposal': proposal}
-            return super(CommentsProposal,self).get(request, assembly)
+            self.filters = {'sync':False, 'parent_idea': idea}
+            return super(CommentsIdea,self).get(request, assembly)
         except Exception as e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
 
-    def post(self, request, proposal_id, format=None):
+    def post(self, request, idea_id, format=None):
         try:
-            proposal = Proposal.objects.get(appcivist_id=proposal_id)
-            assembly = proposal.campaign.assembly
-            comment_details = {"status": "PUBLISHED", "text": request.data["text"], "type": "DISCUSSION", "campaigns":[request.data['campaign_id']]}
-            self.api_method = 'comment_proposal'
-            self.api_method_params = {"sid": proposal.resource_space_id, "discussion": comment_details}
+            idea = Idea.objects.get(appcivist_id=idea_id)
+            assembly = idea.campaign.assembly
+            comment_details = {"status": "PUBLISHED", "title": request.data['text'][:10],
+                               "text": request.data["text"], "type": "DISCUSSION"}
+            self.api_method = 'comment_idea'
+            self.api_method_params = {"sid": idea.resource_space_id, "discussion": comment_details}
             self.create_obj = cru_comment
             self.serializer_class = CommentSerializer
             self.filters = {'sync':True}
-            return super(CommentsProposal,self).post(request, assembly)
-        except Proposal.DoesNotExist:
-            return Response('Error: Idea with id {} does not exist'.format(proposal_id), status=status.HTTP_400_BAD_REQUEST)
+            return super(CommentsIdea,self).post(request, assembly)
+        except Idea.DoesNotExist:
+            return Response('Error: Idea with id {} does not exist'.format(idea_id), \
+                             status=status.HTTP_400_BAD_REQUEST)
 
 
 class CommentsComment(AppCivistObject):
@@ -645,8 +684,8 @@ class CommentsComment(AppCivistObject):
     permission_classes = (IsAuthenticated,)
 
     def get_assembly(self, comment):
-        if comment.parent_type == 'proposal':
-            return comment.parent_proposal.campaign.assembly
+        if comment.parent_type == 'idea':
+            return comment.parent_idea.campaign.assembly
         else:
             return self.get_assembly(comment.parent_comment)
 
@@ -657,7 +696,9 @@ class CommentsComment(AppCivistObject):
         try:
             comment = Comment.objects.get(appcivist_id=comment_id)
             assembly = self.get_assembly(comment)
-            comment_details = {"status": "PUBLISHED", "text": request.data["text"], "type": "COMMENT", "campaigns":[request.data['campaign_id']]}
+            comment_details = {"status": "PUBLISHED", "title": request.data["text"][:10],
+                               "text": request.data["text"], "type": "COMMENT"}
+            self.api_method = "comment_discussion"
             self.api_method_params = {"sid": comment.resource_space_id, "comment": comment_details}
             self.create_obj = cru_comment
             self.serializer_class = CommentSerializer
@@ -677,8 +718,8 @@ class CommentDetail(AppCivistObjectDetail):
     serializer_class = CommentSerializer
 
     def get_assembly(self, comment):
-        if comment.parent_type == 'proposal':
-            return comment.parent_proposal.campaign.assembly
+        if comment.parent_type == 'idea':
+            return comment.parent_idea.campaign.assembly
         else:
             return self.get_assembly(comment.parent_comment)
 
@@ -705,16 +746,17 @@ class CommentDetail(AppCivistObjectDetail):
             return Response('Error: {}'.format(e.reason), status=status.HTTP_400_BAD_REQUEST)
 
 
-class FeedbacksProposals(AppCivistObject):
+class FeedbacksIdeas(AppCivistObject):
     """
     Return the list of all votes of all ideas.
     """
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request, assembly_id, format=None):
+    def get(self, request, initiative_id, format=None):
+        assembly_id = initiative_id
         try:
-            self.api_method = 'get_feedbacks_of_all_proposals'
+            self.api_method = 'get_feedbacks_of_all_ideas'
             self.client_attr = 'last_vote'
             self.create_obj = cru_feedback
             self.queryset = Feedback
@@ -722,13 +764,13 @@ class FeedbacksProposals(AppCivistObject):
             self.filters = {'sync': False}
             assembly = Assembly.objects.get(appcivist_id=assembly_id)
             self.api_method_params = {"aid": assembly.appcivist_id}
-            return super(FeedbacksProposals,self).get(request, assembly)
+            return super(FeedbacksIdeas,self).get(request, assembly)
         except Exception as e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
 
-    def post(self, request, assembly_id, format=None):
+    def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -739,7 +781,8 @@ class FeedbacksComments(AppCivistObject):
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
 
-    def get(self, request, assembly_id, format=None):
+    def get(self, request, initiative_id, format=None):
+        assembly_id = initiative_id
         try:
             self.api_method = 'get_feedbacks_of_all_comments'
             self.client_attr = 'last_vote'
@@ -755,45 +798,45 @@ class FeedbacksComments(AppCivistObject):
             resp.content = e
             return resp
 
-    def post(self, request, assembly_id, format=None):
+    def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class FeedbacksProposal(AppCivistObject):
+class FeedbacksIdea(AppCivistObject):
     """
     Return the list of votes related to a particular idea.
     """
 
-    def get(self, request, proposal_id, format=None):
+    def get(self, request, idea_id, format=None):
         try:
-            proposal = Proposal.objects.get(appcivist_id=proposal_id)
-            assembly = proposal.campaign.assembly
-            self.api_method = 'get_feedbacks_of_proposal'
+            idea = Idea.objects.get(appcivist_id=idea_id)
+            assembly = idea.campaign.assembly
+            self.api_method = 'get_feedbacks_of_idea'
             self.client_attr = 'last_vote_idea'
-            self.api_method_params = {"aid":assembly.appcivist_id , "coid":proposal.appcivist_id}
+            self.api_method_params = {"aid":assembly.appcivist_id , "coid":idea.appcivist_id}
             self.create_obj = cru_feedback
             self.queryset = Feedback
             self.serializer_class = FeedbackSerializer
             self.filters = {'sync':False}
-            return super(FeedbacksProposal, self).get(request, assembly)
+            return super(FeedbacksIdea, self).get(request, assembly)
         except Exception as e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
 
-    def post(self, request, proposal_id, format=None):
+    def post(self, request, idea_id, format=None):
         try:
-            proposal = Proposal.objects.get(appcivist_id=proposal_id)
-            assembly = proposal.campaign.assembly
+            idea = Idea.objects.get(appcivist_id=idea_id)
+            assembly = idea.campaign.assembly
             if request.data['value'] > 0:
-                self.api_method = 'vote_up_proposal'
+                self.api_method = 'vote_up_idea'
             else:
-                self.api_method = 'vote_down_proposal'
-            self.api_method_params = {"caid": assembly.campaign.appcivist_id, "coid": proposal.appcivist_id}
+                self.api_method = 'vote_down_idea'
+            self.api_method_params = {"caid": assembly.campaign.appcivist_id, "coid": idea.appcivist_id}
             self.create_obj = cru_feedback
             self.serializer_class = FeedbackSerializer
             self.filters = {'sync':True}
-            return super(FeedbacksProposal,self).post(request, assembly)
+            return super(FeedbacksIdea,self).post(request, assembly)
         except Exception as e:
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
@@ -807,8 +850,8 @@ class FeedbacksComment(AppCivistObject):
     """
 
     def get_assembly(self, comment):
-        if comment.parent_type == 'proposal':
-            return comment.parent_proposal.campaign.assembly
+        if comment.parent_type == 'idea':
+            return comment.parent_idea.campaign.assembly
         else:
             return self.get_assembly(comment.parent_comment)
 
@@ -828,7 +871,7 @@ class FeedbacksComment(AppCivistObject):
             resp = Response(status=status.HTTP_400_BAD_REQUEST)
             resp.content = e
             return resp
-    def post(self, request, assembly_id, format=None):
+    def post(self, request, initiative_id, format=None):
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
