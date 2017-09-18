@@ -167,3 +167,30 @@ Getting started
  
  21. To stop synchronization run the bash script called stop_sync.sh with the following command: ```bash stop_sync.sh```
  
+License
+-------
+MIT
+
+Technologies
+------------
+
+1. [Django Framework 1.8](https://www.djangoproject.com/)
+
+2. [MySQL](http://www.mysql.com) database and its corresponding python package
+
+3. [Facebook SDK](https://github.com/pythonforfacebook/facebook-sdk) a python-based Facebook API client
+
+4. [IdeaScaly](https://github.com/joausaga/ideascaly) a python-based IdeaScale API client
+
+5. [Celery](http://www.celeryproject.org)
+
+6. [Celery for Django](http://docs.celeryproject.org/en/latest/django/first-steps-with-django.html)
+
+7. [Rabbit MQ](http://www.rabbitmq.com)
+
+Let me know
+-----------
+
+If you use social ideation, please [write me](mailto:jorgesaldivar@gmail.com) a short message with a link to your project. 
+It is not mandatory, but I will really appreciate it!
+ 
