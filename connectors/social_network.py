@@ -271,7 +271,8 @@ class Facebook(SocialNetworkBase):
     @classmethod
     def get_posts(cls, app):
         cls.authenticate(app)
-        posts = cls.graph.get_connections(app.community.external_id, 'feed')
+        #posts = cls.graph.get_connections(app.community.external_id, 'feed')
+        posts = cls.graph.get_connections(id=app.community.external_id, connection_name='feed', fields='id,message,actions,from,created_time,likes,comments')
         posts_array = cls.get_elements(posts, 'posts')
         return posts_array
 
@@ -355,7 +356,8 @@ class Facebook(SocialNetworkBase):
             cls.graph = facebook.GraphAPI(access_token)
         else:
             cls.authenticate(app)
-        raw_user = cls.graph.get_object(id_user)
+        #raw_user = cls.graph.get_object(id_user)
+        raw_user = cls.graph.get_object(id=id_user, fields='id,name,email,link')
         user = {'id': raw_user['id'], 'name': raw_user['name']}
         if 'link' in raw_user.keys():
             user.update({'url': raw_user['link']})

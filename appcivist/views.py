@@ -130,9 +130,9 @@ def cru_idea(idea_id, assembly, idea_obj=None):
     try:
         idea = Idea.objects.get(appcivist_id=idea_id)
         if idea_obj:
-            if 'title' in idea_obj.keys() and 'text' in idea_obj.keys():
+            if 'title' in idea_obj.keys() and 'plainText' in idea_obj.keys():
                 idea.title = idea_obj["title"]
-                idea.text = idea_obj["text"]
+                idea.text = idea_obj["plainText"]
             else:
                 idea.text = idea_obj["title"]
             idea.positive_votes = idea_obj["stats"]['ups']
@@ -147,8 +147,11 @@ def cru_idea(idea_id, assembly, idea_obj=None):
             idea_obj = get_appcivist_data(assembly, 'get_idea_details', 
                        {'coid': idea_id, 'aid': assembly.appcivist_id})
         if 'firstAuthor' not in idea_obj.keys():
-            return
-        author = cru_author(idea_obj["firstAuthor"]['userId'], assembly, idea_obj["firstAuthor"])
+            if 'nonMemberAuthor' in idea_obj.keys():
+                author_info = {'userId': 0 , 'name': 'Anonymous', 'uuid': '0'}
+        else:
+            author_info = idea_obj['firstAuthor']
+        author = cru_author(author_info['userId'], assembly, author_info)
         campaign_idea = cru_campaign(idea_obj["campaignIds"][0], assembly)
         positive_votes = idea_obj["stats"]['ups']
         negative_votes = idea_obj["stats"]['downs']
@@ -158,9 +161,9 @@ def cru_idea(idea_id, assembly, idea_obj=None):
         idea_dt = _get_timezone_aware_datetime(idea_ac_dt) if timezone.is_naive(idea_ac_dt) else idea_ac_dt
         # We use the 'title' attribute of the response as the 'text' attribute of the instance
         # because that's where appcivist's ideas store the text
-        if 'title' in idea_obj.keys() and 'text' in idea_obj.keys():
+        if 'title' in idea_obj.keys() and 'plainText' in idea_obj.keys():
             title = idea_obj["title"]
-            text = idea_obj["text"]
+            text = idea_obj["plainText"]
         else:
             title = ""
             text = idea_obj["title"]
@@ -189,7 +192,7 @@ def cru_comment(comment_id, assembly, comment_obj=None):
     try:
         comment = Comment.objects.get(appcivist_id=comment_id)
         if comment_obj:
-            comment.text = comment_obj["text"]
+            comment.text = comment_obj["plainText"]
             comment.positive_votes = comment_obj["stats"]['ups']
             comment.negative_votes = comment_obj["stats"]['downs']
             comment.comments = comment_obj["commentCount"]
@@ -201,8 +204,11 @@ def cru_comment(comment_id, assembly, comment_obj=None):
             comment_obj = get_appcivist_data(assembly, 'get_comment_details', {'coid': comment_id,
                                                                       'aid': assembly.appcivist_id})
         if 'firstAuthor' not in comment_obj.keys():
-            return
-        author = cru_author(comment_obj["firstAuthor"]['userId'], assembly, comment_obj["firstAuthor"])
+            if 'nonMemberAuthor' in comment_obj.keys():
+                author_info = {'userId': 0 , 'name': 'Anonymous', 'uuid': '0'}
+        else:
+            author_info = comment_obj['firstAuthor']
+        author = cru_author(author_info['userId'], assembly, author_info)
         positive_votes = comment_obj["stats"]['ups']
         negative_votes = comment_obj["stats"]['downs']
         comments = comment_obj["commentCount"]
@@ -215,7 +221,7 @@ def cru_comment(comment_id, assembly, comment_obj=None):
         comment_ac_dt = datetime.strptime(comment_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         comment_dt = _get_timezone_aware_datetime(comment_ac_dt) if timezone.is_naive(comment_ac_dt) else comment_ac_dt
         comment = Comment(appcivist_id=comment_obj["contributionId"], appcivist_uuid=comment_obj["uuidAsString"],
-                          text=comment_obj["text"], datetime=comment_dt, positive_votes=positive_votes, 
+                          text=comment_obj["plainText"], datetime=comment_dt, positive_votes=positive_votes, 
                           negative_votes=negative_votes, comments=comments, url=url, user=author, 
                           parent_type=parent_type, sync=False, resource_space_id=comment_obj["resourceSpaceId"],
                           forum_resource_space_id=comment_obj["forumResourceSpaceId"])
@@ -254,14 +260,14 @@ def cru_feedback(feedback_id, assembly, feedback_obj):
             feedback_value = 1
         elif feedback_obj["down"]:
             feedback_value = -1
-        feedback_parent_type = feedback_obj["parentType"]
+        feedback_parent_type = feedback_obj["parentType"].lower()
         feedback_parent_id = feedback_obj["contributionId"]
         feedback = Feedback(appcivist_id=feedback_obj["id"], value=feedback_value, datetime=feedback_dt, 
                             author=author, sync=False, parent_type=feedback_parent_type)
         if feedback_parent_type == 'idea':
             feedback.parent_idea = cru_idea(feedback_parent_id, assembly)
         else:
-            feedback.parent_comment = cru_comment(feedback_parent_id, idea)
+            feedback.parent_comment = cru_comment(feedback_parent_id, assembly)
         feedback.save()
         return feedback
 

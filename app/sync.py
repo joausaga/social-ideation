@@ -806,9 +806,7 @@ def publish_idea_cp(idea):
     template_idea_cp = '{}\n\n----------------\n\n'
     template_idea_cp += _get_str_language(initiative.language, 'author_p')
     template_idea_cp += '\n' + _get_str_language(initiative.language, 'link')
-    logger.warning('10nov Idea text: ' + idea.text)
     text_uf8 = convert_to_utf8_str(idea.text)
-    logger.warning('10nov Idea text UTF8: ' + text_uf8)
     author_name_utf8 = convert_to_utf8_str(idea.author.screen_name)
 
     if _is_in_black_list(idea.author):

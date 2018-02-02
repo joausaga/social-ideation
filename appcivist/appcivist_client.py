@@ -198,7 +198,8 @@ class appcivist_api():
         url =  self.base_url + "/api/assembly/" + str(aid) + "/contribution/" + str(coid) + "/feedback"
         headers = {"SESSION_KEY": self.session_key}
         response = doRequest(url=url, method="get", headers=headers)
-        return response
+        filtered = [r for r in response if (r["up"] or r["down"])] 
+        return filtered
 
   
     # return the votes (called feedbacks on appcivist) of a single idea
