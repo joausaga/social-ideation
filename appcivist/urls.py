@@ -7,9 +7,9 @@ re_url = '(http(s)?:\/\/.)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([
 
 urlpatterns = [
     # ex: /assemblies/
-    url(r'^assemblies/$', views.Assemblies.as_view()), 
+    url(r'^assemblies/$', views.Campaigns.as_view()), 
     # ex: /campaigns/initiative_id
-    url(r'^campaigns/(?P<initiative_id>[0-9]+)$', views.Campaigns.as_view()), 
+    url(r'^campaigns/(?P<initiative_id>[0-9]+)$', views.Themes.as_view()), 
     # ex: /ideas/initiative_id
     url(r'^ideas/(?P<initiative_id>[0-9]+)$', views.Ideas.as_view()), 
     # ex: /idea/idea_id

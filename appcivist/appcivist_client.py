@@ -140,6 +140,27 @@ class appcivist_api():
                 list_of_ideas.append(p)
         return list_of_ideas        
 
+    # get all themes of a campaign
+    def get_themes_of_campaigs(self, sid):
+        url = self.base_url + "/api/space/" + str(sid) + "/theme"
+        headers = {"SESSION_KEY": self.session_key}
+        response = doRequest(url=url, method="get", headers=headers)
+        return response
+
+    #return all ideas of an campaign belonging to a specific theme
+    def get_ideas_of_theme(self, aid, cid, tid):
+        theme_ideas = []
+        ideas = self.get_ideas_of_campaign(aid, cid)
+        for idea in ideas:
+            include = False
+            for theme in idea['themes']:
+                if theme['themeId'] == tid and\
+                   theme["type"] == "OFFICIAL_PRE_DEFINED":
+                    include = True
+            if include:
+                theme_ideas.append(ideas)
+        return theme_ideas
+                
 
     # return the list of comments of a idea
     # GET /api/assembly/:aid/contribution/:cid/comment (no me sirve este. No retorna bien)
@@ -226,6 +247,13 @@ class appcivist_api():
                 list_of_feedbacks = list_of_feedbacks + feedbacks
         return list_of_feedbacks
 
+    def get_feebacks_of_campaign_ideas(self, aid, cid):
+        list_of_feedbacks = []
+        ideas = self.get_ideas_of_campaign(aid, cid)
+        for p in ideas:
+            feedbacks = self.get_feedbacks_of_idea(aid, p["contributionId"])
+            list_of_feedbacks = list_of_feedbacks + feedbacks
+        return list_of_feedbacks
 
     # return all the votes of all comments of all campaigns
     # implemented with get_campaigns(), get_comments_of_campaign() and get_feedbacks_of_comment() methods
@@ -239,6 +267,13 @@ class appcivist_api():
                 list_of_feedbacks = list_of_feedbacks + feedbacks
         return list_of_feedbacks
 
+    def get_feedbacks_of_campaign_comments(self, aid, cid):
+        list_of_feedbacks = []
+        comments = self.get_comments_of_campaign(aid, cid)
+        for c in comments:
+            feedbacks = self.get_feedbacks_of_comment(aid, c["contributionId"])
+            list_of_feedbacks = list_of_feedbacks + feedbacks
+        return list_of_feedbacks
 
 
     ###### POST METHODS
