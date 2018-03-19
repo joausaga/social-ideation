@@ -31,10 +31,10 @@ class CampaignSerializer(serializers.ModelSerializer):
 
 class ThemeSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='appcivist_id', read_only=True)
-
+    name = serializers.CharField(source='title', read_only=True)
     class Meta:
         model = Theme
-        exclude =  ('campaign', 'description', 'theme_type')
+        exclude =  ('campaign', 'description', 'theme_type', 'appcivist_id', 'title')
 
 class AuthorSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(source='appcivist_id', read_only=True)

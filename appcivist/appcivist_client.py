@@ -43,6 +43,7 @@ class appcivist_api():
     social_ideation_user_source_url=""
     social_ideation_user_source_id=""
     social_ideation_user_name=""
+    social_ideation_user_email=""
     assembly_id = ""
 
     def set_headers(self):
@@ -52,6 +53,7 @@ class appcivist_api():
                   "SOCIAL_IDEATION_USER_SOURCE_ID": self.social_ideation_user_source_id, 
                   "SOCIAL_IDEATION_USER_SOURCE_URL": self.social_ideation_user_source_url,
                   "SOCIAL_IDEATION_USER_NAME": self.social_ideation_user_name,
+                  "SOCIAL_IDEATION_USER_EMAIL": self.social_ideation_user_email,
                   "ASSEMBLY_ID": self.assembly_id}
         return headers
 
@@ -81,7 +83,8 @@ class appcivist_api():
         headers = {"SESSION_KEY": self.session_key}
         response = doRequest(url=url, method="get", headers=headers)
         for membership in response:
-            list_of_users.append(membership["user"])
+            if "name" in membership["user"].keys():
+                list_of_users.append(membership["user"])
         return list_of_users
 
 
@@ -115,7 +118,7 @@ class appcivist_api():
         response = doRequest(url=url, method="get", headers=headers, params=params)
         final_list = []
         for idea in response:
-            if "firstAuthor" in idea.keys():
+            if "firstAuthor" in idea.keys() and "title" in idea.keys():
                 final_list.append(idea)
         return final_list
 
@@ -141,24 +144,46 @@ class appcivist_api():
         return list_of_ideas        
 
     # get all themes of a campaign
-    def get_themes_of_campaigs(self, sid):
+    def get_themes_of_campaign(self, sid):
+        themes = []
         url = self.base_url + "/api/space/" + str(sid) + "/theme"
         headers = {"SESSION_KEY": self.session_key}
         response = doRequest(url=url, method="get", headers=headers)
-        return response
-
+        for theme in response:
+            if "title" in theme.keys()\
+            and theme["type"] == "OFFICIAL_PRE_DEFINED":
+               themes.append(theme) 
+        return themes
+    
+    # return ideas of a campaign that have at leats one theme of type
+    # OFFICIAL_PRE_DEFINED
+    def get_ideas_of_campaign_with_theme(self, aid, cid):
+        ideas_w_theme = []
+        ideas = self.get_ideas_of_campaign(aid, cid)
+        for idea in ideas:
+            include = False
+            if "themes" in idea.keys(): 
+                for theme in idea["themes"]:
+                    if theme["type"] == "OFFICIAL_PRE_DEFINED":
+                        include = True
+                if include:
+                    ideas_w_theme.append(idea)
+        return ideas_w_theme
+          
+    
     #return all ideas of an campaign belonging to a specific theme
     def get_ideas_of_theme(self, aid, cid, tid):
         theme_ideas = []
         ideas = self.get_ideas_of_campaign(aid, cid)
         for idea in ideas:
             include = False
-            for theme in idea['themes']:
-                if theme['themeId'] == tid and\
-                   theme["type"] == "OFFICIAL_PRE_DEFINED":
-                    include = True
-            if include:
-                theme_ideas.append(ideas)
+            if "themes" in idea.keys(): 
+                for theme in idea["themes"]:
+                    if theme["themeId"] == tid and\
+                       theme["type"] == "OFFICIAL_PRE_DEFINED":
+                        include = True
+                if include:
+                    theme_ideas.append(idea)
         return theme_ideas
                 
 
@@ -189,6 +214,18 @@ class appcivist_api():
             p_comments = self.get_comments_of_idea(p["resourceSpaceId"])
             list_of_comments = list_of_comments + p_comments
         return list_of_comments
+
+
+    # return the comments of the ideas (of a campaign) that have at least one
+    # theme of the type "OFFICIAL_PRE_DEFINED"
+    def get_comments_of_campaign_with_theme(self, aid, cid):
+        list_of_comments = []
+        ideas = self.get_ideas_of_campaign_with_theme(aid, cid)
+        for p in ideas:
+            p_comments = self.get_comments_of_idea(p["resourceSpaceId"])
+            list_of_comments = list_of_comments + p_comments
+        return list_of_comments
+
 
 
     # return the list of all comments of an assembly
@@ -254,6 +291,16 @@ class appcivist_api():
             feedbacks = self.get_feedbacks_of_idea(aid, p["contributionId"])
             list_of_feedbacks = list_of_feedbacks + feedbacks
         return list_of_feedbacks
+    
+    # return the feedbacks of the ideas (of a campaign) that have at least one
+    # theme of the type "OFFICIAL_PRE_DEFINED"
+    def get_feedbacks_of_campaign_ideas_with_theme(self, aid, cid):
+        list_of_feedbacks = []
+        ideas = self.get_ideas_of_campaign_with_theme(aid, cid)
+        for p in ideas:
+            feedbacks = self.get_feedbacks_of_idea(aid, p["contributionId"])
+            list_of_feedbacks = list_of_feedbacks + feedbacks
+        return list_of_feedbacks
 
     # return all the votes of all comments of all campaigns
     # implemented with get_campaigns(), get_comments_of_campaign() and get_feedbacks_of_comment() methods
@@ -266,6 +313,17 @@ class appcivist_api():
                 feedbacks = self.get_feedbacks_of_comment(aid, c["contributionId"])
                 list_of_feedbacks = list_of_feedbacks + feedbacks
         return list_of_feedbacks
+        
+    # return the feedbacks of comments (of a campaign) that have at least one
+    # theme of the type "OFFICIAL_PRE_DEFINED" on their parent idea
+    def get_feedbacks_of_campaign_comments_with_theme(self, aid, cid):
+        list_of_feedbacks = []
+        comments = self.get_comments_of_campaign_with_theme(aid, cid)
+        for c in comments:
+            feedbacks = self.get_feedbacks_of_comment(aid, c["contributionId"])
+            list_of_feedbacks = list_of_feedbacks + feedbacks
+        return list_of_feedbacks
+
 
     def get_feedbacks_of_campaign_comments(self, aid, cid):
         list_of_feedbacks = []
@@ -357,3 +415,10 @@ class appcivist_api():
     # implemented with delete_contribution() method
     def delete_comment(self, aid, coid):
         return delete_contribution(aid, coid)
+
+    def registerUserInAssembly(self, user):
+        url = self.base_url + "/api/user/signup"
+        headers = self.set_headers()
+        response = doRequest(url=url, method="post", headers=headers, body=user)
+
+

@@ -44,7 +44,7 @@ class Campaign (models.Model):
     appcivist_id = models.PositiveIntegerField(primary_key=True)
     appcivist_uuid = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
-    assembly_id = models.PositiveIntegerField(primary_key=True)
+    assembly_id = models.PositiveIntegerField(blank=True, editable=True)
     url = models.URLField()
     resource_space_id = models.IntegerField()
     forum_resource_space_id = models.IntegerField()
@@ -91,9 +91,9 @@ class Campaign (models.Model):
 class Theme(models.Model):
     appcivist_id = models.PositiveIntegerField(unique=True)
     # appcivist_uuid = models.CharField(max_length=100)
-    title = models.CharField(max_length=30)
-    description = models.CharField(max_length=100, null=True) #no se si voy a usar
-    theme_type = models.CharField(max_length=15, null=True) #no se si voy a usar
+    title = models.CharField(max_length=100)
+    description = models.TextField(null=True) #no se si voy a usar
+    theme_type = models.TextField(null=True) #no se si voy a usar
     campaign = models.ForeignKey(Campaign)
     # resource_space_id = models.IntegerField()
     # forum_resource_space_id = models.IntegerField()

@@ -1,7 +1,7 @@
-from appcivist.models import Assembly
+from appcivist.models import Campaign
 
 def updateAssembliesSessionKeys():
-    assemblies = Assembly.objects.all()
-    for assembly in assemblies:
-        if assembly.keyHasExpired() or assembly.admin_session_key=="":
-            assembly.updateSessionKey()
+    campaigns = Campaign.objects.all()
+    for campaign in campaigns:
+        if campaign.keyHasExpired() or campaign.admin_session_key=="":
+            campaign.updateSessionKey()

@@ -2,6 +2,7 @@ import logging
 import os
 import six
 import sys
+import re
 
 from django.shortcuts import render
 
@@ -22,7 +23,7 @@ from appcivist.serializers import CampaignSerializer, ThemeSerializer,\
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import Toke  nAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 
@@ -38,7 +39,39 @@ logger = logging.getLogger(__name__)
 # General methods and classes
 # ---
 
+def extract_url(text):
+    try:
+        found = re.search("(?P<url>https?://[^\s]+)", text).group(0)
+    except AttributeError:
+        # not string found
+        found = ''
+    return found
 
+def create_html_text(text):
+    try:
+        idea_url = extract_url(text)
+        html_text = ""
+        text0 = text.split(" ---------------- ")[0]
+        text1 = text.split(" ---------------- ")[1]
+        author_name = text1.split(" (Facebook) ")[0].split(": ")[1]
+        html_link = "<br><br><a href='{}'>Link</a>".format(idea_url)
+        html_text = text0 + "<br><br>" + author_name + html_link
+        return (html_text)
+        print("Html text", html_text)
+    except:
+        return text
+
+def create_plain_text(text):
+    try:
+        text = text.replace("\n", " ")
+        plain_text = ""
+        text0 = text.split(" ---------------- ")[0]
+        text1 = text.split(" ---------------- ")[1]
+        author_name = text1.split(" (Facebook) ")[0].split(": ")[1]
+        plain_text = text0 +"\n\n" + author_name + " (Facebook)"
+        return (plain_text)
+    except:
+        return text
 
 def convert_to_utf8_str(arg):
     try:
@@ -103,15 +136,17 @@ def cu_themes(campaign):
     for theme_raw in themes_raw:
         try:
             theme = Theme.objects.get(appcivist_id=theme_raw["themeId"])
-            theme.title = theme_raw["title"]
-            theme.description = theme_raw["description"]
+            title = convert_to_utf8_str(theme_raw["title"])
+            theme.title = title
             theme.theme_type = theme_raw["type"]
             campaign.save()
         except Theme.DoesNotExist:
-            theme = Theme(appcivist_id=theme_raw["themeId"], appcivist_uuid=theme_raw["uuid"], 
-                       title=theme_raw["title"], description=theme_raw["description"],
-                       theme_type=theme_raw["type"], campaign=campaign)
-            campaign.save()
+            title = convert_to_utf8_str(theme_raw["title"])
+            theme = Theme(appcivist_id=theme_raw["themeId"],  
+                       title=title,
+                       theme_type=theme_raw["type"], 
+                       campaign=campaign)
+            theme.save()
 
 def cru_theme(theme_id, campaign):
     if theme_id > 0:
@@ -140,9 +175,12 @@ def cru_idea(idea_id, campaign, idea_obj=None):
                 idea.text = idea_obj["plainText"]
             else:
                 idea.text = idea_obj["title"]
-            idea.positive_votes = idea_obj["stats"]['ups']
-            idea.negative_votes = idea_obj["stats"]['downs']
-            idea.comments = idea_obj["commentCount"]
+            if idea_obj["stats"]['ups'] >= 0:
+                idea.positive_votes = idea_obj["stats"]['ups']
+            if idea_obj["stats"]['downs'] >= 0:
+                idea.negative_votes = idea_obj["stats"]['downs']
+            if idea_obj["commentCount"] >= 0:
+                idea.comments = idea_obj["commentCount"]
             theme_id = get_theme_id_from_raw_idea(idea_obj["themes"])
             idea.theme = cru_theme(theme_id, campaign)
         idea.sync = False
@@ -160,10 +198,22 @@ def cru_idea(idea_id, campaign, idea_obj=None):
         author = cru_author(author_info['userId'], campaign, author_info)
         theme_id = get_theme_id_from_raw_idea(idea_obj["themes"])
         theme = cru_theme(theme_id, campaign)
-        positive_votes = idea_obj["stats"]['ups']
-        negative_votes = idea_obj["stats"]['downs']
-        comments = idea_obj["commentCount"]
-        url = ""
+        if idea_obj["stats"]['ups'] >= 0:
+            positive_votes = idea_obj["stats"]['ups']
+        else:
+            positive_votes = 0
+        if idea_obj["stats"]['downs'] >= 0:
+            negative_votes = idea_obj["stats"]['downs']
+        else:
+            negative_votes = 0
+        if idea_obj["commentCount"] >= 0:
+            comments = idea_obj["commentCount"]
+        else:
+            comments = 0
+        # url example: https://pb.appcivist.org/#/v2/assembly/112/campaign/211/contribution/3896
+        url = "https://pb.appcivist.org/#/v2/assembly/" + str(campaign.assembly_id)\
+               + "/campaign/" + str(campaign.appcivist_id)\
+               + "/contribution/" + str(idea_obj["contributionId"])
         idea_ac_dt = datetime.strptime(idea_obj["creation"].replace(" GMT", ""), "%Y-%m-%d %H:%M %p")
         idea_dt = _get_timezone_aware_datetime(idea_ac_dt) if timezone.is_naive(idea_ac_dt) else idea_ac_dt
         # We use the 'title' attribute of the response as the 'text' attribute of the instance
@@ -199,9 +249,12 @@ def cru_comment(comment_id, campaign, comment_obj=None):
         comment = Comment.objects.get(appcivist_id=comment_id)
         if comment_obj:
             comment.text = comment_obj["plainText"]
-            comment.positive_votes = comment_obj["stats"]['ups']
-            comment.negative_votes = comment_obj["stats"]['downs']
-            comment.comments = comment_obj["commentCount"]
+            if comment_obj["stats"]['ups'] >= 0:
+                comment.positive_votes = comment_obj["stats"]['ups']
+            if comment_obj["stats"]['downs'] >= 0:
+                comment.negative_votes = comment_obj["stats"]['downs']
+            if comment_obj["commentCount"] >= 0:
+                comment.comments = comment_obj["commentCount"]
         comment.sync = False
         comment.save()
         return comment
@@ -215,9 +268,18 @@ def cru_comment(comment_id, campaign, comment_obj=None):
         else:
             author_info = comment_obj['firstAuthor']
         author = cru_author(author_info['userId'], campaign, author_info)
-        positive_votes = comment_obj["stats"]['ups']
-        negative_votes = comment_obj["stats"]['downs']
-        comments = comment_obj["commentCount"]
+        if comment_obj["stats"]['ups'] >= 0:
+            positive_votes = comment_obj["stats"]['ups']
+        else:
+            positive_votes = 0
+        if comment_obj["stats"]['downs'] >= 0:
+            negative_votes = comment_obj["stats"]['downs']
+        else:
+            negative_votes = 0
+        if comment_obj["commentCount"] >= 0:
+            comments = comment_obj["commentCount"]
+        else:
+            comments = 0
         url = ""
         if comment_obj["type"] == "DISCUSSION":
             parent_type = "idea"
@@ -237,6 +299,7 @@ def cru_comment(comment_id, campaign, comment_obj=None):
             comment.parent_idea = parent
         else:
             comment.parent_comment = parent
+        comment.url = parent.url
         comment.save()
         return comment
 
@@ -350,14 +413,16 @@ class AppCivistObject(APIView):
     def post(self, request, campaign, format=None):
         respmsg = "inicio"
         try:
+            print("entro")
             api = get_api_obj(campaign)
-
+            print(str(request.data))
             api.ignore_admin_user = "true"
             api.social_ideation_source = request.data['source'] # indicates the name of the providerId (e.g., social_ideation_facebook)
             api.social_ideation_source_url = request.data['source_url'] # source to the original post
             api.social_ideation_user_source_url = request.data['user_url'] # link to the user
             api.social_ideation_user_source_id = request.data['user_external_id'] # email or id of the user in the source social network
             api.social_ideation_user_name = request.data['user_name'] # the name of the author in the social network
+            api.social_ideation_user_email = request.data['user_email'] # the email of the author in social network. Could be empty
             api.assembly_id = campaign.assembly_id
             new_obj_raw = getattr(api, self.api_method)(**self.api_method_params)
             new_obj_id = find_obj_id(new_obj_raw)
@@ -465,7 +530,7 @@ class Themes(APIView):
     def get(self, request, initiative_id, format=None):
         campaign_id = initiative_id
         try:
-            campaign = Campaign.objects.get(appcivist_id=assembly_id)
+            campaign = Campaign.objects.get(appcivist_id=campaign_id)
             themes = cru_theme(-100, campaign)
             serializer = ThemeSerializer(themes, many=True)
             return Response(serializer.data)
@@ -483,7 +548,7 @@ class Ideas(AppCivistObject):
     def get(self, request, initiative_id, format=None):
         campaign_id = initiative_id
         try:
-            self.api_method = 'get_ideas_of_campaign'
+            self.api_method = 'get_ideas_of_campaign_with_theme'
             self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
             self.iterate = False
             self.create_obj = cru_idea
@@ -505,10 +570,12 @@ class Ideas(AppCivistObject):
         theme_id = request.data["campaign_id"] #AC theme = SI campaign
         try:
             campaign = Campaign.objects.get(appcivist_id=campaign_id)
+            html_text = create_html_text(request.data["text"])
+            plain_text = create_plain_text(request.data["text"])
             idea_details = {"status": "PUBLISHED", "title": request.data["title"], 
-                            "text": request.data["text"], "type": "IDEA", 
+                            "text": html_text, "plainText": plain_text, "type": "IDEA", 
                             "campaigns":[campaign.appcivist_id],
-                            "themes": [{"themeId": theme_id, "type": "OFFICIAL_PRE_DEFINED"}]
+                            "themes": [{"themeId": theme_id, "type": "OFFICIAL_PRE_DEFINED"}]}
             self.api_method_params = {"sid": campaign.resource_space_id, 
                                       "idea": idea_details}
             self.api_method = 'create_idea'
@@ -620,7 +687,7 @@ class Comments(AppCivistObject):
 
     def get(self, request, initiative_id, format=None):
         campaign_id = initiative_id
-        self.api_method = 'get_comments_of_campaign'
+        self.api_method = 'get_comments_of_campaign_with_theme'
         self.client_attr = 'last_comment'
         self.pag_params = {'page_number': self.PAGE_NUMBER, 'page_size': self.PAGE_SIZE}
         self.iterate = False
@@ -759,7 +826,7 @@ class FeedbacksIdeas(AppCivistObject):
     def get(self, request, initiative_id, format=None):
         campaign_id = initiative_id
         try:
-            self.api_method = 'get_feedbacks_of_capaign_ideas'
+            self.api_method = 'get_feedbacks_of_campaign_ideas_with_theme'
             self.client_attr = 'last_vote'
             self.create_obj = cru_feedback
             self.queryset = Feedback
@@ -787,7 +854,7 @@ class FeedbacksComments(AppCivistObject):
     def get(self, request, initiative_id, format=None):
         campaign_id = initiative_id
         try:
-            self.api_method = 'get_feedbacks_of_campaign_comments'
+            self.api_method = 'get_feedbacks_of_campaign_comments_with_theme'
             self.client_attr = 'last_vote'
             self.create_obj = cru_feedback
             self.queryset = Feedback
@@ -831,7 +898,7 @@ class FeedbacksIdea(AppCivistObject):
     def post(self, request, idea_id, format=None):
         try:
             idea = Idea.objects.get(appcivist_id=idea_id)
-             campaign = idea.theme.campaign
+            campaign = idea.theme.campaign
             if request.data['value'] > 0:
                 self.api_method = 'vote_up_idea'
             else:
@@ -894,7 +961,3 @@ class FeedbackDetail(AppCivistObjectDetail):
 
 def index(request):
     return HttpResponse('Welcome to Appcivist client API.')
-
-
-
-
