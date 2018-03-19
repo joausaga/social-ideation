@@ -4,12 +4,18 @@
    <meta charset="utf-8">
    <meta http-equiv="X-UA-Compatible" content="IE=edge">
    <meta name="viewport" content="width=device-width, initial-scale=1">
-   <title>Social Ideation App</title>
+   <title>Parque Caballero</title>
 
    <!-- Bootstrap -->
    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
-   <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet">
-   <link href="/static/css/jumbotron-narrow.css" rel="stylesheet">
+   <!-- <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet"> -->
+   <!-- <link href="/static/css/jumbotron-narrow.css" rel="stylesheet"> -->
+   <!-- <link href="/static/css/datepicker.css" rel="stylesheet"> -->
+   <link href="/static/css/hexagons.css" rel="stylesheet">
+   <link href="/static/css/tooplate-style.css" rel="stylesheet">
+   <link href="/static/css/timeline.css" rel="stylesheet">
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700">
+   <link rel="stylesheet" href="static/font-awesome-4.7.0/css/font-awesome.min.css">
 
    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -26,12 +32,298 @@
       ga('create', 'UA-68012049-1', 'auto');
       ga('send', 'pageview');
     </script>
+
+<!-- load JS files -->
+    <script src="static/js/jquery-1.11.3.min.js"></script>
+    <!-- jQuery (https://jquery.com/download/) -->
+    <script src="static/js/popper.min.js"></script>
+    <!-- https://popper.js.org/ -->
+    <script src="static/js/bootstrap.min.js"></script>
+    <!-- https://getbootstrap.com/ -->
+    <script src="static/js/datepicker.min.js"></script>
+    <!-- https://github.com/qodesmith/datepicker -->
+    <script src="static/js/jquery.singlePageNav.min.js"></script>
+    <!-- Single Page Nav (https://github.com/ChrisWojcik/single-page-nav) -->
+    <script src="static/slick/slick.min.js"></script>
+    <!-- http://kenwheeler.github.io/slick/ -->
+  
+
+    <script>
+
+          function startConnect(initiative_url){
+                FB.login(function(response) {
+                    if (response.authResponse) {
+                        var next_url = window.location.origin +  window.location.pathname;
+                        window.location = next_url + 'app/login_fb' +
+                                '?access_token=' + response.authResponse.accessToken +
+                                '&expires=' + response.authResponse.expiresIn +
+                                '&signed_request=' + response.authResponse.signedRequest +
+                                '&user_id=' + response.authResponse.userID +
+                                '&initiative_url=' + initiative_url;
+                    } else {
+                        checkStatusCallback(response);
+                    }
+                }, {scope: 'public_profile,email,user_friends,publish_actions'})
+            };
+
+            function checkStatusCallback(response) {
+            if (response.status === 'connected') {
+                var next_url = window.location.origin +  window.location.pathname;
+                // $.ajax({
+                //     url: next_url + 'app/check_user' + '?user_id=' + response.authResponse.userID,
+                //     success: function(result) {
+                //         if (result) {
+                //             document.getElementById('status').className = 'alert alert-info';
+                //             document.getElementById('status').style.display = 'block';
+                //             document.getElementById('status').innerHTML = result;
+                //         } else {
+                //             document.getElementById('status').style.display = 'none';
+                //         }
+                //     }
+                // });
+            } else if (response.status === 'not_authorized') {
+                // The person is logged into Facebook, but not your app.
+                document.getElementById('status').style.display = 'none';
+            } else {
+                // The person is not logged into Facebook, so we're not sure if
+                // they are logged into this app or not.
+                document.getElementById('status').style.display = 'none';
+              }
+            }
+
+            function registerACandFB(initiative_url){
+                // console.log("entro a la func");
+                var form1 = document.getElementById("form1");
+                var form2 = document.getElementById("form2");
+                var xhttp = new XMLHttpRequest();
+                var u_name = document.getElementById("name_field").value;
+                var u_email = document.getElementById("email_field").value;
+                var u_password1 = document.getElementById("pass1_field").value;
+                var u_password2 = document.getElementById("pass2_field").value;
+                if (u_email=="" || u_password1 =="" || u_password2==""){
+                  console.log("no completo todos los campos");
+                  alert("Completa todos los campos por favor");
+                  return false;
+                } 
+                if (u_password1!=u_password2){
+                  console.log("los pass no coinciden");
+                  alert("Las contraseñas no coinciden");
+                  return false;
+                } else if (u_password1.length < 5 || u_password1.length > 10) {
+                  alert("Utilice contraseñas de entre 5 y 10 caracteres");
+                  return false;
+                }
+
+                new_user = {
+                      name: u_name,
+                      email: u_email,
+                      password: u_password1,
+                      repeatPassword: u_password2,
+                      lang: "es-ES",
+                      existingAssembly: {
+                        assemblyId: 112,
+                        uuid: "467eb262-2008-4368-9beb-e28b229b9579"
+                      }
+                    };
+                xhttp.onreadystatechange = function() {
+                    if (this.readyState == 4 && this.status == 200) {
+                      // var response = JSON.parse(xhttp.responseText);
+                      // startConnect(initiative_url);
+                      form1.style.display = "none";
+                      form2.style.display = "block";
+                    } else if (this.readyState == 4 && this.status == 400){
+                      var response = JSON.parse(xhttp.responseText);
+                      // console.log(response);
+                      if (response.statusMessage.includes("This user already exists")){
+                        form1.style.display = "none";
+                      	form2.style.display = "block";
+                      } else {
+                      	alert(response.statusMessage);
+                      }
+                    }
+                };
+                
+                // xhttp.open('GET', "https://ipinfo.io/json", true);
+                // xhttp.send()
+
+                var url = "https://platform.appcivist.org/api/user/signup";
+                xhttp.open('POST', url, true);
+                xhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+                xhttp.setRequestHeader("Access-Control-Allow-Methods", "POST");
+                xhttp.setRequestHeader("Access-Control-Allow-Headers", "Content-Type");
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhttp.send(JSON.stringify(new_user));
+
+            };
+            // function askWritingPermissions(initiative_url) {
+            //     $('#writingPermissionModal').modal('hide');
+            //     FB.login(function(response) {
+            //         console.log(initiative_url);
+            //         if (response.authResponse) {
+            //             var next_url = window.location.origin +  window.location.pathname;
+            //             window.location = next_url + 'app/write_permissions_fb' +
+            //                     '?access_token=' + response.authResponse.accessToken +
+            //                     '&expires=' + response.authResponse.expiresIn +
+            //                     '&signed_request=' + response.authResponse.signedRequest +
+            //                     '&user_id=' + response.authResponse.userID +
+            //                     '&initiative_url=' + initiative_url;
+            //         } else {
+            //             checkStatusCallback(response);
+            //         }
+            //     }, {scope: 'publish_actions'})
+            // };
+
+            /* Google map
+            ------------------------------------------------*/
+            var map = '';
+            var center;
+
+            function initialize() {
+                var mapOptions = {
+                    zoom: 16,
+                    center: new google.maps.LatLng(13.7567928,100.5653741),
+                    scrollwheel: false
+                };
+
+                map = new google.maps.Map(document.getElementById('google-map'),  mapOptions);
+
+                google.maps.event.addDomListener(map, 'idle', function() {
+                  calculateCenter();
+              });
+
+                google.maps.event.addDomListener(window, 'resize', function() {
+                  map.setCenter(center);
+              });
+            }
+
+            function calculateCenter() {
+                center = map.getCenter();
+            }
+
+            // function loadGoogleMap(){
+            //     var script = document.createElement('script');
+            //     script.type = 'text/javascript';
+            //     script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyDVWt4rJfibfsEDvcuaChUaZRS5NXey1Cs&v=3.exp&sensor=false&' + 'callback=initialize';
+            //     document.body.appendChild(script);
+            // } 
+
+            function setCarousel() {
+                
+                if ($('.tm-article-carousel').hasClass('slick-initialized')) {
+                    $('.tm-article-carousel').slick('destroy');
+                } 
+
+                if($(window).width() < 438){
+                    // Slick carousel
+                    $('.tm-article-carousel').slick({
+                        infinite: false,
+                        dots: true,
+                        slidesToShow: 1,
+                        slidesToScroll: 1
+                    });
+                }
+                else {
+                 $('.tm-article-carousel').slick({
+                        infinite: false,
+                        dots: true,
+                        slidesToShow: 3,
+                        slidesToScroll: 1
+                    });   
+                }
+            }
+
+            function setPageNav(){
+                if($(window).width() > 991) {
+                    $('#tm-top-bar').singlePageNav({
+                        currentClass:'active',
+                        offset: 79
+                    });   
+                }
+                else {
+                    $('#tm-top-bar').singlePageNav({
+                        currentClass:'active',
+                        offset: 65
+                    });   
+                }
+            }
+
+            function togglePlayPause() {
+                vid = $('.tmVideo').get(0);
+
+                if(vid.paused) {
+                    vid.play();
+                    $('.tm-btn-play').hide();
+                    $('.tm-btn-pause').show();
+                }
+                else {
+                    vid.pause();
+                    $('.tm-btn-play').show();
+                    $('.tm-btn-pause').hide();   
+                }  
+            }
+       
+            $(document).ready(function(){
+
+                $(window).on("scroll", function() {
+                    if($(window).scrollTop() > 100) {
+                        $(".tm-top-bar").addClass("active");
+                    } else {
+                        //remove the background property so it comes transparent again (defined in your css)
+                       $(".tm-top-bar").removeClass("active");
+                    }
+                });      
+
+                $('[data-toggle="tooltip"]').tooltip({placement:"right"});
+                // Google Map
+                // loadGoogleMap();  
+
+                // Date Picker
+                // const pickerCheckIn = datepicker('#inputCheckIn');
+                // const pickerCheckOut = datepicker('#inputCheckOut');
+                
+                // Slick carousel
+                setCarousel();
+                setPageNav();
+
+                $(window).resize(function() {
+                  setCarousel();
+                  setPageNav();
+                });
+
+                // Close navbar after clicked
+                $('.nav-link').click(function(){
+                    $('#mainNav').removeClass('show');
+                });
+
+                // Control video
+                $('.tm-btn-play').click(function() {
+                    togglePlayPause();                                      
+                });
+
+                $('.tm-btn-pause').click(function() {
+                    togglePlayPause();                                      
+                });
+
+                // Update the current year in copyright
+                $('.tm-current-year').text(new Date().getFullYear());   
+                var form2 = document.getElementById("form2");
+                form2.style.display = "none";
+
+                var url = new URL(window.location.href);
+                var modal_to_show = url.searchParams.get("show");
+                if(modal_to_show == "selectPlatform"){
+                    $("#ideasModal").modal('show');       
+                }         
+            });
+
+        </script>
+
  {% block script %}{% endblock %}
  </head>
  <body data-spy="scroll" data-target=".navbar" data-offset="180">
    {% block main %}{% endblock %}
    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+   <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> -->
    <!-- Include all compiled plugins (below), or include individual files as needed -->
    <script src="/static/js/bootstrap.min.js"></script>
  </body>

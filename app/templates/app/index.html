@@ -1,276 +1,1231 @@
 {% extends 'app/base.html' %}
 
-{% load i18n %}
-
-{% block script %}
-    <style>
-        div.my-hidden {
-            display: none;
-        }
-        body {
-            position: relative;
-            padding-top: 80px;
-        }
-        nav {
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
-    </style>
-    <script type="text/javascript">
-        function startConnect(initiative_url){
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    var next_url = window.location.origin +  window.location.pathname;
-                    window.location = next_url + 'app/login_fb' +
-                            '?access_token=' + response.authResponse.accessToken +
-                            '&expires=' + response.authResponse.expiresIn +
-                            '&signed_request=' + response.authResponse.signedRequest +
-                            '&user_id=' + response.authResponse.userID +
-                            '&initiative_url=' + initiative_url;
-                } else {
-                    checkStatusCallback(response);
-                }
-            }, {scope: 'public_profile,email,user_friends'})
-        };
-        function askWritingPermissions(initiative_url) {
-            $('#writingPermissionModal').modal('hide');
-            FB.login(function(response) {
-                console.log(initiative_url);
-                if (response.authResponse) {
-                    var next_url = window.location.origin +  window.location.pathname;
-                    window.location = next_url + 'app/write_permissions_fb' +
-                            '?access_token=' + response.authResponse.accessToken +
-                            '&expires=' + response.authResponse.expiresIn +
-                            '&signed_request=' + response.authResponse.signedRequest +
-                            '&user_id=' + response.authResponse.userID +
-                            '&initiative_url=' + initiative_url;
-                } else {
-                    checkStatusCallback(response);
-                }
-            }, {scope: 'publish_actions'})
-        };
-        function checkStatusCallback(response) {
-            if (response.status === 'connected') {
-                var next_url = window.location.origin +  window.location.pathname;
-                $.ajax({
-                    url: next_url + 'app/check_user' + '?user_id=' + response.authResponse.userID,
-                    success: function(result) {
-                        if (result) {
-                            document.getElementById('status').className = 'alert alert-info';
-                            document.getElementById('status').style.display = 'block';
-                            document.getElementById('status').innerHTML = result;
-                        } else {
-                            document.getElementById('status').style.display = 'none';
-                        }
-                    }
-                });
-            } else if (response.status === 'not_authorized') {
-                // The person is logged into Facebook, but not your app.
-                document.getElementById('status').style.display = 'none';
-            } else {
-                // The person is not logged into Facebook, so we're not sure if
-                // they are logged into this app or not.
-                document.getElementById('status').style.display = 'none';
-            }
-        }
-    </script>
-{% endblock %}
-
 {% block main %}
-{% trans "participate" as participate %}
-{% trans "without leaving Facebook" as without_leave_facebook %}
-{% trans "only" as only %}
-<div class="container">
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-              <span class="icon-bar"></span>
-          </button>
-          <img src="/static/img/app_icon.png" alt="Brand" height="55" width="55" class="img-responsive">
-        </div>
-        <div>
-          <div class="collapse navbar-collapse" id="myNavbar">
-            <ul class="nav navbar-nav navbar-right">
-              <li><a href="#section1">{% trans "Home" %}</a></li>
-              <li><a href="#how-to-use">{% trans "How to use it" %}</a></li>
-              <li><a href="#how-it-works">{% trans "How it works" %}</a></li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </nav>
-    <div id="status" role="alert" class="my-hidden"></div>
-    <div id="section1">
-      <div class="jumbotron">
-        <h1>Social Ideation App</h1>
-        <p align="left">
-            {% trans "Social Ideation is an application that will allow you to participate on the initiative" %}
-            <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>
-            <i>{% trans "directly from Facebook" %}</i>.
-            <b>{% trans "Just follow the next steps" %}</b>.
-           <!--  <div id="pushing-msg" align="left" class="my-hidden">
-                <br>
-                    <b>{% trans "If you want to make use of this advantage, please log into the app by clicking on the next button" %}</b>
-                <br>
-            </div> -->
-        </p>
-        <!-- <div id="button" class="my-hidden">
-            <button class="btn btn-lg btn-primary" type="button" onclick="startConnect(); return false;">
-                {% trans "I agree to use the App" %}
-            </button>
-        </div>
-        <p id="status"></p> -->
-      </div>
-      <div class="alert alert-warning" role="alert">
-            <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>
-            <b>{% trans "Attention!" %}</b>
-            {% trans "Make sure to perform ALL of the 3 steps to correctly install the app" %}
-      </div>
-      <div id="how-to-use" class="container">
-        <div class="row">
-            <div class="col-md-4">
-              <p align="center">
-                <img src="/static/img/group.png" alt="Facebook Group" height="100" width="100">
-              </p>
-              <h2>{% trans "Step 1" %}</h2>
-              <p>
-                  {% trans "Join the Facebook linked to the initiative" %}
-                  <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>,
-                  {% trans "which will offer you a an alternative participation channel" %}.
-              </p>
-              <a class="btn btn-primary" href="{{ fb_group_url }}" role="button">
-                    <span class="glyphicon glyphicon-home" aria-hidden="true"></span>
-                    &nbsp;&nbsp;{% trans "Join Group" %}
-                </a>
-                <br><br>
-            </div>
-            <div class="col-md-4">
-              <p align="center">
-                <img src="/static/img/login.png" alt="App Icon" height="100" width="90">
-              </p>
-              <h2>{% trans "Step 2" %}</h2>
-              <p>{% trans "Log into <b>Social Ideation App</b> so the ideas and comments you post on the" %}
-                 <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group's" %}</a></b>
-                 {% trans "timeline will be automatically replicated on the page of the initiative" %}
-                 <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
-                 {% trans "(see the" %} <b><a href="#scenario-1">{% trans "scenario" %} 1</a></b> {%trans "to better understand how it works)" %}
-              </p>
-              <a class="btn btn-success" href="javascript:;" role="button" onclick="startConnect('{{ initiative_url }}'); return false;">
-                  <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
-                  &nbsp;&nbsp;{% trans "Log in" %}
-              </a>
-              <br><br>
-           </div>
-            <div class="col-md-4">
-              <p align="center">
-                <img src="/static/img/write_permission.png" alt="App Icon" height="100" width="100">
-              </p>
-              <h2>{% trans "Step 3" %}</h2>
-              <p>{% trans "Give <b>Social Ideation App</b> the permission to post on your behalf inside the" %}
-                 <b><a href="{{ fb_group_url }}" target="_blank">{% trans "group" %}</a></b> {% trans "the ideas and comments you publish on the page of the initiative" %}
-                 <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b> {% trans "on IdeaScale" %}
-                 {% trans "(see the" %} <b><a href="#scenario-2">{% trans "scenario" %} 2</a></b> {% trans "to better understand how it works)" %}.
-              </p>
-              <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#writingPermissionModal">
-                    <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
-                    &nbsp;&nbsp;{% trans "Allow it" %}
+
+    <div class="tm-main-content" id="top">
+      <div class="tm-top-bar-bg"></div>
+      <div class="tm-top-bar" id="tm-top-bar">
+        <!-- SECCION MENU TOP NAVBAR -->
+        <div class="container">
+          <div class="row">
+            <nav class="navbar navbar-expand-lg narbar-light"> <a class="navbar-brand mr-auto"
+
+                href="#top" style="    padding-right: 10px; font-size: 1rem;"> <img src="static/img/logo_new.png" alt="Site logo"></a>
+              <button type="button" id="nav-toggle" class="navbar-toggler collapsed"
+
+                data-toggle="collapse" data-target="#mainNav" aria-expanded="false"
+
+                aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span>
               </button>
+              <div id="mainNav" class="collapse navbar-collapse tm-bg-white">
+                <ul class="navbar-nav ml-auto">
+                  <li class="nav-item"> <a class="nav-link" href="#linea_de_proceso">Proceso <span
+
+                        class="sr-only">(current)</span></a> </li>
+                  <li class="nav-item"> <a class="nav-link" href="#temas">Temas</a> </li>
+                  <li class="nav-item"> <a class="nav-link" href="#entrevistas">Entrevistas</a> </li>
+                  <li class="nav-item"> <a class="nav-link" href="#fotos">Fotos</a> </li>
+                  <li class="nav-item"> <a class="nav-link" href="#infografias">Infografías</a> </li>
+                  <li class="nav-item"> <a class="nav-link" href="#expertos">Expertos</a> </li>
+                  <li class="nav-item"> <a class="nav-link" href="#patrocinadores">Patrocinadores</a> </li>
+                  <li class="nav-item"> <a class="nav-link" href="#tm-section-6">Planos</a> </li>
+
+                </ul>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- SECCION: ESCOGE TU CANAL -->
+      <div class="tm-section tm-bg-img" id="tm-section-1">
+        <div class="tm-bg-transparent ie-container-width-fix-2" style="padding: 1em">
+          <div class="container ie-h-align-center-fix">
+            <div class="row">
+              <div class="col-xs-12 ml-auto mr-auto ie-container-width-fix">
+                <h3 style="text-align: center;">¿Cómo podemos revitalizar el Parque Caballero para que vuelva a ser un espacio de encuentro ciudadano?<br><br></h3>
+                <!-- <h4 style="text-align: center; font-weight: bold;">¡Unite a los más de {{ n_snapp_users }} participantes!<br><br></h4>  -->
+               </div>
+            </div>
+            <div class="row">
+            	<div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+            	</div>
+                  <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+                    <button class="btn btn-primary tm-btn-primary" data-toggle="modal" data-target="#registerModal">Participar</button>
+                  </div>
+                  <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+                    <button class="btn btn-primary tm-btn-primary" data-toggle="modal" data-target="#ideasModal">Ver Ideas</button>
+                  </div>
+                  <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+            	</div>
             </div>
           </div>
-          <!--<div class="row">
-              <div class="col-md-4">
-                <a class="btn btn-primary" href="{{ fb_group_url }}" role="button">
-                    <span class="glyphicon glyphicon-home" aria-hidden="true"></span>
-                    &nbsp;&nbsp;{% trans "Join Group" %}
-                </a>
+          <!-- <div class="container ie-h-align-center-fix">
+            <div class="row">
+            	<div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+            	</div>
+                  <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+                    <button class="btn btn-primary tm-btn-primary" data-toggle="modal" data-target="#registerModal">Participar</button>
+                  </div>
+                  <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+                    <button class="btn btn-primary tm-btn-primary" data-toggle="modal" data-target="#ideasModal">Ver Ideas</button>
+                  </div>
+                  <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3" >
+            	</div>
+            </div>
+          </div>
+ -->        </div>
+       </div>
+      </div>
+
+
+     <!-- SECCION: FORMAS DE PARTICIPACION -->
+<!--      <div class="tm-section-2" id="formas_de_participacion">
+        <div class="container">
+          <div class="row">
+            <div class="col text-center">
+              <h2 class="tm-section-title">Formas de Participación</h2>
               </div>
-              <div class="col-md-4">
-                <a class="btn btn-success" href="javascript:;" role="button" onclick="startConnect(); return false;">
-                  <span class="glyphicon glyphicon-log-in" aria-hidden="true"></span>
-                  &nbsp;&nbsp;{% trans "Log in" %}
-                </a>
+          </div>
+        </div>
+      </div>
+      <div class="tm-section tm-position-relative tm-bg-white">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"
+
+          class="tm-section-down-arrow">
+          <polygon fill="#ee5057" points="0,0  100,0  50,60"></polygon> </svg>
+        <div class="container tm-pt-5 tm-pb-4">
+          <div class="row text-center">
+            <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4 tm-article"> <i
+
+                class="fa fa-lightbulb-o fa-5x tm-color-primary tm-margin-b-20" style="tex"></i>
+              <h3 class="tm-color-primary tm-article-title-1">Postulando ideas y 
+                propuestas a través de la plataforma web
+              </h3>
+              </article>
+            <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4 tm-article"> <i
+
+                class="fa fa-comment fa-5x tm-color-primary tm-margin-b-20"></i>
+              <h3 class="tm-color-primary tm-article-title-1">Comentando y votando
+                las ideas o propuestas a través de la plataforma web
+              </h3>
+            </article>
+            <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4 tm-article"> <i
+
+                class="fa fa-cog fa-5x tm-color-primary tm-margin-b-20"></i>
+              <h3 class="tm-color-primary tm-article-title-1">Participando en los
+                talleres presenciales
+              </h3>
+            </article>
+          </div>
+        </div>
+      </div> -->
+
+
+      <!-- SECCION: LINEA DE PROCESO -->
+      <div class="tm-section tm-section-pad tm-bg-white" id="linea_de_proceso">
+        <div class="container ie-h-align-center-fix">
+        <div class="row">
+           <div class="col-sm-12 col-md-8 col-lg-8 col-xl-8"> 
+                <!-- <a target="_blank" href="static/img/banner.jpg" > -->
+                  <img src="static/img/banner.jpg" class="img-fluid">
+                <!-- </a> -->
+                <br><br>
+		        
+		        <p style="font-size: 16px;">Renová el Parque Caballero es una iniciativa del <a target="_blank" href="https://participa.org.py">Proyecto Participa</a>, en coperación con la <a target="_blank" href="https://www.ciudadela.org.py/es">Asociación Ciudadela</a>, que busca promover la participación ciudadana en la generación de ideas para la revitalización del Parque Caballero. En concreto la pregunta que pretendemos responder con esta iniciativa es <b><i>¿Cómo podríamos revitalizar el Parque Caballero para que vuelva a ser un espacio de encuentro ciudadano?</i></b>
+		        </p>
+		        <p style="font-size: 16px;">Comentanos que ideas tenes para revitalizar el parque en alguno de estos <a target="_blank" href="http://parquecaballero.participa.org.py/#temas">aspectos</a>. Tus ideas podrán ser comentadas y votadas por otros participantes. Además, contamos con la participación de <a target="_blank" href="http://parquecaballero.participa.org.py/#expertos">expertos</a> que te ayudarán a mejorar tu propuesta.</p>
+		        <p style="font-size: 16px;">Ponemos a tu disposición material informativo que puede ayudarte en el desarrollo de tu propuesta. ¡No pierdas esta oportunidad de aportar al mejoramiento de nuestra ciudad! <!-- </p>
+		        <p>
+		        <ul style="color: gray;">
+		        <li>Realizar un diagnostico que proporcione la información  necesaria para la realización de las ideas;</li> 
+				<li>Implementar una plataforma de uso sencillo para promover la participación e involucramiento de la ciudadanía en proyectos urbanísticos de la ciudad;</li> 
+				<li>Colectar ideas/propuestas de los ciudadanos que sean factibles tanto económicamente como socialmente;</li> 
+				<li>Generar vínculos entre gobierno (nacional y municipal), organizaciones civiles (ciudadela), y la ciudadanía en general para lograr la sociedad se apropie de los espacios públicos. </li> 
+		        </ul>
+		        </p> -->
+          </div>
+        <div class="col-md-4">
+          <div class="page-header" style="text-align:center">
+            <h1>Etapas </h1>
+          </div>
+          <div style="display:inline-block;width:100%;overflow-y:auto;">
+          <ul class="timeline">
+            <li class="timeline-item">
+              <div class="timeline-badge danger"  ><i class="glyphicon glyphicon-check">
+                <p style="padding-top: 20%; font-size: 12px; color: white; font-style: normal;">
+                  Activo
+                </p>
+
+</i>
               </div>
-              <div class="col-md-4">
-                <button type="button" class="btn btn-warning" data-toggle="modal" data-target="#writingPermissionModal">
-                    <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
-                    &nbsp;&nbsp;{% trans "Allow it" %}
-                </button>
-                <a class="btn btn-warning" href="javascript:;" role="button" onclick="askWritingPermissions(); return false;">
-                  <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
-                  &nbsp;&nbsp;{% trans "Allow it" %}
-                </a>
+              <div class="timeline-panel" style="border-color: red;">
+                <div class="timeline-heading">
+                  <h4 class="timeline-title">Ideación</h4>
+                  <!-- <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p> -->
+                </div>
+                <div class="timeline-body">
+                  <p>Los ciudadanos proponen, opinan, votan, y comparten ideas en torno a la pregunta de cómo revitalizar el Parque Caballero.</p>
+                </div>
               </div>
+            </li>
+            <li class="timeline-item">
+              <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+              <div class="timeline-panel">
+                <div class="timeline-heading">
+                  <h4 class="timeline-title">Deliberación</h4>
+                </div>
+                <div class="timeline-body">
+                  <p>En una asamblea deliberativa, se expondrán las 10 ideas mas votadas para que la comunidad y las instituciones puedan evaluarlas y priorizarlas.
+                    </p>
+                </div>
+              </div>
+            </li>
+            <li class="timeline-item">
+              <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+              <div class="timeline-panel">
+                <div class="timeline-heading">
+                  <h4 class="timeline-title">Refinamiento</h4>
+                </div>
+                <div class="timeline-body">
+                  <p>Durante un par de semanas, se buscará mejorar las ideas para hacerlas más factibles, considerando las devoluciones recibidas tanto online como offline. 
+                  </p>
+                </div>
+              </div>
+            </li>
+            <li class="timeline-item">
+              <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+              <div class="timeline-panel">
+                <div class="timeline-heading">
+                  <h4 class="timeline-title">Votación</h4>
+                </div>
+                <div class="timeline-body">
+                  <p>La ciudadanía seleccionará las mejores propuestas refinadas a través de un proceso abierto de votación.</p>
+                </div>
+              </div>
+            </li>
+            <li class="timeline-item">
+              <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+              <div class="timeline-panel">
+                <div class="timeline-heading">
+                  <h4 class="timeline-title">Premiación</h4>
+                </div>
+                <div class="timeline-body">
+                  <p>Se exponen las ideas ganadoras, que serán luego presentada a la comisión de revitalización del parque, a cargo de la Itaipu Binacional.
+                  </p>
+                </div>
+              </div>
+            </li>
+            <!-- <li class="timeline-item">
+              <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+              <div class="timeline-panel">
+                <div class="timeline-heading">
+                  <h4 class="timeline-title">Mussum ipsum cacilds 6</h4>
+                  <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p>
+                </div>
+                <div class="timeline-body">
+                  <p>Mussum ipsum cacilds, vidis litro abertis. Consetis adipiscings elitis. Pra lá , depois divoltis porris, paradis. Paisis, filhis, espiritis santis.</p>
+                </div>
+              </div>
+            </li> -->
+          </ul>
+        </div>
+        </div>
+      </div>
+      </div>
+      </div>
+      
+      <div class="tm-section tm-section-pad tm-bg-white" style="text-align:center" id="temas">
+      <div class="container ie-h-align-center-fix">
+        <div class="page-header">
+            <h1>Temas</h1>
+          </div>
+          <div class="row text-center">
+            <article class="col-sm-12 col-md-3 col-lg-3 col-xl-3 tm-article">    
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-01-modal">
+              	<i class="fa fa-building fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+              Infraestructura</a>
+            </article>
+            <article class="col-sm-12 col-md-2 col-lg-2 col-xl-2 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-02-modal">
+              <i class="fa fa-tree fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+          		Paisaje</a>
+             </article>
+            <article class="col-sm-12 col-md-2 col-lg-2 col-xl-2 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-03-modal">
+              <i class="fa fa-futbol-o fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+          		Deporte</a>
+             </article>
+             <article class="col-sm-12 col-md-2 col-lg-2 col-xl-2 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-04-modal">
+              	<i class="fa fa-leaf fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+              	Naturaleza</a>
+             </article>
+             <article class="col-sm-12 col-md-3 col-lg-3 col-xl-3 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-07-modal">
+              <i class="fa fa-line-chart  fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+          		Sostenibilidad</a>
+             </article>
+          </div>
+          <div class="row text-center">
+            <article class="col-sm-12 col-md-3 col-lg-3 col-xl-3 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-05-modal">
+              <i class="fa fa-university  fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+          		Educación</a>
+             </article>
+            <article class="col-sm-12 col-md-3 col-lg-3 col-xl-3 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-08-modal">
+              <i class="fa fa-users fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+          		Integración con la Ciudad</a>
+             </article>
+            <article class="col-sm-12 col-md-3 col-lg-3 col-xl-3 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-06-modal">
+              <i class="fa fa-book fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+          		Cultura e Historia</a>
+             </article>
+            <article class="col-sm-12 col-md-3 col-lg-3 col-xl-3 tm-article"> 
+              <a href="#" class="text-uppercase tm-color-primary tm-font-semibold" data-toggle="modal" data-target="#tema-09-modal">
+              <i class="fa fa-bullhorn fa-5x tm-color-primary tm-margin-b-20" style="tex"	></i><br>
+          		Seguridad</a>
+             </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCION: MENU HEXAGONAL -->
+<!--       <div class="tm-section tm-section-pad tm-bg-primary" id="menu_hexagonal">
+          <ul id="hexGrid">
+              <li class="hex">
+                <div class="hexIn">
+                    <img src="" alt="" />
+                    <h1>This is a title</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                  <a class="hexLink" href="#fotos">
+                    <img src="static/img/icon-01.jpg" alt="" />
+                    <h1>FOTOS</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                  </a>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                  <a class="hexLink" href="#entrevistas">
+                    <img src="static/img/icon-02.jpg" alt="" />
+                    <h1>ENTREVISTAS</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                  </a>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                    <img src="" alt="" />
+                    <h1>This is a title</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                  <a class="hexLink" href="#infografias">
+                    <img src="static/img/icon-03.jpg" alt="" />
+                    <h1>INFOGRAFÍAS</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                  </a>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                  <a class="hexLink">
+                    <img src="static/img/icon-07.jpg" alt="" />
+                    <h1>This is a title</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                  </a>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                  <a class="hexLink" href="#tm-section-6">
+                    <img src="static/img/icon-04.jpg" alt="" />
+                    <h1>PLANOS</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                  </a>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                    <img src="" alt="" />
+                    <h1>This is a title</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                  <a class="hexLink" href="#top_ideas">
+                    <img src="static/img/icon-05.jpg" alt="" />
+                    <h1>IDEAS</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                  </a>
+                </div>
+              </li>
+              <li class="hex">
+                <div class="hexIn">
+                  <a class="hexLink" href="#historia">
+                    <img src="static/img/icon-06.jpg" alt="" />
+                    <h1>HISTORIA</h1>
+                    <p>Some sample text about the article this hexagon leads to</p>
+                  </a>
+                </div>
+              </li>           
+            </ul>
+      </div>
+ -->
+
+
+      
+      <!-- SECCION: ENTREVISTAS -->
+        <div class="tm-section tm-section-pad tm-bg-white" style="text-align:center" id="entrevistas">
+         <div class="container ie-h-align-center-fix">
+          <div class="page-header">
+            <h1>Entrevistas</h1>
+          </div>
+          <div class="row">
+            <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                <div><iframe width="100%" height="315" src="https://www.youtube.com/embed/4bc4BYxpMfs" 
+                  frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+                </div>
+              </div>
+            <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+                <div><iframe width="100%" height="315" src="https://www.youtube.com/embed/cWZxXset0PM" 
+                  frameborder="0" allow="encrypted-media" allowfullscreen></iframe>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      
+<!--       <div class="tm-section tm-section-pad tm-bg-gray" id="fotos">
+          <div class="container">
+            <div class="row">
+              <div class="col-sm-12 col-md-12 col-lg-12 col-xl-12">
+                <div class="tm-article-carousel">
+                  <article class="tm-bg-white mr-2 tm-carousel-item"> <img src="static/img/foto-01.JPG"
+  
+                      alt="Image" class="img-fluid">
+                      <div class="tm-article-pad">
+                        <header>
+                          <h3 class="text-uppercase tm-article-title-2">Nunc in
+                            felis aliquet metus luctus iaculis</h3>
+                        </header>
+                      </div>
+                  </article>
+                  <article class="tm-bg-white mr-2 tm-carousel-item"> <img src="static/img/foto-02.JPG"
+  
+                      alt="Image" class="img-fluid">
+                     <div class="tm-article-pad">
+                      <header>
+                        <h3 class="text-uppercase tm-article-title-2">Sed cursus
+                          dictum nunc quis molestie</h3>
+                      </header>
+                     </div>
+                  </article>
+                  <article class="tm-bg-white mr-2 tm-carousel-item"> <img src="static/img/foto-03.JPG"
+  
+                      alt="Image" class="img-fluid">
+                    <div class="tm-article-pad">
+                      <header>
+                        <h3 class="text-uppercase tm-article-title-2">Eget diam
+                          pellentesque interdum ut porta</h3>
+                      </header>
+                    </div>
+                  </article>
+                  <article class="tm-bg-white mr-2 tm-carousel-item"> <img src="static/img/foto-04.JPG"
+  
+                      alt="Image" class="img-fluid">
+                    <div class="tm-article-pad">
+                      <header>
+                        <h3 class="text-uppercase tm-article-title-2">Lorem ipsum
+                          dolor sit amet, consectetur</h3>
+                      </header>
+                    </div>
+                  </article>
+                  <article class="tm-bg-white mr-2 tm-carousel-item"> <img src="static/img/foto-05.JPG"
+  
+                      alt="Image" class="img-fluid">
+                    <div class="tm-article-pad">
+                      <header>
+                        <h3 class="text-uppercase tm-article-title-2">Orci varius
+                          natoque penatibus et</h3>
+                      </header>
+                    </div>
+                  </article>
+                  <article class="tm-bg-white tm-carousel-item"> <img src="static/img/foto-06.JPG"
+  
+                      alt="Image" class="img-fluid">
+                    <div class="tm-article-pad">
+                      <header>
+                        <h3 class="text-uppercase tm-article-title-2">Nullam
+                          sollicitudin at augue venenatis eleifend</h3>
+                      </header>
+                      </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> -->
+         
+
+         <!-- SECCION: FOTOS -->
+         <div class="tm-section tm-section-pad tm-bg-gray" id="fotos" style="text-align:center">
+            <div class="container ie-h-align-center-fix">
+              <div class="page-header">
+                <h1>Fotos</h1>
+              </div>
+                <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+                    <ol class="carousel-indicators">
+                      <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="3"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="4"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="5"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="6"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="7"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="8"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="9"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="10"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="11"></li>
+                      <li data-target="#carouselExampleIndicators" data-slide-to="12"></li>
+                    </ol>
+                    <div class="carousel-inner">
+                      <div class="carousel-item active">
+                        <img class="d-block w-100" src="static/img/foto-01.JPG" alt="First slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-02.JPG" alt="Second slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-03.JPG" alt="Third slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-04.JPG" alt="Fourth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-05.JPG" alt="Fifth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-06.JPG" alt="Sixth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-07.JPG" alt="Fifth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-08.JPG" alt="Fifth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-09.JPG" alt="Fifth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-10.JPG" alt="Fifth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-11.JPG" alt="Fifth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-12.JPG" alt="Fifth slide">
+                      </div>
+                      <div class="carousel-item">
+                        <img class="d-block w-100" src="static/img/foto-13.JPG" alt="Fifth slide">
+                      </div>
+                    </div>
+                    <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                      <span class="sr-only">Previous</span>
+                    </a>
+                    <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                      <span class="sr-only">Next</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- SECCION: INFOGRAFIAS -->
+        <div class="tm-section tm-section-pad tm-bg-white" style="text-align:center" id="infografias">
+            <div class="page-header">
+                <h1>Infografías</h1>
+              </div>
+            <div class="row text-center">
+              <article class="col-sm-12 col-md-6 col-lg-6 col-xl-6 tm-article"> 
+                <a target="_blank" href="static/img/infografia-01.png" >
+                  <img src="static/img/infografia-01.png" class="img-fluid">
+                </a>
+                </article>
+              <article class="col-sm-12 col-md-6 col-lg-6 col-xl-6 tm-article">
+                  <a target="_blank" href="static/img/infografia-02.png" >
+                    <img src="static/img/infografia-02.png" class="img-fluid">
+                  </a>
+              </article>
+              <!-- <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4 tm-article">
+                   <a href="#" >
+                    <img src="https://assets7.domestika.org/project-items/001/798/857/19.pictoline-big.jpg?1481490517" class="img-fluid">
+                   </a>
+              </article>  -->             
+            </div>
+          </div>  
+        
+
+        
+        <!-- SECCION: HISTORIA -->
+        <!-- <div class="tm-section tm-section-pad tm-bg-gray" id="historia">
+            <div class="row">
+            <div class="col-md-12">
+              <div class="page-header" style="text-align:center">
+                <h1>Historia</h1>
+              </div>
+              <div style="display:inline-block;width:100%;overflow-y:auto;">
+              <ul class="timeline timeline-horizontal">
+                <li class="timeline-item">
+                  <div class="timeline-badge primary"><i class="glyphicon glyphicon-check"></i></div>
+                  <div class="timeline-panel">
+                    <div class="timeline-heading">
+                      <h4 class="timeline-title">Mussum ipsum cacilds 1</h4>
+                      <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p>
+                    </div>
+                    <div class="timeline-body">
+                      <p>Mussum ipsum cacilds, vidis litro abertis. Consetis faiz elementum girarzis, nisi eros gostis.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-badge success"><i class="glyphicon glyphicon-check"></i></div>
+                  <div class="timeline-panel">
+                    <div class="timeline-heading">
+                      <h4 class="timeline-title">Mussum ipsum cacilds 2</h4>
+                      <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p>
+                    </div>
+                    <div class="timeline-body">
+                      <p>Mussum ipsum cacilds, vidis faiz elementum girarzis, nisi eros gostis.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-badge info"><i class="glyphicon glyphicon-check"></i></div>
+                  <div class="timeline-panel">
+                    <div class="timeline-heading">
+                      <h4 class="timeline-title">Mussum ipsum cacilds 3</h4>
+                      <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p>
+                    </div>
+                    <div class="timeline-body">
+                      <p>Mussum ipsum cacilds, vidis litro abertis. Consetis adipisci. Mé faiz elementum girarzis, nisi eros gostis.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-badge danger"><i class="glyphicon glyphicon-check"></i></div>
+                  <div class="timeline-panel">
+                    <div class="timeline-heading">
+                      <h4 class="timeline-title">Mussum ipsum cacilds 4</h4>
+                      <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p>
+                    </div>
+                    <div class="timeline-body">
+                      <p>Mussum ipsum cacilds, vidis litro abertis. Consetis adipiscings elitis. Pra lá , depois divoltis porris, paradis. Paisis, filhis, espiritis santis.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-badge warning"><i class="glyphicon glyphicon-check"></i></div>
+                  <div class="timeline-panel">
+                    <div class="timeline-heading">
+                      <h4 class="timeline-title">Mussum ipsum cacilds 5</h4>
+                      <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p>
+                    </div>
+                    <div class="timeline-body">
+                      <p>Mussum ipsum cacilds, vidis litro abertis. Consetis adipiscings elitis. Pra lá , depois divoltis porris, paradis. Paisis, filhis, espiritis santis.</p>
+                    </div>
+                  </div>
+                </li>
+                <li class="timeline-item">
+                  <div class="timeline-badge"><i class="glyphicon glyphicon-check"></i></div>
+                  <div class="timeline-panel">
+                    <div class="timeline-heading">
+                      <h4 class="timeline-title">Mussum ipsum cacilds 6</h4>
+                      <p><small class="text-muted"><i class="glyphicon glyphicon-time"></i> 11 hours ago via Twitter</small></p>
+                    </div>
+                    <div class="timeline-body">
+                      <p>Mussum ipsum cacilds, vidis litro abertis. Consetis adipiscings elitis. Pra lá , depois divoltis porris, paradis. Paisis, filhis, espiritis santis.</p>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            </div>
+          </div>
           </div> -->
-          <br><br>
-          <h1 id="how-it-works" class="page-header">{% trans "How it works" %}</h1>
-          {% trans "The following images illustrates how Social Ideation App works under different situations" %}<br><br>
-          <h4 id="scenario-1"><span class="label label-primary">{% trans "Scenario 1" %}</span></h4><br>
-          {% trans "The ideas posted on" %} <b><a href="{{ fb_group_url }}" target="_blank">{% trans "the Facebook group" %}</a></b>
-          {% trans "are later automatically replicated on the page of" %}
-          <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>
-          {% trans "the initiative on IdeaScale" %}
-          <br><br>
-          <img src="/static/img/scenario_1.png" alt="Scenario 1" height="146" width="716">
-          <br><br>
-          <h4 id="scenario-2"><span class="label label-primary">{% trans "Scenario 2" %}</span></h4><br>
-          {% trans "The ideas posted on the page of" %}
-          <b><a href="{{ initiative_url }}" target="_blank">{{ initiative_name }}</a></b>
-          {% trans "on IdeaScale are later automatically replicated on the" %}
-          <b><a href="{{ fb_group_url }}" target="_blank">{% trans "Facebook group" %}</a></b>
-          <br><br>
-          <img src="/static/img/scenario_2.png" alt="Scenario 2" height="222" width="716">
-          <br><br>
-          <!-- <h4 id="scenario-3"><span class="label label-primary">{% trans "Scenario 3" %}</span></h4><br>
-          {% trans "Comment posted on Facebook and then automatically replicated on the initiative page on IdeaScale" %}<br><br>
-          <img src="/static/img/scenario_3.png" alt="Scenario 3" height="100" width="716">
-          <br><br>
-          <h4 id="scenario-4"><span class="label label-primary">{% trans "Scenario 4" %}</span></h4><br>
-          {% trans "Comment posted on IdeaScale and then automatically replicated on the Facebook group" %}<br><br>
-          <img src="/static/img/scenario_4.png" alt="Scenario 4" height="142" width="716">
-          <br><br> -->
-          <br>
-          <footer id="contact" class="footer">
-            <h5>
-                <small>
-                    {% trans "Social Ideation App is a part of a research project conducted by the" %}
-                    <a href="http://lifeparticipation.org/" target="_blank">Life Participation Research Group</a>
-                    {% trans "of the University of Trento (Italy) with the aim to exploit the advantages of social network" %}
-                    {% trans "services to improving the technologies for civic participation. For more information, drop us an" %}
-                    <a href="mailto:hola@social-ideation.com" target="_blank">{% trans "email" %}</a>.
-                </small>
-            </h5>
-          </footer>
-        </div> <!-- /container -->
+        
+        <!-- SECCION: TOP IDEAS -->
+        <!-- <div class="tm-section tm-section-pad tm-bg-img" id="top_ideas">
+          <div class="container ie-h-align-center-fix">
+            <div class="row tm-flex-align-center">
+              <div class="col-xs-12 col-md-12 col-lg-3 col-xl-3 tm-media-title-container">
+                <h2 class="text-uppercase tm-section-title-2">Ideas</h2>
+                <h3 class="tm-color-primary tm-font-semibold tm-section-subtitle-2">Top 3</h3>
+              </div>
+              <div class="col-xs-12 col-md-12 col-lg-9 col-xl-9 mt-0 mt-sm-3">
+                <div class="ml-auto tm-bg-white-shadow tm-pad tm-media-container">
+                  <article class="media tm-margin-b-20 tm-media-1"> <img src="static/img/img-05.jpg"
+
+                      alt="Image">
+                    <div class="media-body tm-media-body-1 tm-media-body-v-center">
+                      <h3 class="tm-font-semibold tm-color-primary tm-article-title-3">Suspendisse
+                        vel est libero sem phasellus ac laoreet</h3>
+                      <p>Integer libero purus, consectetur vitae posuere quis,
+                        maximus id diam. Vivamus eget tellus ornare,
+                        sollicitudin quam id, dictum nulla. Phasellus finibus
+                        rhoncus justo, tempus eleifend neque dictum ac. Aenean
+                        metus leo, consectetur non. <br>
+                        <br>
+                        Etiam aliquam arcu at mauris consectetur scelerisque.
+                        Integer elementum justo in orci facilisis ultricies.
+                        Pellentesque at velit ante. Duis scelerisque metus vel
+                        felis porttitor gravida.</p>
+                    </div>
+                  </article>
+                  <article class="media tm-margin-b-20 tm-media-1"> <img src="static/img/img-04.jpg"
+
+                      alt="Image">
+                    <div class="media-body tm-media-body-1 tm-media-body-v-center">
+                      <h3 class="tm-font-semibold tm-article-title-3">Suspendisse
+                        vel est libero sem phasellus ac laoreet</h3>
+                      <p>Duis accumsan sagittis tortor in ultrices. Praesent
+                        tortor ante, fringilla ac nibh porttitor, fermentum
+                        commodo nulla.</p>
+                      <a href="#" class="text-uppercase tm-color-primary tm-font-semibold">Continue
+                        reading...</a> </div>
+                  </article>
+                  <article class="media tm-margin-b-20 tm-media-1"> <img src="static/img/img-05.jpg"
+
+                      alt="Image">
+                    <div class="media-body tm-media-body-1 tm-media-body-v-center">
+                      <h3 class="tm-font-semibold tm-article-title-3">Faucibus
+                        dolor ligula nisl metus auctor aliquet</h3>
+                      <p>Nunc in felis aliquet metus luctus iaculis vel et nisi.
+                        Nulla venenatis nisl orci, laoreet ultricies massa
+                        tristique id.</p>
+                      <a href="#" class="text-uppercase tm-color-primary tm-font-semibold">Continue
+                        reading...</a> </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div> -->
+
+
+      <!-- SECCION: EXPERTOS -->
+      <div class="tm-section tm-section-pad tm-bg-white" style="text-align:center" id="expertos">
+          <div class="page-header">
+              <h1>Expertos</h1>
+            </div>
+        <div class="container ie-h-align-center-fix">
+        <div class="row text-center">
+          <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4"> 
+              <img src="static/img/experto-01.jpg" alt="Image" class="img-fluid" style="-webkit-filter: grayscale(100%); filter: grayscale(100%); border-radius: 50%;">
+              <div class="tm-article-pad">
+                <header>
+                  <h3 class="text-uppercase tm-article-title-2">Juan Carlos Cristaldo</h3>
+                  <a class="text-uppercase btn-primary tm-btn-primary" data-toggle="modal" data-target="#experto-01-modal" >Más Info</a>
+                </header>
+              </div>
+              <!-- <p>Aliquam ac lacus volutpat, dictum risus at, scelerisque
+                nulla. Nullam sollicitudin at augue venenatis eleifend.
+                Nulla ligula ligula, egestas sit amet viverra id, iaculis
+                sit amet ligula.</p> -->
+              <!-- <a href="#" class="text-uppercase btn-primary tm-btn-primary">Get
+                More Info.</a>  -->
+          </article>
+          <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4"> 
+              <img src="static/img/experto-02.jpg" alt="Image" class="img-fluid" style="-webkit-filter: grayscale(100%); filter: grayscale(100%); border-radius: 50%;">
+              <div class="tm-article-pad">
+                <header>
+                  <h3 class="text-uppercase tm-article-title-2">Bruno Defelippe</h3>
+                  <a class="text-uppercase btn-primary tm-btn-primary" data-toggle="modal" data-target="#experto-02-modal" >Más Info</a>
+                </header>
+              </div>
+              <!-- <p>Aliquam ac lacus volutpat, dictum risus at, scelerisque
+                nulla. Nullam sollicitudin at augue venenatis eleifend.
+                Nulla ligula ligula, egestas sit amet viverra id, iaculis
+                sit amet ligula.</p> -->
+              <!-- <a href="#" class="text-uppercase btn-primary tm-btn-primary">Get
+                More Info.</a>  -->
+          </article>
+          <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4"> 
+              <img src="static/img/experto-03.jpg" alt="Image" class="img-fluid" style="-webkit-filter: grayscale(100%); filter: grayscale(100%); border-radius: 50%;">
+              <div class="tm-article-pad">
+                <header>
+                  <h3 class="text-uppercase tm-article-title-2">Maria Glauser</h3>
+                  <a class="text-uppercase btn-primary tm-btn-primary" data-toggle="modal" data-target="#experto-03-modal" >Más Info</a>
+                </header>
+              </div>
+              <!-- <p>Aliquam ac lacus volutpat, dictum risus at, scelerisque
+                nulla. Nullam sollicitudin at augue venenatis eleifend.
+                Nulla ligula ligula, egestas sit amet viverra id, iaculis
+                sit amet ligula.</p> -->
+              <!-- <a href="#" class="text-uppercase btn-primary tm-btn-primary">Get
+                More Info.</a>  -->
+          </article>
+        </div>
+       </div>
+      </div>
+      
+      <!-- SECCION: PATROCINADORES -->
+      <div class="tm-section tm-bg-white" style="text-align:center; min-height: 20px" id="patrocinadores">
+          <div class="page-header">
+              <h1>Patrocinadores</h1>
+            </div>
+        <div class="container ie-h-align-center-fix">
+          <div class="row">
+              <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4"> 
+                  <a href="http://www.universidadcatolica.edu.py"><img src="static/img/uca.jpg" alt="Image" class="logo"></a>
+              </article>
+              <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4"> 
+                <a href="http://www.conacyt.gov.py"><img src="static/img/conacyt.jpg" alt="Image" class="logo"></a>
+              </article>
+              <article class="col-sm-12 col-md-4 col-lg-4 col-xl-4"> 
+                <a href="http://www.ciudadela.org.py"><img src="static/img/ciudadela.png" alt="Image" class="logo"></a>
+              </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCION: PLANO -->
+      <div class="tm-section tm-section-pad tm-bg-img tm-position-relative" id="tm-section-6">
+        <div class="container ie-h-align-center-fix">
+          <div class="row" style="justify-content:center">
+            <!-- <div class="col-xs-12 col-sm-12 col-md-6 col-lg-6 col-xl-7"> -->
+              <img src="static/img/mapa.png" class="img-fluid" style="padding-bottom: 2em;">
+            <!-- </div> -->
+          </div>
+            <div class="row">
+                  <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4" >
+                    <a class="btn btn-primary tm-btn-primary" href="static/planos/plano_parque_caballero.jpg" target="_blank">Descargar Plano .jpg</a>
+                    <!-- <button class="btn btn-primary tm-btn-primary">Descargar Plano .swg</button> -->
+                  </div>
+                  <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4" >
+                    <a class="btn btn-primary tm-btn-primary" href="static/planos/plano_parque_caballero.pdf" target="_blank">Descargar Plano .pdf</a>
+                    <!-- <button class="btn btn-primary tm-btn-primary">Descargar Plano .jpg</button> -->
+                  </div>
+                  <div class="col-sm-12 col-md-4 col-lg-4 col-xl-4" >
+                    <a class="btn btn-primary tm-btn-primary" href="static/planos/plano_parque_caballero.swg" target="_blank">Descargar Plano .swg</a>
+                    <!-- <button class="btn btn-primary tm-btn-primary">Descargar Plano .pdf</button> -->
+                  </div>
+
+            </div>
+          </div>
+        </div>
+
+      <!-- SECCION: FOOTER -->
+      <footer class="tm-bg-dark-blue">
+        <div class="container ie-h-align-center-fix">
+          <div class="row">
+            <p class="col-sm-12 text-center tm-font-light tm-color-white p-4 tm-margin-b-0">
+              Designed by <a href="http://www.tooplate.com" class="tm-color-primary tm-font-normal"
+
+                target="_parent">Tooplate</a></p>
+          </div>
+        </div>
+      </footer>
     </div>
-</div>
-<div id="fb-root"></div>
-<!-- Modal -->
-<div class="modal fade" id="writingPermissionModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog" role="document">
+
+    <!-- Modals -->
+<div class="modal fade" id="ideasModal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="myModalLabel">Social Ideation App</h4>
+        <h5 class="modal-title" id="exampleModalLongTitle">Elige dónde quieres ver las ideas</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
       </div>
       <div class="modal-body">
-      {% trans "We are going to publish on your behalf" %} <b>{% trans "ONLY" %}</b> {% trans "inside the Facebook group associated to the initiative" %};
-      {% trans "never on your wall nor on your friends' wall" %}.<br><br>
-        <div class="alert alert-warning" role="alert">
-            <span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>
-            <b>{% trans "Attention!" %}</b>
-            <i>{% trans "Please make sure to select the option 'Public' from the dropdown menu of the following window, so all the members of the group can see your posts" %}.</i>
+        <div class="row">
+          <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6" >
+            <!-- <button class="btn btn-primary tm-btn-search">En Facebook</button>  -->
+            <a href="https://www.facebook.com/groups/388005881660762/" class="btn btn-primary tm-btn-search" target="_blank">En Facebook</a>
+          </div>  
+          <div class="col-sm-12 col-md-6 col-lg-6 col-xl-6" >
+            <!-- <button class="btn btn-primary tm-btn-search">En AppCivist</button> -->
+            <a href="https://pb.appcivist.org/#/v2/p/assembly/467eb262-2008-4368-9beb-e28b229b9579/campaign/81fef62d-9600-423e-8979-164422e24f60" 
+            class="btn btn-primary tm-btn-search" target="_blank">En AppCivist</a>
+          </div>
         </div>
+        <small class="form-text text-muted">AppCivist es una Plataforma de Participación Cívica</small>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" onclick="askWritingPermissions('{{ initiative_url }}'); return false;">{% trans "Ok" %}</button>
-        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
       </div>
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Ingresá tus datos</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+              <form id="form1">
+              <div class="form-group">
+                <label for="exampleInputEmail1">Nombre</label>
+                <input type="text" class="form-control" id="name_field" placeholder="Ingresa tu nombre y apellido">
+              </div>
+              <div class="form-group">
+                <label for="exampleInputEmail1">Email</label>
+                <input type="email" class="form-control" id="email_field" aria-describedby="emailHelp" placeholder="Ingresar email">
+                <small id="emailHelp" class="form-text text-muted">Utiliza la dirección de correo que usas en Facebook</small>
+              </div>
+              <div class="form-group">
+                <label for="exampleInputPassword1">Contraseña</label>
+                <input type="password" class="form-control" id="pass1_field" placeholder="Contraseña">
+                <small id="emailHelp" class="form-text text-muted">Mínimo 5 caracteres, máximo 10</small>
+              </div>
+              <div class="form-group">
+                <label for="exampleInputPassword2">Confirmar Contraseña</label>
+                <input type="password" class="form-control" id="pass2_field" placeholder="Repita su Contraseña">
+              </div>
+               <!-- <small id="emailHelp" class="form-text text-muted">Al registrarte, se te solicitará que inicies sesión en Facebook para que nuestra aplicación pueda replicar tus ideas
+               y comentarios de AppCivist en nuestro grupo de Facebook automáticamente en tu nombre</small> -->
+              <div class="form-group">
+               <a onclick="registerACandFB('{{ initiative_url }}');" class="btn btn-primary tm-btn-search">REGISTRARME</a>
+              </div>
+              <div class="form-group">
+               <button class="btn btn-primary tm-btn-primary" data-dismiss="modal" data-toggle="modal" data-target="#termConditionModal">Ver Términos y Condificiones</button>
+              </div>
+              <div class="form-group">
+               <a href='http://parquecaballero.participa.org.py/?show=selectPlatform' class="btn btn-primary tm-btn-search">Ya estoy registrado</a>
+              </div>
+              <!-- <button class="btn btn-primary" onclick="registerACandFB('testing.com');">Registrarse</button> -->
+            </form>
+            <form id="form2">
+               <small id="emailHelp" class="form-text text-muted">Al presionar este botón, se te solicitará que inicies sesión en Facebook para que también puedas participar en nuestro grupo</small>
+               <a onclick="startConnect('{{ initiative_url }}');" class="btn btn-primary tm-btn-search">DAR PERMISOS EN FACEBOOK</a>
+              <!-- <button class="btn btn-primary" onclick="registerACandFB('testing.com');">Registrarse</button> -->
+            </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="experto-03-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Maria Glauser</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          Educadora, facilitadora y gestora cultural. Es co-fundadora de IMPACT HUB, red internacional de espacios compartidos y programas para emprendedores de impacto. En Asunción, Maria es co-fundadora de la iniciativa ciudadana PUERTO ABIERTO dedicada a la defensa y buen uso de los espacios públicos, y directora de EL GRANEL Lugar de Encuentros, multi-espacio que combina espacios inspiradores, una programación mensual de eventos educativos y recreativos y un café independiente. Tanto para IMPACT HUB como para otras organizaciones, Maria se dedica a asesorar la creación participativa de nuevos espacios y servicios, con especial énfasis en la formación de equipos gestores y una comunidad cohesiva.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="experto-02-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Bruno Defelippe</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          Co-fundador y CEO de Koga Impact Lab, Director Ejecutivo de Sistema B Paraguay, co-fundador de Loffice, y co-fundador de la ASEPY. Bruno es un emprendedor social reconocido como Fellow Ashoka y Fellow del Centro de Desarrollo y Democracia de Stanford University (2015).</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="experto-01-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Juan Carlos Cristaldo</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          Actualmente, es Director de Investigación y coordinador del CIDi (Centro de Investigación Desarrollo e Innovación) en la Facultad de Arquitectura de la UNA. Ha actuado en diversos proyectos de urbanísticos en Paraguay, Brasil, y Estados Unidos, incluyendo entre otros, su actuación como experto consultor en el Infastructure 360 Award, impulsado por el IADB y el Zofnass Program for Sustainable Infrastructure de Harvard University (2013-14), el desarrollo del Plan del Centro Histórico de Asunción (Plan CHA) como socio local de Ecosistema Urbano (2014 - 2015), y la coordinación técnica del proceso de construcción participativa de la Política Nacional del Hábitat y la Vivienda (en curso)..</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="termConditionModal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog modal-lg" role="document" style="padding-top: 10em;">
+    <div class="modal-content" style="padding: 15px;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Términos y Condiciones de Uso</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" >
+          Para participar necesitamos que tengas en cuenta lo siguiente y aceptes lo siguiente:<br>
+          <ol>
+            <li>Esta plataforma está moderada. La admisión a la misma será aceptada por los moderadores según se pueda evidenciar que el perfil de la persona que pide unirse es auténtico, y representa a la persona y no a algún ente u organización.</li>
+            <li>Esta plataforma es un espacio participación ciudadana, todos los comentarios no relacionados al debate serán eliminados.</li>
+            <li>Esta es una plataforma de construcción por lo tanto se deben evitar en lo posible las quejas y reclamos, sin embargo las eventuales quejas o reclamos pueden ser presentados en forma de propuesta sobre qué es necesario mejorar y como hacerlo.</li>
+            <li>Los participantes deberán plantear las ideas dentro del eje temático asociado el problema o la propuesta presentada y se recomienda que los temas sean específicos, y no genéricos.</li>
+            <li>Si alguien quiere plantear un tema pero por motivos de seguridad, por temor a alguna represalia o motivos particulares válidos prefiere hacerlo de forma anónima, puede enviar un mensaje en privado y los moderadores del grupo lo pondrán a consideración.</li>
+            <li>Tampoco está permitido lo siguiente:</li>
+            <ul>
+                <li>Publicidad, compra o venta directa o sugestiva de productos y servicios, inmuebles, o relacionados a búsquedas laborales.</li>
+                <li>Incitación a la violencia humana, animal, de género o cualquier otra; así como cualquier incitación, sugerencia o apoyo a todo tipo de actividad ilegal.</li>
+                <li>Agresiones verbales, groserías, faltas de respeto o malos tratos.</li>
+                <li>Búsqueda de objetos, mascotas o personas perdidas</li>
+                <li>Memes.</li>
+                <li>Cuestiones que no contribuyan al debate de propuestas.</li>
+                <li>Quejas y reclamos contra empresas y/o marcas.</li>
+                <li>Cualquier tipo de discriminación.</li>
+                <li>Fotografías e información privada de personas, en especial menores de edad.</li>
+              </ul>
+
+          </ol>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" data-toggle="modal" data-target="#registerModal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-01-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Infraestructura</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Qué infrastructura necesita el parque? ¿Con qué tipo de instalaciones te gustaría que cuente?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-02-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Paisaje</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿De qué manera mejorarías el paisaje del parque? ¿Cómo te gustaría que el parque se vea desde afuera o desde adentro?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-03-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Deporte</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Cómo se puede impulsar al deporte desde el parque? ¿Qué tipo de instalaciones deportivas te gustaría tener en el parque?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-04-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Naturaleza</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Qué tipo de plantas te gustaría ver en el parque? ¿Cómo hacer más visibles su flora y su fauna?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-05-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Educación</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Qué rol puede jugar el parque en la educación de quienes lo visitan o quienes viven en su zona de influencia?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-06-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Cultura e Historia</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Cómo podemos mejorar la visibilidad de la historia del parque? ¿Qué tipo de eventos culturales te gustaría realizar en el mismo?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-07-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Sostenibilidad</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Cómo podemos sostener el cuidado del parque a corto, mediano y largo plazo? ¿Qué tipo de actividades económicas podrían beneficiar al sostenimiento de su área vital?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-08-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Integración con la Ciudad</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Cómo podemos integrar el área del parque a la ciudad? ¿De qué manera podemos facilitar su acceso e incrementar el alcance de su influencia?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="tema-09-modal" tabindex="-1" role="dialog" aria-labelledby="ideasModal" aria-hidden="true" style="overflow-y: scroll;">
+  <div class="modal-dialog odal-dialog-centered" role="document" style="padding-top: 10em;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Seguridad</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p style="text-align: justify;">
+          ¿Cómo podemos lograr que el parque sea un espacio seguro para quienes lo visitan y para quienes viven en sus alrededores?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="fb-root"></div>
+<div id="status" role="alert" class="my-hidden"></div>
+
 <script type="text/javascript">
     window.fbAsyncInit = function() {
         FB.init({
@@ -289,8 +1244,12 @@
     (function() {
         var e = document.createElement('script'); e.async = true;
         e.src = document.location.protocol +
-                '//connect.facebook.net/ru_RU/all.js';
+                '//connect.facebook.net/es_ES/all.js';
         document.getElementById('fb-root').appendChild(e);
     }());
 </script>
+{% endblock %}
+
+{% block script %}
+
 {% endblock %}
