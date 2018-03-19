@@ -200,9 +200,11 @@ def get_initiative_info(initiative_url):
     # url of the community associated to the first social network
     # where it is executed
     initiative = Initiative.objects.get(active=True, url=initiative_url)
+    snapp = initiative.social_network.all()[0]
+    users = SocialNetworkAppUser.objects.filter(snapp=snapp)
     return {'initiative_name': initiative.name, 'initiative_url': initiative.url,
             'fb_group_url': initiative.social_network.all()[0].community.url, 
-             'site_url': initiative.site_url}
+             'site_url': initiative.site_url, 'n_snapp_users': str(len(users))}
 
 
 def _get_recent_ideas (n_ideas, initiative_url):
@@ -257,12 +259,12 @@ def index(request):
     else:
         activate(language_to_render)
     # TODO, cambiar URL1 por la url del request. User request.get_host()
-    context = get_initiative_info("")
-    # form = SignInForm()
-    # context['form'] = form
-    context['top'] = _get_top_ideas(3, context['initiative_url'])
-    context['recent'] = _get_recent_ideas(3, context['initiative_url'])
-    context['campaigns'] = _get_campaigns(context['initiative_url'])
+    # return render(request, 'app/index.html')
+
+    context = get_initiative_info("https://platform.appcivist.org")
+    # context['top'] = _get_top_ideas(3, context['initiative_url'])
+    # context['recent'] = _get_recent_ideas(3, context['initiative_url'])
+    # context['campaigns'] = _get_campaigns(context['initiative_url'])
     return render(request, 'app/index.html', context)
 
 # def index_v1(request):
@@ -410,6 +412,9 @@ def _save_user(user_id, access_token, initiative_url, type_permission):
             user.access_token_exp = calculate_token_expiration_time(ret_token['expiration'])
             if type_permission == 'write':
                 user.write_permissions = True
+            elif type_permission == "read_write":
+                user.read_permissions = True
+                user.write_permissions = True
             else:
                 user.read_permissions = True
             user.save()
@@ -430,6 +435,9 @@ def _save_user(user_id, access_token, initiative_url, type_permission):
                             'external_id': user_id}
             if type_permission == 'write':
                 new_app_user.update({'write_permissions': True})
+            elif type_permission == "read_write":
+                new_app_user.update({'write_permissions': True})
+                new_app_user.update({'read_permissions': True})
             else:
                 new_app_user.update({'read_permissions': True})
             if 'name' in user_fb.keys():
@@ -475,8 +483,8 @@ def login_fb(request):
     user_id = request.GET.get('user_id')
     initiative_url = request.GET.get('initiative_url')
     #demo_data = _get_demo_data(request)
-    _save_user(user_id, access_token, initiative_url, 'read')
-    return redirect('/')
+    _save_user(user_id, access_token, initiative_url, 'read_write')
+    return redirect('/?show=selectPlatform')
     # if initiative_url == URL_1:
     #     return redirect('/app/v1#askWRperm')
     # elif initiative_url == URL_2:

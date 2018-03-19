@@ -53,11 +53,13 @@ def _pull_content_consultation_platform(platform, initiative):
     cud_initiative_ideas(platform, initiative)
     cud_initiative_comments(platform, initiative)
     cud_initiative_votes(platform, initiative)
-    #notify_new_campaigns(initiative)
-    #count_other_platform_votes()
-    #notify_new_users(initiative)
-    #notify_join_group(initiative)
+
+    notify_new_users(initiative)
     #check_reactivated_accounts_activity()
+    # notify_new_campaigns(initiative)
+
+    #count_other_platform_votes()
+    #notify_join_group(initiative)
     #update_IS_user_demographic_data(initiative)
 
 

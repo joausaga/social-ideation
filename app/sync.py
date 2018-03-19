@@ -830,6 +830,10 @@ def publish_idea_cp(idea):
                   'campaign_id': campaign.external_id, 'source': 'social_ideation_facebook' ,
                   'source_url': idea.source_social.community.url, 'user_external_id': idea.author.external_id,
                   'user_url': idea.author.url, 'user_name': idea.author.screen_name}
+        if idea.author.email:
+            params['user_email'] = idea.author.email;
+        else:
+            params['user_email'] = ''
         body_param = build_request_body(connector, url_cb.callback, params)
         resp = do_request(connector, url, url_cb.callback.method, body_param)
         new_content = get_json_or_error(connector.name, url_cb.callback, resp)
@@ -892,6 +896,10 @@ def publish_comment_cp(comment):
               'user_external_id': comment.author.external_id,
               'user_url': comment.author.url,
               'user_name': comment.author.screen_name}
+    if comment.author.email:
+        params['user_email'] = comment.author.email;
+    else:
+        params['user_email'] = ''
     if comment.is_new:
         if comment.parent == 'idea':
             url_cb = get_url_cb(connector, 'create_comment_idea_cb')
@@ -1650,9 +1658,7 @@ def notify_new_users(initiative):
                 ctx = {
                     'author' : user.name,
                     'initiative_name': initiative.name,
-                    'initiative_site_url': initiative.site_url,
-                    'initiative_community_id': initiative.community_id,
-                    'survey_url': initiative.survey_url 
+                    'group_url': snapp.community.url
                 }
                 subject = initiative.name
                 html_msg = get_template('app/email/email_new_user.html').render(Context(ctx))
